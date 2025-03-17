@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Monitor, Move, MousePointer, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
+import { Monitor, Move, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Canvas, Image } from 'fabric';
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,6 @@ interface VideoMockupProps {
   overlayIndex: number | null;
   videoUrl?: string;
 }
-
-const DEFAULT_OVERLAYS = [
-  "Elegant Frame",
-  "Simple Border", 
-  "Soft Glow"
-];
 
 const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
@@ -86,25 +80,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
       video.onerror = () => console.error("Error loading video");
     }
   }, [videoUrl]);
-
-  const getOverlayStyles = (index: number | null) => {
-    if (index === null) return "";
-    
-    if (index < DEFAULT_OVERLAYS.length) {
-      switch (index) {
-        case 0: // Elegant Frame
-          return "border-[20px] border-white/90 backdrop-blur-sm";
-        case 1: // Simple Border
-          return "border-[15px] border-white";
-        case 2: // Soft Glow
-          return "border-[12px] border-white/80 shadow-[inset_0_0_20px_rgba(255,255,255,0.6)]";
-        default:
-          return "border-[20px] border-white/90 backdrop-blur-sm";
-      }
-    } else {
-      return "custom-overlay";
-    }
-  };
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -261,37 +236,24 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                     />
                     
                     {overlayIndex !== null && (
-                      <>
-                        {overlayIndex < DEFAULT_OVERLAYS.length ? (
-                          <div 
-                            className={`absolute inset-0 ${getOverlayStyles(overlayIndex)}`}
-                            aria-label={`Overlay: ${DEFAULT_OVERLAYS[overlayIndex] || 'Custom'}`}
-                          >
-                            <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                              {DEFAULT_OVERLAYS[overlayIndex] || 'Custom Overlay'}
-                            </div>
-                          </div>
-                        ) : (
-                          <div 
-                            className="absolute inset-0 custom-overlay"
-                            aria-label="Custom Overlay"
-                            style={{
-                              border: 'none',
-                              backgroundImage: `url(${customOverlays[overlayIndex - DEFAULT_OVERLAYS.length]})`,
-                              backgroundPosition: 'center',
-                              backgroundSize: 'contain',
-                              backgroundRepeat: 'no-repeat',
-                              width: '100%',
-                              height: '100%',
-                              pointerEvents: 'none'
-                            }}
-                          >
-                            <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                              Custom Overlay
-                            </div>
-                          </div>
-                        )}
-                      </>
+                      <div 
+                        className="absolute inset-0 custom-overlay"
+                        aria-label="Custom Overlay"
+                        style={{
+                          border: 'none',
+                          backgroundImage: `url(${customOverlays[overlayIndex]})`,
+                          backgroundPosition: 'center',
+                          backgroundSize: 'contain',
+                          backgroundRepeat: 'no-repeat',
+                          width: '100%',
+                          height: '100%',
+                          pointerEvents: 'none'
+                        }}
+                      >
+                        <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                          Custom Overlay
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

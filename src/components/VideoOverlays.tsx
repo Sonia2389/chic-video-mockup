@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Upload, Image as ImageIcon, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 
@@ -15,19 +15,11 @@ interface Overlay {
   name: string;
   description: string;
   preview: string;
-  isCustom?: boolean;
+  isCustom: boolean;
 }
 
-const defaultOverlays: Overlay[] = [
-  {
-    name: "Elegant Frame",
-    description: "Classic bordered frame with subtle blur effect",
-    preview: "linear-gradient(to right, #e6e9f0 0%, #eef1f5 100%)"
-  }
-];
-
 const VideoOverlays = ({ selectedOverlay, onSelectOverlay }: VideoOverlaysProps) => {
-  const [overlays, setOverlays] = useState<Overlay[]>(defaultOverlays);
+  const [overlays, setOverlays] = useState<Overlay[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,7 +41,7 @@ const VideoOverlays = ({ selectedOverlay, onSelectOverlay }: VideoOverlaysProps)
       if (result) {
         // Add new overlay to the list
         const newOverlay: Overlay = {
-          name: `Custom Overlay ${overlays.length - defaultOverlays.length + 1}`,
+          name: `Custom Overlay ${overlays.length + 1}`,
           description: "Your custom uploaded overlay",
           preview: result,
           isCustom: true
@@ -77,36 +69,41 @@ const VideoOverlays = ({ selectedOverlay, onSelectOverlay }: VideoOverlaysProps)
 
   return (
     <div className="w-full">
-      <h3 className="text-sm font-medium mb-3">Available Overlays</h3>
+      <h3 className="text-sm font-medium mb-3">Uploaded Overlays</h3>
       
-      <div className="space-y-3 mb-4">
-        {overlays.map((overlay, index) => (
-          <Card 
-            key={index}
-            className={cn(
-              "cursor-pointer overflow-hidden transition-all hover:shadow-md",
-              selectedOverlay === index && "ring-2 ring-primary shadow-md"
-            )}
-            onClick={() => onSelectOverlay(index)}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div 
-                className="w-14 h-14 rounded flex-shrink-0"
-                style={{ 
-                  background: overlay.isCustom ? 'none' : overlay.preview,
-                  backgroundImage: overlay.isCustom ? `url(${overlay.preview})` : 'none',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }}
-              />
-              <div>
-                <h3 className="font-medium text-sm">{overlay.name}</h3>
-                <p className="text-xs text-muted-foreground">{overlay.description}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {overlays.length > 0 ? (
+        <div className="space-y-3 mb-4">
+          {overlays.map((overlay, index) => (
+            <Card 
+              key={index}
+              className={cn(
+                "cursor-pointer overflow-hidden transition-all hover:shadow-md",
+                selectedOverlay === index && "ring-2 ring-primary shadow-md"
+              )}
+              onClick={() => onSelectOverlay(index)}
+            >
+              <CardContent className="p-3 flex items-center gap-3">
+                <div 
+                  className="w-14 h-14 rounded flex-shrink-0"
+                  style={{ 
+                    backgroundImage: `url(${overlay.preview})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  }}
+                />
+                <div>
+                  <h3 className="font-medium text-sm">{overlay.name}</h3>
+                  <p className="text-xs text-muted-foreground">{overlay.description}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="mb-4 p-4 border-2 border-dashed rounded-lg text-center">
+          <p className="text-sm text-muted-foreground">No overlays uploaded yet</p>
+        </div>
+      )}
 
       <Button 
         variant="outline" 
@@ -115,7 +112,7 @@ const VideoOverlays = ({ selectedOverlay, onSelectOverlay }: VideoOverlaysProps)
         onClick={handleUploadClick}
       >
         <Plus size={14} />
-        <span>Upload Custom Overlay</span>
+        <span>Upload Overlay</span>
         <input
           type="file"
           ref={fileInputRef}
