@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Move, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -50,7 +49,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     
     if (imageUrl) {
       Image.fromURL(imageUrl).then(img => {
-        // Save original dimensions for reference
         if (!originalImageDimensions) {
           setOriginalImageDimensions({
             width: img.width!,
@@ -65,7 +63,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
         
         const adjustedScale = baseScale * (userImageSize / 100);
         
-        // Use saved position if available
         if (savedPosition) {
           img.set({
             left: savedPosition.left,
@@ -119,7 +116,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
 
   const handleEditToggle = () => {
     if (isEditing) {
-      // Save the position before closing edit mode
       if (fabricCanvas && fabricCanvas.getActiveObject()) {
         const activeObject = fabricCanvas.getActiveObject();
         setSavedPosition({
@@ -224,7 +220,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
   const handleImageSizeChange = (value: number[]) => {
     setUserImageSize(value[0]);
     
-    // Update scale in edit mode if there's an active object
     if (isEditing && fabricCanvas && fabricCanvas.getActiveObject()) {
       const activeObject = fabricCanvas.getActiveObject();
       const baseScale = Math.min(
@@ -295,10 +290,10 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                         style={{ 
                           left: `${savedPosition.left}px`,
                           top: `${savedPosition.top}px`,
+                          width: originalImageDimensions?.width, 
+                          height: originalImageDimensions?.height,
                           transform: `scale(${savedPosition.scale})`,
-                          transformOrigin: 'left top',
-                          width: originalImageDimensions?.width,
-                          height: originalImageDimensions?.height
+                          transformOrigin: 'left top'
                         }}
                       />
                     ) : (
@@ -471,7 +466,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
           </div>
         )}
 
-        {/* Remove the fixed size controls when position is saved */}
         {imageUrl && !isEditing && !savedPosition && (
           <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm rounded-md shadow-sm p-2 flex gap-2 items-center z-20">
             <span className="text-xs font-medium">Image Size:</span>
