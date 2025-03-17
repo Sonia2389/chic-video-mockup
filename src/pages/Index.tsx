@@ -120,7 +120,7 @@ const Index = () => {
           
           <div className="space-y-6">
             <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
-              <h2 className="text-lg font-semibold mb-4">Background Video</h2>
+              <h2 className="text-lg font-semibold mb-4">Step 1: Add background video</h2>
               <div className="space-y-4">
                 {videoUrl ? (
                   <div className="flex items-center justify-between">
