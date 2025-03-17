@@ -66,6 +66,10 @@ const VideoMockup = ({
     if (isEditing && fabricCanvas) {
       const activeObject = fabricCanvas.getActiveObject();
       if (activeObject) {
+        // Calculate the actual display dimensions to maintain consistency
+        const scaledWidth = activeObject.getScaledWidth();
+        const scaledHeight = activeObject.getScaledHeight();
+        
         // Ensure we precisely capture all dimensions and transformations
         const newPosition = {
           left: activeObject.left!,
@@ -73,8 +77,8 @@ const VideoMockup = ({
           scale: Math.max(activeObject.scaleX!, activeObject.scaleY!),
           scaleX: activeObject.scaleX!,
           scaleY: activeObject.scaleY!,
-          width: activeObject.getScaledWidth(),
-          height: activeObject.getScaledHeight(),
+          width: scaledWidth,
+          height: scaledHeight,
           originalWidth: activeObject.width!,
           originalHeight: activeObject.height!,
           angle: activeObject.angle

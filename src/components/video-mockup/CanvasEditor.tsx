@@ -61,7 +61,7 @@ const CanvasEditor = ({
         }
         
         if (savedPosition) {
-          // Apply exact saved position with transformations - preserve exact dimensions
+          // Apply exact saved position with transformations
           img.set({
             left: savedPosition.left,
             top: savedPosition.top,

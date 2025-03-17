@@ -39,10 +39,10 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
             style={{ 
               left: `${savedPosition.left}px`,
               top: `${savedPosition.top}px`,
-              width: `${savedPosition.originalWidth}px`, 
-              height: `${savedPosition.originalHeight}px`,
+              width: `${savedPosition.width}px`, 
+              height: `${savedPosition.height}px`,
               transformOrigin: 'left top',
-              transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
+              transform: `rotate(${savedPosition.angle || 0}deg)`,
               zIndex: 1
             }}
           />
