@@ -373,7 +373,7 @@ const VideoMockup = ({
                               width: '100%',
                               height: '100%',
                               pointerEvents: 'none',
-                              opacity: 0.3 // 30% opacity (70% transparency)
+                              opacity: 0.15 // Changed from 0.3 to 0.15 (85% transparent)
                             }}
                           />
                         ) : (
@@ -381,7 +381,7 @@ const VideoMockup = ({
                             ref={overlayVideoRef}
                             src={overlays[overlayIndex].url}
                             className="w-full h-full object-cover"
-                            style={{ opacity: 0.3 }} // 30% opacity (70% transparency)
+                            style={{ opacity: 0.15 }} // Changed from 0.3 to 0.15 (85% transparent)
                             autoPlay
                             loop
                             muted

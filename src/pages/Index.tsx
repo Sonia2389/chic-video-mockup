@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -248,22 +247,15 @@ const Index = () => {
         overlayVideoElement.play().catch(e => console.error("Error playing overlay video", e));
       }
       
-      // Get reference to the preview video to match its timing
       const previewVideoElement = document.querySelector('.video-mockup-container video') as HTMLVideoElement | null;
       if (previewVideoElement) {
-        // Try to match the playback rate if available
         videoElement.playbackRate = previewVideoElement.playbackRate;
         if (overlayVideoElement) {
           overlayVideoElement.playbackRate = previewVideoElement.playbackRate;
         }
       }
       
-      // Use requestAnimationFrame for smoother frame capture
-      let lastFrameTime = 0;
-      const frameInterval = 1000 / fps; // time between frames in ms
-      
       const drawFrame = (timestamp: number) => {
-        // Control the frame rate
         if (timestamp - lastFrameTime < frameInterval) {
           if (frameCount < maxFrames) {
             requestAnimationFrame(drawFrame);
@@ -276,10 +268,8 @@ const Index = () => {
         if (frameCount < maxFrames) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           
-          // First layer: Background video
           ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
           
-          // Second layer: User image
           if (uploadedImage && savedPosition) {
             const img = new Image();
             img.src = uploadedImage;
@@ -315,9 +305,8 @@ const Index = () => {
             );
           }
           
-          // Third layer: Overlay video
           if (overlayVideoElement && selectedOverlay !== null) {
-            ctx.globalAlpha = 0.3;
+            ctx.globalAlpha = 0.15;
             ctx.drawImage(overlayVideoElement, 0, 0, canvas.width, canvas.height);
             ctx.globalAlpha = 1.0;
           }
@@ -336,7 +325,6 @@ const Index = () => {
         }
       };
       
-      // Start the animation frame loop
       requestAnimationFrame(drawFrame);
     };
     
