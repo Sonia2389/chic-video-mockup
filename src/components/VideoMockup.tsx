@@ -10,12 +10,7 @@ interface VideoMockupProps {
 }
 
 const OVERLAY_PLACEHOLDER = [
-  "Elegant Frame",
-  "Modern Split",
-  "Dynamic Motion",
-  "Warm Glow",
-  "Cool Tone",
-  "Vibrant Pop"
+  "Elegant Frame"
 ];
 
 const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => {
@@ -67,7 +62,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                 {/* Overlay effect */}
                 {overlayIndex !== null && (
                   <div 
-                    className={`absolute inset-0 ${getOverlayClass(overlayIndex)}`}
+                    className="absolute inset-0 border-[20px] border-white/90 backdrop-blur-sm"
                     aria-label={`Overlay: ${OVERLAY_PLACEHOLDER[overlayIndex] || 'Custom'}`}
                   >
                     <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
@@ -83,25 +78,5 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     </Card>
   );
 };
-
-// Helper function to get overlay CSS classes based on selected index
-function getOverlayClass(index: number): string {
-  switch (index) {
-    case 0: // Elegant Frame
-      return "border-[20px] border-white/90 backdrop-blur-sm";
-    case 1: // Modern Split
-      return "bg-gradient-to-r from-transparent via-white/20 to-transparent backdrop-blur-[2px]";
-    case 2: // Dynamic Motion
-      return "bg-gradient-to-t from-black/50 to-transparent";
-    case 3: // Warm Glow
-      return "bg-[linear-gradient(to_right,#ee9ca7,#ffdde1)] opacity-40 mix-blend-overlay";
-    case 4: // Cool Tone
-      return "bg-[linear-gradient(to_right,#243949,#517fa4)] opacity-30 mix-blend-multiply";
-    case 5: // Vibrant Pop
-      return "bg-[linear-gradient(90deg,hsla(24,100%,83%,1),hsla(341,91%,68%,1))] opacity-30 mix-blend-color";
-    default:
-      return "";
-  }
-}
 
 export default VideoMockup;
