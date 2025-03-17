@@ -166,7 +166,7 @@ const Index = () => {
             </div>
                 
             <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
-              <h2 className="text-lg font-semibold mb-4">Upload Your Image</h2>
+              <h2 className="text-lg font-semibold mb-4">Step 2: Upload your image</h2>
               <ImageUpload onImageUpload={handleImageUpload} />
             </div>
             
