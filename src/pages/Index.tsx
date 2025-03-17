@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -140,9 +141,31 @@ const Index = () => {
     
     const chunks: Blob[] = [];
     const stream = canvas.captureStream(30);
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp9'
-    });
+    
+    // Try different codec options, falling back to browser defaults if needed
+    let mediaRecorder;
+    try {
+      // First try with a common codec
+      mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm'
+      });
+    } catch (e) {
+      try {
+        // Fallback to basic webm
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'video/webm;codecs=vp8'
+        });
+      } catch (e2) {
+        try {
+          // Last resort, let browser choose format
+          mediaRecorder = new MediaRecorder(stream);
+        } catch (e3) {
+          toast.error("Your browser doesn't support video recording");
+          setRendering(false);
+          return;
+        }
+      }
+    }
     
     mediaRecorder.ondataavailable = (e) => {
       if (e.data.size > 0) {
@@ -151,7 +174,8 @@ const Index = () => {
     };
     
     mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/mp4' });
+      const mimeType = mediaRecorder.mimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
+      const blob = new Blob(chunks, { type: mimeType });
       
       if (renderedVideoUrl) {
         URL.revokeObjectURL(renderedVideoUrl);
@@ -168,7 +192,7 @@ const Index = () => {
     mediaRecorder.start();
     
     let frameCount = 0;
-    const maxFrames = 90;
+    const maxFrames = 90; // 3 seconds at 30fps
     
     const videoElement = document.createElement('video');
     videoElement.src = videoUrl;
@@ -185,6 +209,7 @@ const Index = () => {
           if (uploadedImage) {
             const img = new Image();
             img.src = uploadedImage;
+            img.crossOrigin = "anonymous";
             
             if (savedPosition) {
               ctx.save();
@@ -194,9 +219,7 @@ const Index = () => {
               ctx.drawImage(img, 0, 0, savedPosition.originalWidth, savedPosition.originalHeight);
               ctx.restore();
             } else {
-              img.onload = () => {
-                ctx.drawImage(img, canvas.width/4, canvas.height/4, canvas.width/2, canvas.height/2);
-              };
+              ctx.drawImage(img, canvas.width/4, canvas.height/4, canvas.width/2, canvas.height/2);
             }
           }
           
