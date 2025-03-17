@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -34,6 +35,10 @@ const Index = () => {
   const handleSelectOverlay = (index: number) => {
     setSelectedOverlay(index);
     toast.success(`Overlay selected`);
+  };
+
+  const handleOverlaysChange = (newOverlays: Overlay[]) => {
+    setOverlays(newOverlays);
   };
 
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,6 +181,7 @@ const Index = () => {
               <VideoOverlays 
                 selectedOverlay={selectedOverlay} 
                 onSelectOverlay={handleSelectOverlay} 
+                onOverlaysChange={handleOverlaysChange}
               />
             </div>
           </div>

@@ -3,12 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Video } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
 interface VideoOverlaysProps {
   selectedOverlay: number | null;
   onSelectOverlay: (index: number) => void;
+  onOverlaysChange: (overlays: Overlay[]) => void;
 }
 
 interface Overlay {
@@ -20,9 +21,14 @@ interface Overlay {
   url: string;
 }
 
-const VideoOverlays = ({ selectedOverlay, onSelectOverlay }: VideoOverlaysProps) => {
+const VideoOverlays = ({ selectedOverlay, onSelectOverlay, onOverlaysChange }: VideoOverlaysProps) => {
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const videoInputRef = useRef<HTMLInputElement>(null);
+
+  // When overlays change, notify the parent component
+  useEffect(() => {
+    onOverlaysChange(overlays);
+  }, [overlays, onOverlaysChange]);
 
   const handleVideoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
