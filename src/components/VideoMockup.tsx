@@ -46,6 +46,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
   const [originalImageDimensions, setOriginalImageDimensions] = useState<{width: number, height: number} | null>(null);
   const [containerDimensions, setContainerDimensions] = useState<{width: number, height: number} | null>(null);
   const [lastEditDimensions, setLastEditDimensions] = useState<{width: number, height: number} | null>(null);
+  const [initialImageLoad, setInitialImageLoad] = useState(true);
 
   // Get and store container dimensions
   useEffect(() => {
