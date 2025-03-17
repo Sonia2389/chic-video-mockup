@@ -223,6 +223,20 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
 
   const handleImageSizeChange = (value: number[]) => {
     setUserImageSize(value[0]);
+    
+    // Update scale in edit mode if there's an active object
+    if (isEditing && fabricCanvas && fabricCanvas.getActiveObject()) {
+      const activeObject = fabricCanvas.getActiveObject();
+      const baseScale = Math.min(
+        (fabricCanvas.width! * imageScale) / activeObject.width!,
+        (fabricCanvas.height! * imageScale) / activeObject.height!
+      );
+      
+      const adjustedScale = baseScale * (value[0] / 100);
+      
+      activeObject.scale(adjustedScale);
+      fabricCanvas.renderAll();
+    }
   };
 
   return (
