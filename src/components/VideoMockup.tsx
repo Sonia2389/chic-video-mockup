@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect, useRef } from "react";
 import { Canvas } from 'fabric';
@@ -66,8 +65,7 @@ const VideoMockup = ({
     if (isEditing && fabricCanvas) {
       const activeObject = fabricCanvas.getActiveObject();
       if (activeObject) {
-        // Save the exact position and dimensions of the image
-        // Ensure we preserve the original width/height and store current scaling
+        // Ensure we precisely capture all dimensions and transformations
         const newPosition = {
           left: activeObject.left!,
           top: activeObject.top!,
