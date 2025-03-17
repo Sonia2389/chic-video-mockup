@@ -284,9 +284,10 @@ const Index = () => {
       ctx.fillText('tothefknmoon', canvas.width/2, canvas.height/15);
     };
     
-    const duration = 8;
+    const baseDuration = 8;
+    const duration = baseDuration / previewVideoElement.playbackRate;
     const fps = targetFps;
-    const totalFrames = duration * fps;
+    const totalFrames = Math.round(duration * fps);
     let frameCount = 0;
     
     const frameInterval = 1000 / fps;
