@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -16,7 +15,7 @@ const SAMPLE_VIDEO = {
 };
 
 interface Overlay {
-  type: "image" | "video";
+  type: "video";
   url: string;
 }
 

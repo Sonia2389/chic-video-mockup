@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Plus, Video, Image as ImageIcon } from "lucide-react";
+import { Video } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 
@@ -16,63 +16,19 @@ interface Overlay {
   description: string;
   preview: string;
   isCustom: boolean;
-  type: "image" | "video";
+  type: "video";
   url: string;
 }
 
 const VideoOverlays = ({ selectedOverlay, onSelectOverlay }: VideoOverlaysProps) => {
   const [overlays, setOverlays] = useState<Overlay[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      processFile(files[0]);
-    }
-  };
 
   const handleVideoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
       processVideo(files[0]);
     }
-  };
-
-  const processFile = (file: File) => {
-    if (!file.type.match('image.*')) {
-      toast.error("Please upload an image file");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
-        // Add new overlay to the list
-        const newOverlay: Overlay = {
-          name: `Custom Image ${overlays.length + 1}`,
-          description: "Your custom uploaded image overlay",
-          preview: result,
-          isCustom: true,
-          type: "image",
-          url: result
-        };
-        
-        const newOverlays = [...overlays, newOverlay];
-        setOverlays(newOverlays);
-        
-        // Select the newly added overlay
-        onSelectOverlay(newOverlays.length - 1);
-        toast.success("Custom image overlay uploaded successfully");
-      }
-    };
-    
-    reader.onerror = () => {
-      toast.error("Error reading file");
-    };
-    
-    reader.readAsDataURL(file);
   };
 
   const processVideo = (file: File) => {
@@ -124,12 +80,8 @@ const VideoOverlays = ({ selectedOverlay, onSelectOverlay }: VideoOverlaysProps)
     };
   };
 
-  const handleUploadClick = (type: 'image' | 'video') => {
-    if (type === 'image') {
-      fileInputRef.current?.click();
-    } else {
-      videoInputRef.current?.click();
-    }
+  const handleUploadClick = () => {
+    videoInputRef.current?.click();
   };
 
   return (
@@ -157,11 +109,9 @@ const VideoOverlays = ({ selectedOverlay, onSelectOverlay }: VideoOverlaysProps)
                       backgroundPosition: 'center'
                     }}
                   />
-                  {overlay.type === "video" && (
-                    <div className="absolute top-1 right-1 bg-black/70 rounded-full p-1">
-                      <Video size={12} className="text-white" />
-                    </div>
-                  )}
+                  <div className="absolute top-1 right-1 bg-black/70 rounded-full p-1">
+                    <Video size={12} className="text-white" />
+                  </div>
                 </div>
                 <div>
                   <h3 className="font-medium text-sm">{overlay.name}</h3>
@@ -173,36 +123,19 @@ const VideoOverlays = ({ selectedOverlay, onSelectOverlay }: VideoOverlaysProps)
         </div>
       ) : (
         <div className="mb-4 p-4 border-2 border-dashed rounded-lg text-center">
-          <p className="text-sm text-muted-foreground">No overlays uploaded yet</p>
+          <p className="text-sm text-muted-foreground">No video overlays uploaded yet</p>
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div className="flex justify-center">
         <Button 
           variant="outline" 
           size="sm" 
           className="w-full flex gap-2 items-center"
-          onClick={() => handleUploadClick('image')}
-        >
-          <ImageIcon size={14} />
-          <span>Image Overlay</span>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/*"
-            className="hidden"
-          />
-        </Button>
-        
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full flex gap-2 items-center"
-          onClick={() => handleUploadClick('video')}
+          onClick={handleUploadClick}
         >
           <Video size={14} />
-          <span>Video Overlay</span>
+          <span>Upload Video Overlay</span>
           <input
             type="file"
             ref={videoInputRef}
