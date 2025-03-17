@@ -84,30 +84,9 @@ const Index = () => {
     }
   };
 
-  const handleSelectSampleVideo = () => {
-    if (videoUrl && videoUrl !== SAMPLE_VIDEO.url) {
-      URL.revokeObjectURL(videoUrl);
-    }
-    setVideoUrl(SAMPLE_VIDEO.url);
-    
-    const video = document.createElement('video');
-    video.src = SAMPLE_VIDEO.url;
-    video.crossOrigin = "anonymous";
-    video.onloadedmetadata = () => {
-      if (video.videoWidth && video.videoHeight) {
-        setVideoAspectRatio(video.videoWidth / video.videoHeight);
-      }
-    };
-    video.load();
-    
-    toast.success("Sample background video selected");
-  };
-
   const removeVideo = () => {
     if (videoUrl) {
-      if (videoUrl !== SAMPLE_VIDEO.url) {
-        URL.revokeObjectURL(videoUrl);
-      }
+      URL.revokeObjectURL(videoUrl);
       setVideoUrl(null);
       toast.success("Background video removed");
     }
