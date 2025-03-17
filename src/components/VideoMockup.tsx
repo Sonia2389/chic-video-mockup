@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Move, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -9,13 +8,6 @@ import { toast } from "sonner";
 interface Overlay {
   type: "image" | "video";
   url: string;
-}
-
-interface VideoMockupProps {
-  imageUrl: string | null;
-  overlayIndex: number | null;
-  videoUrl?: string;
-  overlays: Overlay[];
 }
 
 interface ImagePosition {
@@ -31,7 +23,23 @@ interface ImagePosition {
   angle?: number;
 }
 
-const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockupProps) => {
+interface VideoMockupProps {
+  imageUrl: string | null;
+  overlayIndex: number | null;
+  videoUrl?: string;
+  overlays: Overlay[];
+  onPositionSave?: (position: ImagePosition) => void;
+  savedPosition?: ImagePosition | null;
+}
+
+const VideoMockup = ({ 
+  imageUrl, 
+  overlayIndex, 
+  videoUrl, 
+  overlays,
+  onPositionSave,
+  savedPosition: externalSavedPosition
+}: VideoMockupProps) => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [videoAspectRatio, setVideoAspectRatio] = useState(16/9); // Default aspect ratio
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -41,11 +49,17 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
   const [activeMode, setActiveMode] = useState<'select' | 'move'>('select');
   const [isEditing, setIsEditing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(null);
+  const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(externalSavedPosition || null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [originalImageDimensions, setOriginalImageDimensions] = useState<{width: number, height: number} | null>(null);
   const [containerDimensions, setContainerDimensions] = useState<{width: number, height: number} | null>(null);
   const [lastEditDimensions, setLastEditDimensions] = useState<{width: number, height: number} | null>(null);
+
+  useEffect(() => {
+    if (externalSavedPosition) {
+      setSavedPosition(externalSavedPosition);
+    }
+  }, [externalSavedPosition]);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -159,7 +173,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
     if (isEditing && fabricCanvas) {
       const activeObject = fabricCanvas.getActiveObject();
       if (activeObject) {
-        setSavedPosition({
+        const newPosition = {
           left: activeObject.left!,
           top: activeObject.top!,
           scale: activeObject.scaleX!,
@@ -170,7 +184,13 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
           originalWidth: activeObject.width!,
           originalHeight: activeObject.height!,
           angle: activeObject.angle
-        });
+        };
+        
+        setSavedPosition(newPosition);
+        
+        if (onPositionSave) {
+          onPositionSave(newPosition);
+        }
         
         if (containerDimensions) {
           setLastEditDimensions(containerDimensions);

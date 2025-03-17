@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -9,7 +8,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Video, X } from "lucide-react";
 
-// Sample background video
 const SAMPLE_VIDEO = {
   name: "Abstract Waves", 
   url: "https://assets.mixkit.co/videos/preview/mixkit-white-waves-digital-animation-6580-large.mp4"
@@ -18,6 +16,19 @@ const SAMPLE_VIDEO = {
 interface Overlay {
   type: "video";
   url: string;
+}
+
+interface ImagePosition {
+  left: number;
+  top: number;
+  scale: number;
+  width: number;
+  height: number;
+  scaleX: number;
+  scaleY: number;
+  originalWidth: number;
+  originalHeight: number;
+  angle?: number;
 }
 
 const Index = () => {
@@ -29,6 +40,7 @@ const Index = () => {
   const [renderedVideoUrl, setRenderedVideoUrl] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [overlays, setOverlays] = useState<Overlay[]>([]);
+  const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(null);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
 
   const handleImageUpload = (imageUrl: string) => {
@@ -90,12 +102,15 @@ const Index = () => {
       return;
     }
 
-    // Reset state
+    if (!videoUrl) {
+      toast.error("Please select a background video");
+      return;
+    }
+
     setRendering(true);
     setRenderProgress(0);
     setDownloadReady(false);
     
-    // Simulate rendering progress
     const interval = setInterval(() => {
       setRenderProgress((prev) => {
         const newProgress = prev + Math.floor(Math.random() * 10);
@@ -112,57 +127,109 @@ const Index = () => {
   };
 
   const simulateVideoRender = () => {
-    // Create a canvas to "render" our final video
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      toast.error("Error creating video");
+      setRendering(false);
+      return;
+    }
     
-    // Set canvas dimensions
     canvas.width = 1280;
     canvas.height = 720;
     
-    // Draw a fake background
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const chunks: Blob[] = [];
+    const stream = canvas.captureStream(30);
+    const mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp9'
+    });
     
-    // Draw image in the center
-    if (uploadedImage) {
-      const img = new Image();
-      img.src = uploadedImage;
-      ctx.drawImage(img, canvas.width/4, canvas.height/4, canvas.width/2, canvas.height/2);
-    }
-    
-    // Add text to indicate this is a simulated video
-    ctx.fillStyle = '#fff';
-    ctx.font = '30px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Generated Video', canvas.width/2, 50);
-    
-    // Convert canvas to blob
-    canvas.toBlob((blob) => {
-      if (blob) {
-        // Create URL for download
-        if (renderedVideoUrl) {
-          URL.revokeObjectURL(renderedVideoUrl);
-        }
-        
-        const url = URL.createObjectURL(blob);
-        setRenderedVideoUrl(url);
-        setRendering(false);
-        setDownloadReady(true);
-        
-        toast.success("Video rendered successfully!");
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        chunks.push(e.data);
       }
-    }, 'image/png');
+    };
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/mp4' });
+      
+      if (renderedVideoUrl) {
+        URL.revokeObjectURL(renderedVideoUrl);
+      }
+      
+      const url = URL.createObjectURL(blob);
+      setRenderedVideoUrl(url);
+      setRendering(false);
+      setDownloadReady(true);
+      
+      toast.success("Video rendered successfully!");
+    };
+    
+    mediaRecorder.start();
+    
+    let frameCount = 0;
+    const maxFrames = 90;
+    
+    const videoElement = document.createElement('video');
+    videoElement.src = videoUrl;
+    videoElement.muted = true;
+    videoElement.crossOrigin = "anonymous";
+    
+    videoElement.oncanplay = () => {
+      videoElement.play();
+      
+      const drawFrame = () => {
+        if (frameCount < maxFrames) {
+          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+          
+          if (uploadedImage) {
+            const img = new Image();
+            img.src = uploadedImage;
+            
+            if (savedPosition) {
+              ctx.save();
+              ctx.translate(savedPosition.left, savedPosition.top);
+              ctx.rotate((savedPosition.angle || 0) * Math.PI / 180);
+              ctx.scale(savedPosition.scaleX, savedPosition.scaleY);
+              ctx.drawImage(img, 0, 0, savedPosition.originalWidth, savedPosition.originalHeight);
+              ctx.restore();
+            } else {
+              img.onload = () => {
+                ctx.drawImage(img, canvas.width/4, canvas.height/4, canvas.width/2, canvas.height/2);
+              };
+            }
+          }
+          
+          if (selectedOverlay !== null && overlays[selectedOverlay]) {
+            ctx.fillStyle = 'rgba(0, 0, 255, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+          
+          ctx.fillStyle = '#fff';
+          ctx.font = '30px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('tothefknmoon', canvas.width/2, 50);
+          
+          frameCount++;
+          requestAnimationFrame(drawFrame);
+        } else {
+          mediaRecorder.stop();
+          videoElement.pause();
+        }
+      };
+      
+      requestAnimationFrame(drawFrame);
+    };
+    
+    videoElement.load();
   };
 
   const handleDownload = () => {
     if (!renderedVideoUrl) return;
     
-    // Create a temporary anchor element for downloading
     const a = document.createElement('a');
     a.href = renderedVideoUrl;
-    a.download = 'rendered-video.mp4';
+    a.download = 'tothefknmoon-video.mp4';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -170,7 +237,10 @@ const Index = () => {
     toast.success("Video downloaded successfully!");
   };
 
-  // Clean up URLs when component unmounts
+  const handlePositionSave = (position: ImagePosition) => {
+    setSavedPosition(position);
+  };
+
   useEffect(() => {
     return () => {
       if (videoUrl && videoUrl !== SAMPLE_VIDEO.url) {
@@ -201,6 +271,8 @@ const Index = () => {
               overlayIndex={selectedOverlay}
               videoUrl={videoUrl || undefined}
               overlays={overlays}
+              onPositionSave={handlePositionSave}
+              savedPosition={savedPosition}
             />
             
             <RenderButton 
