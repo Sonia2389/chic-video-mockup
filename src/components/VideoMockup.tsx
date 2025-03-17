@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Move, MousePointer, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -29,6 +28,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
   const [isEditing, setIsEditing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [imageScale, setImageScale] = useState(0.8);
+  const [userImageSize, setUserImageSize] = useState(100); // New state for user image size (percentage)
 
   useEffect(() => {
     if (!canvasRef.current || !isEditing) return;
@@ -44,15 +44,19 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     if (imageUrl) {
       // Fix: Use the correct API for Fabric.js v6
       Image.fromURL(imageUrl).then(img => {
-        const scale = Math.min(
+        // Calculate base scale - this is what we consider 100%
+        const baseScale = Math.min(
           (canvas.width! * imageScale) / img.width!,
           (canvas.height! * imageScale) / img.height!
         );
         
-        img.scale(scale);
+        // Apply user's size preference on top of base scale
+        const adjustedScale = baseScale * (userImageSize / 100);
+        
+        img.scale(adjustedScale);
         img.set({
-          left: canvas.width! / 2 - (img.width! * scale) / 2,
-          top: canvas.height! / 2 - (img.height! * scale) / 2,
+          left: canvas.width! / 2 - (img.width! * adjustedScale) / 2,
+          top: canvas.height! / 2 - (img.height! * adjustedScale) / 2,
           cornerSize: 12,
           cornerColor: '#9b87f5',
           borderColor: '#9b87f5',
@@ -69,7 +73,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     return () => {
       canvas.dispose();
     };
-  }, [imageUrl, isEditing, videoAspectRatio, imageScale]);
+  }, [imageUrl, isEditing, videoAspectRatio, imageScale, userImageSize]);
 
   useEffect(() => {
     if (videoUrl) {
@@ -193,6 +197,10 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     setImageScale(value[0] / 100);
   };
 
+  const handleImageSizeChange = (value: number[]) => {
+    setUserImageSize(value[0]);
+  };
+
   return (
     <Card className="overflow-hidden shadow-xl">
       <CardContent className="p-0 relative">
@@ -244,6 +252,10 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                       src={imageUrl} 
                       alt="Uploaded content" 
                       className="object-cover w-full h-full"
+                      style={{ 
+                        transform: `scale(${userImageSize / 100})`,
+                        transformOrigin: 'center'
+                      }}
                     />
                     
                     {overlayIndex !== null && (
@@ -374,9 +386,38 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                       className="w-full"
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium">Image Size</label>
+                    <Slider 
+                      defaultValue={[userImageSize]} 
+                      value={[userImageSize]}
+                      max={200}
+                      min={20}
+                      step={5}
+                      onValueChange={handleImageSizeChange}
+                      className="w-full"
+                    />
+                    <div className="text-xs text-right text-muted-foreground">{userImageSize}%</div>
+                  </div>
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {imageUrl && !isEditing && (
+          <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm rounded-md shadow-sm p-2 flex gap-2 items-center z-20">
+            <span className="text-xs font-medium">Image Size:</span>
+            <Slider 
+              value={[userImageSize]}
+              max={200}
+              min={20}
+              step={5}
+              onValueChange={handleImageSizeChange}
+              className="w-32"
+            />
+            <span className="text-xs font-medium">{userImageSize}%</span>
           </div>
         )}
       </CardContent>
