@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -225,12 +226,14 @@ const Index = () => {
     mediaRecorder.start();
     
     let frameCount = 0;
-    const maxFrames = 240;
+    const maxFrames = 240; // 8 seconds at 30fps
+    const fps = 30;
     
     const videoElement = document.createElement('video');
     videoElement.src = videoUrl!;
     videoElement.muted = true;
     videoElement.crossOrigin = "anonymous";
+    videoElement.playbackRate = 1.0; // Ensure normal playback rate
     
     videoElement.oncanplay = () => {
       videoElement.play();
@@ -241,10 +244,35 @@ const Index = () => {
         overlayVideoElement.src = overlays[selectedOverlay].url;
         overlayVideoElement.muted = true;
         overlayVideoElement.crossOrigin = "anonymous";
+        overlayVideoElement.playbackRate = 1.0; // Ensure normal playback rate
         overlayVideoElement.play().catch(e => console.error("Error playing overlay video", e));
       }
       
-      const drawFrame = () => {
+      // Get reference to the preview video to match its timing
+      const previewVideoElement = document.querySelector('.video-mockup-container video');
+      if (previewVideoElement) {
+        // Try to match the playback rate if available
+        videoElement.playbackRate = previewVideoElement.playbackRate;
+        if (overlayVideoElement) {
+          overlayVideoElement.playbackRate = previewVideoElement.playbackRate;
+        }
+      }
+      
+      // Use requestAnimationFrame for smoother frame capture
+      let lastFrameTime = 0;
+      const frameInterval = 1000 / fps; // time between frames in ms
+      
+      const drawFrame = (timestamp: number) => {
+        // Control the frame rate
+        if (timestamp - lastFrameTime < frameInterval) {
+          if (frameCount < maxFrames) {
+            requestAnimationFrame(drawFrame);
+          }
+          return;
+        }
+        
+        lastFrameTime = timestamp;
+        
         if (frameCount < maxFrames) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           
@@ -305,6 +333,7 @@ const Index = () => {
         }
       };
       
+      // Start the animation frame loop
       requestAnimationFrame(drawFrame);
     };
     
