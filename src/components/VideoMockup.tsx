@@ -1,7 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface VideoMockupProps {
   imageUrl: string | null;
@@ -17,12 +17,20 @@ const OVERLAY_PLACEHOLDER = [
 
 const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [videoAspectRatio, setVideoAspectRatio] = useState(16/9); // Default aspect ratio
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (videoUrl) {
       const video = document.createElement('video');
       video.src = videoUrl;
-      video.onloadeddata = () => setIsVideoLoaded(true);
+      video.onloadedmetadata = () => {
+        setIsVideoLoaded(true);
+        // Update aspect ratio based on the video's dimensions
+        if (video.videoWidth && video.videoHeight) {
+          setVideoAspectRatio(video.videoWidth / video.videoHeight);
+        }
+      };
       video.onerror = () => console.error("Error loading video");
     }
   }, [videoUrl]);
@@ -46,16 +54,28 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
   return (
     <Card className="overflow-hidden shadow-xl">
       <CardContent className="p-0 relative">
-        <div className="aspect-video bg-muted relative overflow-hidden">
+        <div 
+          className="relative overflow-hidden" 
+          style={{ 
+            paddingBottom: `${(1 / videoAspectRatio) * 100}%`,
+          }}
+        >
           {/* Video background */}
           {videoUrl && (
             <video 
+              ref={videoRef}
               src={videoUrl}
               className="absolute inset-0 w-full h-full object-cover"
               autoPlay
               loop
               muted
               playsInline
+              onLoadedMetadata={(e) => {
+                const video = e.currentTarget;
+                if (video.videoWidth && video.videoHeight) {
+                  setVideoAspectRatio(video.videoWidth / video.videoHeight);
+                }
+              }}
             />
           )}
 
