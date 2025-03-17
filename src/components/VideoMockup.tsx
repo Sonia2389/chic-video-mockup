@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Move, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -68,6 +69,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
         }
         
         if (savedPosition) {
+          // Apply exact saved position and transformations
           img.set({
             left: savedPosition.left,
             top: savedPosition.top,
@@ -79,6 +81,8 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
             borderColor: '#9b87f5',
             cornerStyle: 'circle',
             transparentCorners: false,
+            originX: 'left',
+            originY: 'top'
           });
         } else {
           const baseScale = Math.min(
@@ -96,6 +100,8 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
             borderColor: '#9b87f5',
             cornerStyle: 'circle',
             transparentCorners: false,
+            originX: 'left',
+            originY: 'top'
           });
         }
         
@@ -136,6 +142,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
     if (isEditing && fabricCanvas) {
       const activeObject = fabricCanvas.getActiveObject();
       if (activeObject) {
+        // Store exact position, scale and rotation information
         setSavedPosition({
           left: activeObject.left!,
           top: activeObject.top!,
@@ -294,8 +301,8 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
                           top: `${savedPosition.top}px`,
                           width: `${savedPosition.originalWidth}px`, 
                           height: `${savedPosition.originalHeight}px`,
-                          transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
-                          transformOrigin: 'left top'
+                          transformOrigin: 'left top',
+                          transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`
                         }}
                       />
                     ) : (
