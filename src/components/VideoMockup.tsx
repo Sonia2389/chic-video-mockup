@@ -28,6 +28,7 @@ interface ImagePosition {
   scaleY: number;
   originalWidth: number;
   originalHeight: number;
+  angle?: number;
 }
 
 const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockupProps) => {
@@ -70,6 +71,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
             top: savedPosition.top,
             scaleX: savedPosition.scaleX,
             scaleY: savedPosition.scaleY,
+            angle: savedPosition.angle || 0,
             cornerSize: 12,
             cornerColor: '#9b87f5',
             borderColor: '#9b87f5',
@@ -142,7 +144,8 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
           width: activeObject.width! * activeObject.scaleX!,
           height: activeObject.height! * activeObject.scaleY!,
           originalWidth: activeObject.width!,
-          originalHeight: activeObject.height!
+          originalHeight: activeObject.height!,
+          angle: activeObject.angle
         });
       }
       setIsEditing(false);
@@ -290,7 +293,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
                           top: `${savedPosition.top}px`,
                           width: `${savedPosition.originalWidth}px`, 
                           height: `${savedPosition.originalHeight}px`,
-                          transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY})`,
+                          transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
                           transformOrigin: 'left top'
                         }}
                       />
