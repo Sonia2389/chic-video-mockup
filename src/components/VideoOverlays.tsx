@@ -12,13 +12,23 @@ const overlays = [
     name: "Elegant Frame",
     description: "Classic bordered frame with subtle blur effect",
     preview: "linear-gradient(to right, #e6e9f0 0%, #eef1f5 100%)"
+  },
+  {
+    name: "Simple Border",
+    description: "Clean white border with no effects",
+    preview: "linear-gradient(to right, #fdfcfb 0%, #e2d1c3 100%)"
+  },
+  {
+    name: "Soft Glow",
+    description: "Gentle glow effect around the edges",
+    preview: "linear-gradient(to top, #accbee 0%, #e7f0fd 100%)"
   }
 ];
 
 const VideoOverlays = ({ selectedOverlay, onSelectOverlay }: VideoOverlaysProps) => {
   return (
     <div className="w-full">
-      <h3 className="text-sm font-medium mb-3">Available Overlay</h3>
+      <h3 className="text-sm font-medium mb-3">Available Overlays</h3>
       
       <div className="space-y-3">
         {overlays.map((overlay, index) => (

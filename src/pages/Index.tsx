@@ -9,6 +9,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Video, X } from "lucide-react";
 
+// Sample background videos
+const SAMPLE_VIDEOS = [
+  { name: "Abstract Waves", url: "https://assets.mixkit.co/videos/preview/mixkit-white-waves-digital-animation-6580-large.mp4" },
+  { name: "Particles", url: "https://assets.mixkit.co/videos/preview/mixkit-rotating-spheres-of-particles-29734-large.mp4" },
+  { name: "Gradient Flow", url: "https://assets.mixkit.co/videos/preview/mixkit-blue-and-purple-ink-flow-through-water-27124-large.mp4" }
+];
+
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedOverlay, setSelectedOverlay] = useState<number | null>(null);
@@ -41,9 +48,20 @@ const Index = () => {
     }
   };
 
-  const removeVideo = () => {
+  const handleSelectSampleVideo = (url: string) => {
     if (videoUrl) {
       URL.revokeObjectURL(videoUrl);
+    }
+    setVideoUrl(url);
+    toast.success("Sample background video selected");
+  };
+
+  const removeVideo = () => {
+    if (videoUrl) {
+      // Only revoke ObjectURL if it's a local video (not sample videos)
+      if (!SAMPLE_VIDEOS.some(v => v.url === videoUrl)) {
+        URL.revokeObjectURL(videoUrl);
+      }
       setVideoUrl(null);
       toast.success("Background video removed");
     }
@@ -128,6 +146,24 @@ const Index = () => {
                     </label>
                   </div>
                 )}
+
+                {/* Sample videos section */}
+                <div className="mt-4">
+                  <h3 className="text-sm font-medium mb-2">Or choose a sample video:</h3>
+                  <div className="grid grid-cols-1 gap-2">
+                    {SAMPLE_VIDEOS.map((sample, index) => (
+                      <Button 
+                        key={index} 
+                        variant="outline" 
+                        className="justify-start h-auto py-2 px-3"
+                        onClick={() => handleSelectSampleVideo(sample.url)}
+                      >
+                        <Video size={14} className="mr-2 text-primary" />
+                        <span className="text-xs">{sample.name}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
                 

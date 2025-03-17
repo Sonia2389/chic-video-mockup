@@ -10,7 +10,9 @@ interface VideoMockupProps {
 }
 
 const OVERLAY_PLACEHOLDER = [
-  "Elegant Frame"
+  "Elegant Frame",
+  "Simple Border",
+  "Soft Glow"
 ];
 
 const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => {
@@ -24,6 +26,22 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
       video.onerror = () => console.error("Error loading video");
     }
   }, [videoUrl]);
+
+  // Function to get the appropriate overlay styles based on index
+  const getOverlayStyles = (index: number | null) => {
+    if (index === null) return "";
+    
+    switch (index) {
+      case 0: // Elegant Frame
+        return "border-[20px] border-white/90 backdrop-blur-sm";
+      case 1: // Simple Border
+        return "border-[15px] border-white";
+      case 2: // Soft Glow
+        return "border-[12px] border-white/80 shadow-[inset_0_0_20px_rgba(255,255,255,0.6)]";
+      default:
+        return "border-[20px] border-white/90 backdrop-blur-sm";
+    }
+  };
 
   return (
     <Card className="overflow-hidden shadow-xl">
@@ -62,7 +80,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                 {/* Overlay effect */}
                 {overlayIndex !== null && (
                   <div 
-                    className="absolute inset-0 border-[20px] border-white/90 backdrop-blur-sm"
+                    className={`absolute inset-0 ${getOverlayStyles(overlayIndex)}`}
                     aria-label={`Overlay: ${OVERLAY_PLACEHOLDER[overlayIndex] || 'Custom'}`}
                   >
                     <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
