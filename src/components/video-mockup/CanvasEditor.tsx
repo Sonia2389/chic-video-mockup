@@ -50,6 +50,7 @@ const CanvasEditor = ({
     setFabricCanvas(canvas);
     
     if (imageUrl) {
+      // Load the image and apply correct dimensions
       Image.fromURL(imageUrl).then(img => {
         // Store original dimensions if not already stored
         if (!originalImageDimensions) {
@@ -61,6 +62,7 @@ const CanvasEditor = ({
         
         if (savedPosition) {
           // Apply exact saved position with transformations
+          // Important: Use the original width/height and then apply scaling separately
           img.set({
             left: savedPosition.left,
             top: savedPosition.top,

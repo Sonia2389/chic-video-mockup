@@ -67,6 +67,7 @@ const VideoMockup = ({
       const activeObject = fabricCanvas.getActiveObject();
       if (activeObject) {
         // Save the exact position and dimensions of the image
+        // Ensure we preserve the original width/height and store current scaling
         const newPosition = {
           left: activeObject.left!,
           top: activeObject.top!,
