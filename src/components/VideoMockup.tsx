@@ -1,8 +1,7 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Move, MousePointer, Maximize } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { fabric } from 'fabric';
+import { Canvas, Image as FabricImage } from 'fabric';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -23,7 +22,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
   const [videoAspectRatio, setVideoAspectRatio] = useState(16/9); // Default aspect ratio
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
+  const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null);
   const [activeMode, setActiveMode] = useState<'select' | 'move'>('select');
   const [isEditing, setIsEditing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +31,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
   useEffect(() => {
     if (!canvasRef.current || !isEditing) return;
     
-    const canvas = new fabric.Canvas(canvasRef.current, {
+    const canvas = new Canvas(canvasRef.current, {
       width: containerRef.current?.clientWidth || 800,
       height: (containerRef.current?.clientWidth || 800) / videoAspectRatio,
       backgroundColor: 'transparent',
@@ -42,7 +41,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     
     // Add the image to the canvas if available
     if (imageUrl) {
-      fabric.Image.fromURL(imageUrl, (img) => {
+      FabricImage.fromURL(imageUrl, (img) => {
         // Scale image to fit canvas while maintaining aspect ratio
         const scale = Math.min(
           (canvas.width! * 0.8) / img.width!,
