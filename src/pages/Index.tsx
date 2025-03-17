@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -42,7 +41,7 @@ const Index = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(null);
-  const [videoAspectRatio, setVideoAspectRatio] = useState<number>(16/9); // Default 16:9
+  const [videoAspectRatio, setVideoAspectRatio] = useState<number>(16/9);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
 
   const handleImageUpload = (imageUrl: string) => {
@@ -158,7 +157,6 @@ const Index = () => {
       return;
     }
     
-    // Get the preview container dimensions to match the aspect ratio exactly
     const previewContainer = document.querySelector('.video-mockup-container');
     if (!previewContainer) {
       toast.error("Preview container not found");
@@ -166,10 +164,9 @@ const Index = () => {
       return;
     }
     
-    // Set the canvas dimensions to match the preview's aspect ratio
     const previewWidth = previewContainer.clientWidth;
     const previewHeight = previewContainer.clientHeight; 
-    canvas.width = 1280; // Use a higher resolution for quality
+    canvas.width = 1280;
     canvas.height = Math.round(1280 * (previewHeight / previewWidth));
     
     const scaleFactor = canvas.width / previewWidth;
@@ -228,7 +225,7 @@ const Index = () => {
     mediaRecorder.start();
     
     let frameCount = 0;
-    const maxFrames = 90; // 3 seconds at 30fps
+    const maxFrames = 240;
     
     const videoElement = document.createElement('video');
     videoElement.src = videoUrl!;
@@ -251,23 +248,19 @@ const Index = () => {
         if (frameCount < maxFrames) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           
-          // Draw background video
           ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
           
-          // Draw overlay video
           if (overlayVideoElement && selectedOverlay !== null) {
             ctx.globalAlpha = 0.3;
             ctx.drawImage(overlayVideoElement, 0, 0, canvas.width, canvas.height);
             ctx.globalAlpha = 1.0;
           }
           
-          // Draw the user image with the exact same position and transformation as in the preview
           if (uploadedImage && savedPosition) {
             const img = new Image();
             img.src = uploadedImage;
             img.crossOrigin = "anonymous";
             
-            // Apply the same transformations as in the preview, but scaled to the output resolution
             ctx.save();
             ctx.translate(savedPosition.left * scaleFactor, savedPosition.top * scaleFactor);
             ctx.rotate((savedPosition.angle || 0) * Math.PI / 180);
@@ -283,7 +276,6 @@ const Index = () => {
             );
             ctx.restore();
           } else if (uploadedImage) {
-            // If no position is saved, center the image
             const img = new Image();
             img.src = uploadedImage;
             img.crossOrigin = "anonymous";
@@ -299,7 +291,6 @@ const Index = () => {
             );
           }
           
-          // Add watermark
           ctx.fillStyle = '#fff';
           ctx.font = '30px Arial';
           ctx.textAlign = 'center';
