@@ -17,6 +17,8 @@ interface ImagePosition {
   left: number;
   top: number;
   scale: number;
+  width: number;
+  height: number;
 }
 
 const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => {
@@ -32,6 +34,8 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
   const [userImageSize, setUserImageSize] = useState(100); // User image size (percentage)
   const [customOverlays, setCustomOverlays] = useState<string[]>([]);
   const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [originalImageDimensions, setOriginalImageDimensions] = useState<{width: number, height: number} | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current || !isEditing) return;
@@ -46,14 +50,20 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     
     if (imageUrl) {
       Image.fromURL(imageUrl).then(img => {
+        // Save original dimensions for reference
+        if (!originalImageDimensions) {
+          setOriginalImageDimensions({
+            width: img.width!,
+            height: img.height!
+          });
+        }
+        
         const baseScale = Math.min(
           (canvas.width! * imageScale) / img.width!,
           (canvas.height! * imageScale) / img.height!
         );
         
         const adjustedScale = baseScale * (userImageSize / 100);
-        
-        img.scale(adjustedScale);
         
         // Use saved position if available
         if (savedPosition) {
@@ -72,6 +82,8 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
           img.set({
             left: canvas.width! / 2 - (img.width! * adjustedScale) / 2,
             top: canvas.height! / 2 - (img.height! * adjustedScale) / 2,
+            scaleX: adjustedScale,
+            scaleY: adjustedScale,
             cornerSize: 12,
             cornerColor: '#9b87f5',
             borderColor: '#9b87f5',
@@ -89,7 +101,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     return () => {
       canvas.dispose();
     };
-  }, [imageUrl, isEditing, videoAspectRatio, imageScale, userImageSize, savedPosition]);
+  }, [imageUrl, isEditing, videoAspectRatio, imageScale, userImageSize, savedPosition, originalImageDimensions]);
 
   useEffect(() => {
     if (videoUrl) {
@@ -114,6 +126,8 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
           left: activeObject.left!,
           top: activeObject.top!,
           scale: activeObject.scaleX!,
+          width: activeObject.width! * activeObject.scaleX!,
+          height: activeObject.height! * activeObject.scaleY!
         });
       }
       setIsEditing(false);
@@ -260,6 +274,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                   <div className="w-full h-full relative">
                     {savedPosition ? (
                       <img 
+                        ref={imageRef}
                         src={imageUrl} 
                         alt="Uploaded content" 
                         className="absolute object-contain"
@@ -267,7 +282,9 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                           left: `${savedPosition.left}px`,
                           top: `${savedPosition.top}px`,
                           transform: `scale(${savedPosition.scale})`,
-                          transformOrigin: 'left top'
+                          transformOrigin: 'left top',
+                          width: originalImageDimensions?.width,
+                          height: originalImageDimensions?.height
                         }}
                       />
                     ) : (
