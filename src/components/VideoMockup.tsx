@@ -18,6 +18,10 @@ interface ImagePosition {
   scale: number;
   width: number;
   height: number;
+  scaleX: number;
+  scaleY: number;
+  originalWidth: number;
+  originalHeight: number;
 }
 
 const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => {
@@ -67,8 +71,8 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
           img.set({
             left: savedPosition.left,
             top: savedPosition.top,
-            scaleX: savedPosition.scale,
-            scaleY: savedPosition.scale,
+            scaleX: savedPosition.scaleX,
+            scaleY: savedPosition.scaleY,
             cornerSize: 12,
             cornerColor: '#9b87f5',
             borderColor: '#9b87f5',
@@ -122,8 +126,12 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
           left: activeObject.left!,
           top: activeObject.top!,
           scale: activeObject.scaleX!,
+          scaleX: activeObject.scaleX!,
+          scaleY: activeObject.scaleY!,
           width: activeObject.width! * activeObject.scaleX!,
-          height: activeObject.height! * activeObject.scaleY!
+          height: activeObject.height! * activeObject.scaleY!,
+          originalWidth: activeObject.width!,
+          originalHeight: activeObject.height!
         });
       }
       setIsEditing(false);
@@ -290,9 +298,9 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                         style={{ 
                           left: `${savedPosition.left}px`,
                           top: `${savedPosition.top}px`,
-                          width: originalImageDimensions?.width, 
-                          height: originalImageDimensions?.height,
-                          transform: `scale(${savedPosition.scale})`,
+                          width: `${savedPosition.originalWidth}px`, 
+                          height: `${savedPosition.originalHeight}px`,
+                          transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY})`,
                           transformOrigin: 'left top'
                         }}
                       />
