@@ -9,12 +9,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Video, X } from "lucide-react";
 
-// Sample background videos
-const SAMPLE_VIDEOS = [
-  { name: "Abstract Waves", url: "https://assets.mixkit.co/videos/preview/mixkit-white-waves-digital-animation-6580-large.mp4" },
-  { name: "Particles", url: "https://assets.mixkit.co/videos/preview/mixkit-rotating-spheres-of-particles-29734-large.mp4" },
-  { name: "Gradient Flow", url: "https://assets.mixkit.co/videos/preview/mixkit-blue-and-purple-ink-flow-through-water-27124-large.mp4" }
-];
+// Sample background video
+const SAMPLE_VIDEO = {
+  name: "Abstract Waves", 
+  url: "https://assets.mixkit.co/videos/preview/mixkit-white-waves-digital-animation-6580-large.mp4"
+};
 
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -29,7 +28,7 @@ const Index = () => {
 
   const handleSelectOverlay = (index: number) => {
     setSelectedOverlay(index);
-    toast.success(`Overlay ${index + 1} selected`);
+    toast.success(`Overlay selected`);
   };
 
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,18 +47,18 @@ const Index = () => {
     }
   };
 
-  const handleSelectSampleVideo = (url: string) => {
+  const handleSelectSampleVideo = () => {
     if (videoUrl) {
       URL.revokeObjectURL(videoUrl);
     }
-    setVideoUrl(url);
+    setVideoUrl(SAMPLE_VIDEO.url);
     toast.success("Sample background video selected");
   };
 
   const removeVideo = () => {
     if (videoUrl) {
-      // Only revoke ObjectURL if it's a local video (not sample videos)
-      if (!SAMPLE_VIDEOS.some(v => v.url === videoUrl)) {
+      // Only revoke ObjectURL if it's a local video (not sample video)
+      if (videoUrl !== SAMPLE_VIDEO.url) {
         URL.revokeObjectURL(videoUrl);
       }
       setVideoUrl(null);
@@ -147,22 +146,17 @@ const Index = () => {
                   </div>
                 )}
 
-                {/* Sample videos section */}
+                {/* Sample video option */}
                 <div className="mt-4">
-                  <h3 className="text-sm font-medium mb-2">Or choose a sample video:</h3>
-                  <div className="grid grid-cols-1 gap-2">
-                    {SAMPLE_VIDEOS.map((sample, index) => (
-                      <Button 
-                        key={index} 
-                        variant="outline" 
-                        className="justify-start h-auto py-2 px-3"
-                        onClick={() => handleSelectSampleVideo(sample.url)}
-                      >
-                        <Video size={14} className="mr-2 text-primary" />
-                        <span className="text-xs">{sample.name}</span>
-                      </Button>
-                    ))}
-                  </div>
+                  <h3 className="text-sm font-medium mb-2">Or use sample video:</h3>
+                  <Button 
+                    variant="outline" 
+                    className="justify-start h-auto py-2 px-3 w-full"
+                    onClick={handleSelectSampleVideo}
+                  >
+                    <Video size={14} className="mr-2 text-primary" />
+                    <span className="text-xs">{SAMPLE_VIDEO.name}</span>
+                  </Button>
                 </div>
               </div>
             </div>
