@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -153,8 +152,13 @@ const Index = () => {
     canvas.width = containerWidth;
     canvas.height = containerHeight;
     
+    const videoFps = previewVideoElement.videoWidth > 0 ? 
+      Math.round(previewVideoElement.getVideoPlaybackQuality?.().totalVideoFrames || 30) : 30;
+    
+    const targetFps = Math.min(Math.max(videoFps, 24), 60);
+    
     const chunks: Blob[] = [];
-    const stream = canvas.captureStream(60);
+    const stream = canvas.captureStream(targetFps);
     
     let mediaRecorder;
     try {
@@ -281,9 +285,12 @@ const Index = () => {
     };
     
     const duration = 8;
-    const fps = 60;
+    const fps = targetFps;
     const totalFrames = duration * fps;
     let frameCount = 0;
+    
+    const frameInterval = 1000 / fps;
+    let lastFrameTime = 0;
     
     Promise.all([
       new Promise<void>(resolve => {
@@ -303,9 +310,16 @@ const Index = () => {
         }
       })
     ]).then(() => {
-      const renderFrame = () => {
-        captureExactPreview();
-        frameCount++;
+      const renderFrame = (timestamp: number) => {
+        if (!lastFrameTime) lastFrameTime = timestamp;
+        
+        const elapsed = timestamp - lastFrameTime;
+        
+        if (elapsed >= frameInterval) {
+          lastFrameTime = timestamp;
+          captureExactPreview();
+          frameCount++;
+        }
         
         if (frameCount < totalFrames) {
           requestAnimationFrame(renderFrame);
