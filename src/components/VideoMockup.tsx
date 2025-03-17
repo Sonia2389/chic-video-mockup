@@ -342,7 +342,8 @@ const VideoMockup = ({
                           width: `${savedPosition.originalWidth}px`, 
                           height: `${savedPosition.originalHeight}px`,
                           transformOrigin: 'left top',
-                          transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`
+                          transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
+                          zIndex: 1
                         }}
                       />
                     )}
@@ -352,6 +353,7 @@ const VideoMockup = ({
                         src={imageUrl} 
                         alt="Uploaded content" 
                         className="object-contain w-full h-full"
+                        style={{ zIndex: 1 }}
                       />
                     )}
                     
@@ -359,6 +361,7 @@ const VideoMockup = ({
                       <div 
                         className="absolute inset-0"
                         aria-label="Overlay"
+                        style={{ zIndex: 2 }}
                       >
                         {overlays[overlayIndex].type === "image" ? (
                           <div 

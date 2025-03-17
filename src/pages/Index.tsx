@@ -249,7 +249,7 @@ const Index = () => {
       }
       
       // Get reference to the preview video to match its timing
-      const previewVideoElement = document.querySelector('.video-mockup-container video');
+      const previewVideoElement = document.querySelector('.video-mockup-container video') as HTMLVideoElement | null;
       if (previewVideoElement) {
         // Try to match the playback rate if available
         videoElement.playbackRate = previewVideoElement.playbackRate;
@@ -276,14 +276,10 @@ const Index = () => {
         if (frameCount < maxFrames) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           
+          // First layer: Background video
           ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
           
-          if (overlayVideoElement && selectedOverlay !== null) {
-            ctx.globalAlpha = 0.3;
-            ctx.drawImage(overlayVideoElement, 0, 0, canvas.width, canvas.height);
-            ctx.globalAlpha = 1.0;
-          }
-          
+          // Second layer: User image
           if (uploadedImage && savedPosition) {
             const img = new Image();
             img.src = uploadedImage;
@@ -317,6 +313,13 @@ const Index = () => {
               imgWidth,
               imgHeight
             );
+          }
+          
+          // Third layer: Overlay video
+          if (overlayVideoElement && selectedOverlay !== null) {
+            ctx.globalAlpha = 0.3;
+            ctx.drawImage(overlayVideoElement, 0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = 1.0;
           }
           
           ctx.fillStyle = '#fff';
