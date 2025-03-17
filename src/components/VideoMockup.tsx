@@ -1,11 +1,12 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Monitor } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface VideoMockupProps {
   imageUrl: string | null;
   overlayIndex: number | null;
+  videoUrl?: string;
 }
 
 const OVERLAY_PLACEHOLDER = [
@@ -14,11 +15,34 @@ const OVERLAY_PLACEHOLDER = [
   "Dynamic Motion"
 ];
 
-const VideoMockup = ({ imageUrl, overlayIndex }: VideoMockupProps) => {
+const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => {
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+
+  useEffect(() => {
+    if (videoUrl) {
+      const video = document.createElement('video');
+      video.src = videoUrl;
+      video.onloadeddata = () => setIsVideoLoaded(true);
+      video.onerror = () => console.error("Error loading video");
+    }
+  }, [videoUrl]);
+
   return (
     <Card className="overflow-hidden shadow-xl">
       <CardContent className="p-0 relative">
         <div className="aspect-video bg-muted relative overflow-hidden">
+          {/* Video background */}
+          {videoUrl && (
+            <video 
+              src={videoUrl}
+              className="absolute inset-0 w-full h-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+            />
+          )}
+
           {!imageUrl ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
               <Monitor size={48} className="text-muted-foreground/50 mb-3" />
@@ -30,7 +54,7 @@ const VideoMockup = ({ imageUrl, overlayIndex }: VideoMockupProps) => {
           ) : (
             <div className="absolute inset-0">
               <div className="w-full h-full relative">
-                {/* Base image */}
+                {/* User uploaded image */}
                 <img 
                   src={imageUrl} 
                   alt="Uploaded content" 

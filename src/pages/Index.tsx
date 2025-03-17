@@ -6,11 +6,14 @@ import ImageUpload from "@/components/ImageUpload";
 import RenderButton from "@/components/RenderButton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Video, X } from "lucide-react";
 
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedOverlay, setSelectedOverlay] = useState<number | null>(null);
   const [rendering, setRendering] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const handleImageUpload = (imageUrl: string) => {
     setUploadedImage(imageUrl);
@@ -20,6 +23,30 @@ const Index = () => {
   const handleSelectOverlay = (index: number) => {
     setSelectedOverlay(index);
     toast.success(`Overlay ${index + 1} selected`);
+  };
+
+  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      
+      if (!file.type.startsWith('video/')) {
+        toast.error("Please upload a video file");
+        return;
+      }
+      
+      const url = URL.createObjectURL(file);
+      setVideoUrl(url);
+      toast.success("Background video uploaded successfully");
+    }
+  };
+
+  const removeVideo = () => {
+    if (videoUrl) {
+      URL.revokeObjectURL(videoUrl);
+      setVideoUrl(null);
+      toast.success("Background video removed");
+    }
   };
 
   const handleRender = () => {
@@ -58,7 +85,8 @@ const Index = () => {
           <div className="lg:col-span-2 space-y-8">
             <VideoMockup 
               imageUrl={uploadedImage} 
-              overlayIndex={selectedOverlay} 
+              overlayIndex={selectedOverlay}
+              videoUrl={videoUrl || undefined}
             />
             
             <RenderButton 
@@ -69,6 +97,40 @@ const Index = () => {
           </div>
           
           <div className="space-y-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
+              <h2 className="text-lg font-semibold mb-4">Background Video</h2>
+              <div className="space-y-4">
+                {videoUrl ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Video added</span>
+                    <Button variant="outline" size="sm" onClick={removeVideo}>
+                      <X size={16} className="mr-2" />
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                    <label htmlFor="video-upload" className="cursor-pointer">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Video size={16} className="text-primary" />
+                        </div>
+                        <p className="text-sm font-medium">Upload background video</p>
+                        <p className="text-xs text-muted-foreground">MP4, WebM up to 50MB</p>
+                      </div>
+                      <input
+                        id="video-upload"
+                        type="file"
+                        onChange={handleVideoUpload}
+                        accept="video/*"
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
+                
             <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
               <h2 className="text-lg font-semibold mb-4">Upload Your Image</h2>
               <ImageUpload onImageUpload={handleImageUpload} />
