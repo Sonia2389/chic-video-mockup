@@ -228,6 +228,9 @@ const Index = () => {
     const maxFrames = 240; // 8 seconds at 30fps
     const fps = 30;
     
+    let lastFrameTime = 0;
+    const frameInterval = 1000 / fps; // time between frames in ms
+    
     const videoElement = document.createElement('video');
     videoElement.src = videoUrl!;
     videoElement.muted = true;
