@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect, useRef } from "react";
 import { Canvas } from 'fabric';
@@ -72,8 +73,8 @@ const VideoMockup = ({
           scale: Math.max(activeObject.scaleX!, activeObject.scaleY!),
           scaleX: activeObject.scaleX!,
           scaleY: activeObject.scaleY!,
-          width: activeObject.width! * activeObject.scaleX!,
-          height: activeObject.height! * activeObject.scaleY!,
+          width: activeObject.getScaledWidth(),
+          height: activeObject.getScaledHeight(),
           originalWidth: activeObject.width!,
           originalHeight: activeObject.height!,
           angle: activeObject.angle
