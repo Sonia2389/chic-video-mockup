@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -355,7 +356,7 @@ const Index = () => {
             tothefknmoon
           </h1>
           <p className="text-muted-foreground">
-            Upload your image, choose an overlay, create stunning video mockups
+            3 Steps to Create Stunning Video Mockups
           </p>
         </header>
 
