@@ -5,12 +5,17 @@ import { useState, useEffect, useRef } from "react";
 import { Canvas, Image } from 'fabric';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Slider } from "@/components/ui/slider";
+
+interface Overlay {
+  type: "image" | "video";
+  url: string;
+}
 
 interface VideoMockupProps {
   imageUrl: string | null;
   overlayIndex: number | null;
   videoUrl?: string;
+  overlays: Overlay[];
 }
 
 interface ImagePosition {
@@ -25,18 +30,16 @@ interface ImagePosition {
   originalHeight: number;
 }
 
-const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => {
+const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockupProps) => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [videoAspectRatio, setVideoAspectRatio] = useState(16/9); // Default aspect ratio
   const videoRef = useRef<HTMLVideoElement>(null);
+  const overlayVideoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null);
   const [activeMode, setActiveMode] = useState<'select' | 'move'>('select');
   const [isEditing, setIsEditing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [imageScale, setImageScale] = useState(0.8);
-  const [userImageSize, setUserImageSize] = useState(100); // User image size (percentage)
-  const [customOverlays, setCustomOverlays] = useState<string[]>([]);
   const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [originalImageDimensions, setOriginalImageDimensions] = useState<{width: number, height: number} | null>(null);
@@ -61,13 +64,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
           });
         }
         
-        const baseScale = Math.min(
-          (canvas.width! * imageScale) / img.width!,
-          (canvas.height! * imageScale) / img.height!
-        );
-        
-        const adjustedScale = baseScale * (userImageSize / 100);
-        
         if (savedPosition) {
           img.set({
             left: savedPosition.left,
@@ -81,11 +77,16 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
             transparentCorners: false,
           });
         } else {
+          const baseScale = Math.min(
+            (canvas.width! * 0.8) / img.width!,
+            (canvas.height! * 0.8) / img.height!
+          );
+          
           img.set({
-            left: canvas.width! / 2 - (img.width! * adjustedScale) / 2,
-            top: canvas.height! / 2 - (img.height! * adjustedScale) / 2,
-            scaleX: adjustedScale,
-            scaleY: adjustedScale,
+            left: canvas.width! / 2 - (img.width! * baseScale) / 2,
+            top: canvas.height! / 2 - (img.height! * baseScale) / 2,
+            scaleX: baseScale,
+            scaleY: baseScale,
             cornerSize: 12,
             cornerColor: '#9b87f5',
             borderColor: '#9b87f5',
@@ -103,7 +104,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     return () => {
       canvas.dispose();
     };
-  }, [imageUrl, isEditing, videoAspectRatio, imageScale, userImageSize, savedPosition, originalImageDimensions]);
+  }, [imageUrl, isEditing, videoAspectRatio, savedPosition, originalImageDimensions]);
 
   useEffect(() => {
     if (videoUrl) {
@@ -118,6 +119,15 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
       video.onerror = () => console.error("Error loading video");
     }
   }, [videoUrl]);
+
+  // Start playing the overlay video when it becomes visible
+  useEffect(() => {
+    if (overlayIndex !== null && overlays[overlayIndex]?.type === "video" && overlayVideoRef.current) {
+      overlayVideoRef.current.play().catch(error => {
+        console.error("Error playing overlay video:", error);
+      });
+    }
+  }, [overlayIndex, overlays]);
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -289,31 +299,37 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                         src={imageUrl} 
                         alt="Uploaded content" 
                         className="object-cover w-full h-full"
-                        style={{ 
-                          transform: `scale(${userImageSize / 100})`,
-                          transformOrigin: 'center'
-                        }}
                       />
                     )}
                     
-                    {overlayIndex !== null && (
+                    {overlayIndex !== null && overlays[overlayIndex] && (
                       <div 
-                        className="absolute inset-0 custom-overlay"
-                        aria-label="Custom Overlay"
-                        style={{
-                          border: 'none',
-                          backgroundImage: `url(${customOverlays[overlayIndex]})`,
-                          backgroundPosition: 'center',
-                          backgroundSize: 'contain',
-                          backgroundRepeat: 'no-repeat',
-                          width: '100%',
-                          height: '100%',
-                          pointerEvents: 'none'
-                        }}
+                        className="absolute inset-0"
+                        aria-label="Overlay"
                       >
-                        <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                          Custom Overlay
-                        </div>
+                        {overlays[overlayIndex].type === "image" ? (
+                          <div 
+                            style={{
+                              backgroundImage: `url(${overlays[overlayIndex].url})`,
+                              backgroundPosition: 'center',
+                              backgroundSize: 'contain',
+                              backgroundRepeat: 'no-repeat',
+                              width: '100%',
+                              height: '100%',
+                              pointerEvents: 'none'
+                            }}
+                          />
+                        ) : (
+                          <video
+                            ref={overlayVideoRef}
+                            src={overlays[overlayIndex].url}
+                            className="w-full h-full object-contain"
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                          />
+                        )}
                       </div>
                     )}
                   </div>

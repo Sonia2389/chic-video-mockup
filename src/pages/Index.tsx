@@ -15,12 +15,17 @@ const SAMPLE_VIDEO = {
   url: "https://assets.mixkit.co/videos/preview/mixkit-white-waves-digital-animation-6580-large.mp4"
 };
 
+interface Overlay {
+  type: "image" | "video";
+  url: string;
+}
+
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedOverlay, setSelectedOverlay] = useState<number | null>(null);
   const [rendering, setRendering] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [customOverlays, setCustomOverlays] = useState<string[]>([]);
+  const [overlays, setOverlays] = useState<Overlay[]>([]);
 
   const handleImageUpload = (imageUrl: string) => {
     setUploadedImage(imageUrl);
@@ -30,12 +35,6 @@ const Index = () => {
   const handleSelectOverlay = (index: number) => {
     setSelectedOverlay(index);
     toast.success(`Overlay selected`);
-  };
-
-  const handleCustomOverlayUpload = (overlayUrl: string) => {
-    const newCustomOverlays = [...customOverlays, overlayUrl];
-    setCustomOverlays(newCustomOverlays);
-    setSelectedOverlay(newCustomOverlays.length - 1);
   };
 
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,6 +108,7 @@ const Index = () => {
               imageUrl={uploadedImage} 
               overlayIndex={selectedOverlay}
               videoUrl={videoUrl || undefined}
+              overlays={overlays}
             />
             
             <RenderButton 
