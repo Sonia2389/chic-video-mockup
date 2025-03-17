@@ -377,7 +377,7 @@ const VideoMockup = ({
                           <video
                             ref={overlayVideoRef}
                             src={overlays[overlayIndex].url}
-                            className="w-full h-full object-contain"
+                            className="w-full h-full object-cover"
                             style={{ opacity: 0.3 }} // 30% opacity (70% transparency)
                             autoPlay
                             loop

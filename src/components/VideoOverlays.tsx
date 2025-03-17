@@ -10,6 +10,7 @@ interface VideoOverlaysProps {
   selectedOverlay: number | null;
   onSelectOverlay: (index: number) => void;
   onOverlaysChange: (overlays: Overlay[]) => void;
+  videoAspectRatio?: number; // Add this prop to receive aspect ratio from parent
 }
 
 interface Overlay {
@@ -21,7 +22,12 @@ interface Overlay {
   url: string;
 }
 
-const VideoOverlays = ({ selectedOverlay, onSelectOverlay, onOverlaysChange }: VideoOverlaysProps) => {
+const VideoOverlays = ({ 
+  selectedOverlay, 
+  onSelectOverlay, 
+  onOverlaysChange,
+  videoAspectRatio = 16/9 // Default to 16:9 if not provided
+}: VideoOverlaysProps) => {
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,42 +54,86 @@ const VideoOverlays = ({ selectedOverlay, onSelectOverlay, onOverlaysChange }: V
     // Create a video element to generate a thumbnail
     const video = document.createElement('video');
     video.src = videoUrl;
-    video.currentTime = 1; // Seek to 1 second to get thumbnail
+    video.crossOrigin = "anonymous";
     
-    video.onloadeddata = () => {
-      // Create a canvas to capture the thumbnail
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+    video.onloadedmetadata = () => {
+      // Set the video to start at 1 second to get a better thumbnail
+      video.currentTime = 1;
       
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const thumbnailUrl = canvas.toDataURL('image/jpeg');
+      video.onseeked = () => {
+        // Create a canvas to capture the thumbnail
+        const canvas = document.createElement('canvas');
         
-        // Add new video overlay to the list
-        const newOverlay: Overlay = {
-          name: `Video Overlay ${overlays.length + 1}`,
-          description: `${file.name} (${Math.round(file.size / 1024 / 1024 * 10) / 10} MB)`,
-          preview: thumbnailUrl,
-          isCustom: true,
-          type: "video",
-          url: videoUrl
-        };
+        // Set canvas dimensions to match the target aspect ratio
+        // but maintain the resolution quality of the source video
+        const sourceAspect = video.videoWidth / video.videoHeight;
         
-        const newOverlays = [...overlays, newOverlay];
-        setOverlays(newOverlays);
+        // If video's natural aspect ratio is wider than target ratio
+        if (sourceAspect > videoAspectRatio) {
+          // Width is limiting factor
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoWidth / videoAspectRatio;
+        } else {
+          // Height is limiting factor
+          canvas.height = video.videoHeight;
+          canvas.width = video.videoHeight * videoAspectRatio;
+        }
         
-        // Select the newly added overlay
-        onSelectOverlay(newOverlays.length - 1);
-        toast.success("Video overlay uploaded successfully");
-      }
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          // Center the video in the canvas
+          let drawX = 0;
+          let drawY = 0;
+          let drawWidth = canvas.width;
+          let drawHeight = canvas.height;
+          
+          // Adjust draw parameters to center the content
+          if (sourceAspect > videoAspectRatio) {
+            // Video is wider than canvas ratio - center vertically
+            drawHeight = video.videoHeight;
+            drawWidth = drawHeight * videoAspectRatio;
+            drawX = (video.videoWidth - drawWidth) / 2;
+          } else {
+            // Video is taller than canvas ratio - center horizontally
+            drawWidth = video.videoWidth;
+            drawHeight = drawWidth / videoAspectRatio;
+            drawY = (video.videoHeight - drawHeight) / 2;
+          }
+          
+          // Draw the video frame to canvas with adjusted dimensions
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(video, drawX, drawY, drawWidth, drawHeight, 0, 0, canvas.width, canvas.height);
+          
+          const thumbnailUrl = canvas.toDataURL('image/jpeg');
+          
+          // Add new video overlay to the list
+          const newOverlay: Overlay = {
+            name: `Video Overlay ${overlays.length + 1}`,
+            description: `${file.name} (${Math.round(file.size / 1024 / 1024 * 10) / 10} MB)`,
+            preview: thumbnailUrl,
+            isCustom: true,
+            type: "video",
+            url: videoUrl
+          };
+          
+          const newOverlays = [...overlays, newOverlay];
+          setOverlays(newOverlays);
+          
+          // Select the newly added overlay
+          onSelectOverlay(newOverlays.length - 1);
+          toast.success("Video overlay uploaded successfully");
+        }
+      };
     };
     
     video.onerror = () => {
       URL.revokeObjectURL(videoUrl);
       toast.error("Error processing video");
     };
+    
+    // Start loading the video
+    video.load();
   };
 
   const handleUploadClick = () => {

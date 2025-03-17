@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -42,6 +41,7 @@ const Index = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(null);
+  const [videoAspectRatio, setVideoAspectRatio] = useState<number>(16/9); // Default 16:9
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
 
   const handleImageUpload = (imageUrl: string) => {
@@ -70,15 +70,36 @@ const Index = () => {
       
       const url = URL.createObjectURL(file);
       setVideoUrl(url);
+      
+      const video = document.createElement('video');
+      video.src = url;
+      video.onloadedmetadata = () => {
+        if (video.videoWidth && video.videoHeight) {
+          setVideoAspectRatio(video.videoWidth / video.videoHeight);
+        }
+      };
+      video.load();
+      
       toast.success("Background video uploaded successfully");
     }
   };
 
   const handleSelectSampleVideo = () => {
-    if (videoUrl) {
+    if (videoUrl && videoUrl !== SAMPLE_VIDEO.url) {
       URL.revokeObjectURL(videoUrl);
     }
     setVideoUrl(SAMPLE_VIDEO.url);
+    
+    const video = document.createElement('video');
+    video.src = SAMPLE_VIDEO.url;
+    video.crossOrigin = "anonymous";
+    video.onloadedmetadata = () => {
+      if (video.videoWidth && video.videoHeight) {
+        setVideoAspectRatio(video.videoWidth / video.videoHeight);
+      }
+    };
+    video.load();
+    
     toast.success("Sample background video selected");
   };
 
@@ -142,22 +163,18 @@ const Index = () => {
     const chunks: Blob[] = [];
     const stream = canvas.captureStream(30);
     
-    // Try different codec options, falling back to browser defaults if needed
     let mediaRecorder;
     try {
-      // First try with a common codec
       mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'video/webm'
       });
     } catch (e) {
       try {
-        // Fallback to basic webm
         mediaRecorder = new MediaRecorder(stream, {
           mimeType: 'video/webm;codecs=vp8'
         });
       } catch (e2) {
         try {
-          // Last resort, let browser choose format
           mediaRecorder = new MediaRecorder(stream);
         } catch (e3) {
           toast.error("Your browser doesn't support video recording");
@@ -368,6 +385,7 @@ const Index = () => {
                 selectedOverlay={selectedOverlay} 
                 onSelectOverlay={handleSelectOverlay} 
                 onOverlaysChange={handleOverlaysChange}
+                videoAspectRatio={videoAspectRatio}
               />
             </div>
           </div>
