@@ -14,7 +14,7 @@ interface VideoMockupProps {
 
 const OVERLAY_PLACEHOLDER = [
   "Elegant Frame",
-  "Simple Border",
+  "Simple Border", 
   "Soft Glow"
 ];
 
@@ -29,7 +29,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
   const containerRef = useRef<HTMLDivElement>(null);
   const [imageScale, setImageScale] = useState(0.8);
 
-  // Initialize Fabric.js canvas
   useEffect(() => {
     if (!canvasRef.current || !isEditing) return;
     
@@ -41,32 +40,27 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     
     setFabricCanvas(canvas);
     
-    // Add the image to the canvas if available
     if (imageUrl) {
-      FabricImage.fromURL(imageUrl, {
-        objectOptions: {
+      FabricImage.fromURL(imageUrl, (img) => {
+        const scale = Math.min(
+          (canvas.width! * imageScale) / img.width!,
+          (canvas.height! * imageScale) / img.height!
+        );
+        
+        img.scale(scale);
+        img.set({
+          left: canvas.width! / 2 - (img.width! * scale) / 2,
+          top: canvas.height! / 2 - (img.height! * scale) / 2,
           cornerSize: 12,
           cornerColor: '#9b87f5',
           borderColor: '#9b87f5',
           cornerStyle: 'circle',
           transparentCorners: false,
-        },
-        onComplete: (img) => {
-          const scale = Math.min(
-            (canvas.width! * imageScale) / img.width!,
-            (canvas.height! * imageScale) / img.height!
-          );
-          
-          img.scale(scale);
-          img.set({
-            left: canvas.width! / 2 - (img.width! * scale) / 2,
-            top: canvas.height! / 2 - (img.height! * scale) / 2,
-          });
-          
-          canvas.add(img);
-          canvas.setActiveObject(img);
-          canvas.renderAll();
-        }
+        });
+        
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
       });
     }
     
@@ -75,24 +69,12 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     };
   }, [imageUrl, isEditing, videoAspectRatio, imageScale]);
 
-  // Update canvas dimensions when video aspect ratio changes
-  useEffect(() => {
-    if (!fabricCanvas || !containerRef.current) return;
-    
-    fabricCanvas.setDimensions({
-      width: containerRef.current.clientWidth,
-      height: containerRef.current.clientWidth / videoAspectRatio,
-    });
-    fabricCanvas.renderAll();
-  }, [videoAspectRatio, fabricCanvas]);
-
   useEffect(() => {
     if (videoUrl) {
       const video = document.createElement('video');
       video.src = videoUrl;
       video.onloadedmetadata = () => {
         setIsVideoLoaded(true);
-        // Update aspect ratio based on the video's dimensions
         if (video.videoWidth && video.videoHeight) {
           setVideoAspectRatio(video.videoWidth / video.videoHeight);
         }
@@ -101,7 +83,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     }
   }, [videoUrl]);
 
-  // Function to get the appropriate overlay styles based on index
   const getOverlayStyles = (index: number | null) => {
     if (index === null) return "";
     
@@ -220,7 +201,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
             paddingBottom: `${(1 / videoAspectRatio) * 100}%`,
           }}
         >
-          {/* Video background */}
           {videoUrl && (
             <video 
               ref={videoRef}
@@ -239,14 +219,12 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
             />
           )}
 
-          {/* Editing Canvas */}
           {isEditing && (
             <div className="absolute inset-0 z-20">
               <canvas ref={canvasRef} className="w-full h-full" />
             </div>
           )}
 
-          {/* Preview Mode */}
           {!isEditing && (
             <>
               {!imageUrl ? (
@@ -260,14 +238,12 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
               ) : (
                 <div className="absolute inset-0">
                   <div className="w-full h-full relative">
-                    {/* User uploaded image */}
                     <img 
                       src={imageUrl} 
                       alt="Uploaded content" 
                       className="object-cover w-full h-full"
                     />
                     
-                    {/* Overlay effect */}
                     {overlayIndex !== null && (
                       <div 
                         className={`absolute inset-0 ${getOverlayStyles(overlayIndex)}`}
@@ -285,7 +261,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
           )}
         </div>
 
-        {/* Image Edit Controls */}
         {imageUrl && (
           <div className="absolute top-2 right-2 flex items-center gap-2 z-30">
             <Button 
@@ -408,4 +383,3 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
 };
 
 export default VideoMockup;
-
