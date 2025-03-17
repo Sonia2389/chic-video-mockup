@@ -12,7 +12,7 @@ interface VideoMockupProps {
   videoUrl?: string;
 }
 
-const OVERLAY_PLACEHOLDER = [
+const DEFAULT_OVERLAYS = [
   "Elegant Frame",
   "Simple Border", 
   "Soft Glow"
@@ -28,7 +28,8 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
   const [isEditing, setIsEditing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [imageScale, setImageScale] = useState(0.8);
-  const [userImageSize, setUserImageSize] = useState(100); // New state for user image size (percentage)
+  const [userImageSize, setUserImageSize] = useState(100); // User image size (percentage)
+  const [customOverlays, setCustomOverlays] = useState<string[]>([]);
 
   useEffect(() => {
     if (!canvasRef.current || !isEditing) return;
@@ -42,15 +43,12 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     setFabricCanvas(canvas);
     
     if (imageUrl) {
-      // Fix: Use the correct API for Fabric.js v6
       Image.fromURL(imageUrl).then(img => {
-        // Calculate base scale - this is what we consider 100%
         const baseScale = Math.min(
           (canvas.width! * imageScale) / img.width!,
           (canvas.height! * imageScale) / img.height!
         );
         
-        // Apply user's size preference on top of base scale
         const adjustedScale = baseScale * (userImageSize / 100);
         
         img.scale(adjustedScale);
@@ -92,15 +90,19 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
   const getOverlayStyles = (index: number | null) => {
     if (index === null) return "";
     
-    switch (index) {
-      case 0: // Elegant Frame
-        return "border-[20px] border-white/90 backdrop-blur-sm";
-      case 1: // Simple Border
-        return "border-[15px] border-white";
-      case 2: // Soft Glow
-        return "border-[12px] border-white/80 shadow-[inset_0_0_20px_rgba(255,255,255,0.6)]";
-      default:
-        return "border-[20px] border-white/90 backdrop-blur-sm";
+    if (index < DEFAULT_OVERLAYS.length) {
+      switch (index) {
+        case 0: // Elegant Frame
+          return "border-[20px] border-white/90 backdrop-blur-sm";
+        case 1: // Simple Border
+          return "border-[15px] border-white";
+        case 2: // Soft Glow
+          return "border-[12px] border-white/80 shadow-[inset_0_0_20px_rgba(255,255,255,0.6)]";
+        default:
+          return "border-[20px] border-white/90 backdrop-blur-sm";
+      }
+    } else {
+      return "custom-overlay";
     }
   };
 
@@ -259,14 +261,37 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                     />
                     
                     {overlayIndex !== null && (
-                      <div 
-                        className={`absolute inset-0 ${getOverlayStyles(overlayIndex)}`}
-                        aria-label={`Overlay: ${OVERLAY_PLACEHOLDER[overlayIndex] || 'Custom'}`}
-                      >
-                        <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                          {OVERLAY_PLACEHOLDER[overlayIndex] || 'Custom Overlay'}
-                        </div>
-                      </div>
+                      <>
+                        {overlayIndex < DEFAULT_OVERLAYS.length ? (
+                          <div 
+                            className={`absolute inset-0 ${getOverlayStyles(overlayIndex)}`}
+                            aria-label={`Overlay: ${DEFAULT_OVERLAYS[overlayIndex] || 'Custom'}`}
+                          >
+                            <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                              {DEFAULT_OVERLAYS[overlayIndex] || 'Custom Overlay'}
+                            </div>
+                          </div>
+                        ) : (
+                          <div 
+                            className="absolute inset-0 custom-overlay"
+                            aria-label="Custom Overlay"
+                            style={{
+                              border: 'none',
+                              backgroundImage: `url(${customOverlays[overlayIndex - DEFAULT_OVERLAYS.length]})`,
+                              backgroundPosition: 'center',
+                              backgroundSize: 'contain',
+                              backgroundRepeat: 'no-repeat',
+                              width: '100%',
+                              height: '100%',
+                              pointerEvents: 'none'
+                            }}
+                          >
+                            <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                              Custom Overlay
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

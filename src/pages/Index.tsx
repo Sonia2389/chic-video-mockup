@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -20,6 +19,7 @@ const Index = () => {
   const [selectedOverlay, setSelectedOverlay] = useState<number | null>(null);
   const [rendering, setRendering] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [customOverlays, setCustomOverlays] = useState<string[]>([]);
 
   const handleImageUpload = (imageUrl: string) => {
     setUploadedImage(imageUrl);
@@ -29,6 +29,12 @@ const Index = () => {
   const handleSelectOverlay = (index: number) => {
     setSelectedOverlay(index);
     toast.success(`Overlay selected`);
+  };
+
+  const handleCustomOverlayUpload = (overlayUrl: string) => {
+    const newCustomOverlays = [...customOverlays, overlayUrl];
+    setCustomOverlays(newCustomOverlays);
+    setSelectedOverlay(newCustomOverlays.length - 1);
   };
 
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,7 +63,6 @@ const Index = () => {
 
   const removeVideo = () => {
     if (videoUrl) {
-      // Only revoke ObjectURL if it's a local video (not sample video)
       if (videoUrl !== SAMPLE_VIDEO.url) {
         URL.revokeObjectURL(videoUrl);
       }
@@ -79,7 +84,6 @@ const Index = () => {
 
     setRendering(true);
     
-    // Simulate rendering process
     setTimeout(() => {
       setRendering(false);
       toast.success("Video rendered successfully! Download ready.");
@@ -146,7 +150,6 @@ const Index = () => {
                   </div>
                 )}
 
-                {/* Sample video option */}
                 <div className="mt-4">
                   <h3 className="text-sm font-medium mb-2">Or use sample video:</h3>
                   <Button 
