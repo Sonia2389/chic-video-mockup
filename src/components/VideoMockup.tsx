@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Move, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -221,27 +222,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     fabricCanvas.renderAll();
   };
 
-  const handleImageScale = (value: number[]) => {
-    setImageScale(value[0] / 100);
-  };
-
-  const handleImageSizeChange = (value: number[]) => {
-    setUserImageSize(value[0]);
-    
-    if (isEditing && fabricCanvas && fabricCanvas.getActiveObject()) {
-      const activeObject = fabricCanvas.getActiveObject();
-      const baseScale = Math.min(
-        (fabricCanvas.width! * imageScale) / activeObject.width!,
-        (fabricCanvas.height! * imageScale) / activeObject.height!
-      );
-      
-      const adjustedScale = baseScale * (value[0] / 100);
-      
-      activeObject.scale(adjustedScale);
-      fabricCanvas.renderAll();
-    }
-  };
-
   return (
     <Card className="overflow-hidden shadow-xl">
       <CardContent className="p-0 relative">
@@ -442,50 +422,9 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
                     </Button>
                     <div></div>
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium">Image Scale</label>
-                    <Slider 
-                      defaultValue={[imageScale * 100]} 
-                      max={100}
-                      min={10}
-                      step={5}
-                      onValueChange={handleImageScale}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium">Image Size</label>
-                    <Slider 
-                      defaultValue={[userImageSize]} 
-                      value={[userImageSize]}
-                      max={200}
-                      min={20}
-                      step={5}
-                      onValueChange={handleImageSizeChange}
-                      className="w-full"
-                    />
-                    <div className="text-xs text-right text-muted-foreground">{userImageSize}%</div>
-                  </div>
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {imageUrl && !isEditing && !savedPosition && (
-          <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm rounded-md shadow-sm p-2 flex gap-2 items-center z-20">
-            <span className="text-xs font-medium">Image Size:</span>
-            <Slider 
-              value={[userImageSize]}
-              max={200}
-              min={20}
-              step={5}
-              onValueChange={handleImageSizeChange}
-              className="w-32"
-            />
-            <span className="text-xs font-medium">{userImageSize}%</span>
           </div>
         )}
       </CardContent>
