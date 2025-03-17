@@ -149,10 +149,10 @@ const Index = () => {
   };
 
   const simulateVideoRender = () => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      toast.error("Error creating video");
+    const previewVideoElement = document.querySelector('.video-mockup-container video') as HTMLVideoElement | null;
+    
+    if (!previewVideoElement) {
+      toast.error("Preview video not found");
       setRendering(false);
       return;
     }
@@ -164,12 +164,25 @@ const Index = () => {
       return;
     }
     
-    const previewWidth = previewContainer.clientWidth;
-    const previewHeight = previewContainer.clientHeight; 
-    canvas.width = 1280;
-    canvas.height = Math.round(1280 * (previewHeight / previewWidth));
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      toast.error("Error creating video");
+      setRendering(false);
+      return;
+    }
     
-    const scaleFactor = canvas.width / previewWidth;
+    const videoWidth = previewVideoElement.videoWidth;
+    const videoHeight = previewVideoElement.videoHeight;
+    
+    if (!videoWidth || !videoHeight) {
+      toast.error("Unable to determine video dimensions");
+      setRendering(false);
+      return;
+    }
+    
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
     
     const chunks: Blob[] = [];
     const stream = canvas.captureStream(30);
@@ -177,17 +190,20 @@ const Index = () => {
     let mediaRecorder;
     try {
       mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9'
+        mimeType: 'video/webm;codecs=vp9',
+        videoBitsPerSecond: 5000000
       });
     } catch (e) {
       try {
         mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'video/webm;codecs=vp8'
+          mimeType: 'video/webm;codecs=vp8',
+          videoBitsPerSecond: 5000000
         });
       } catch (e2) {
         try {
           mediaRecorder = new MediaRecorder(stream, {
-            mimeType: 'video/webm'
+            mimeType: 'video/webm',
+            videoBitsPerSecond: 5000000
           });
         } catch (e3) {
           try {
@@ -224,114 +240,105 @@ const Index = () => {
     
     mediaRecorder.start();
     
-    let frameCount = 0;
-    const maxFrames = 240; // 8 seconds at 30fps
+    let overlayVideoElement: HTMLVideoElement | null = null;
+    if (selectedOverlay !== null && overlays[selectedOverlay]) {
+      overlayVideoElement = document.createElement('video');
+      overlayVideoElement.src = overlays[selectedOverlay].url;
+      overlayVideoElement.muted = true;
+      overlayVideoElement.crossOrigin = "anonymous";
+      overlayVideoElement.load();
+    }
+    
+    const imageElement = new Image();
+    if (uploadedImage) {
+      imageElement.src = uploadedImage;
+      imageElement.crossOrigin = "anonymous";
+    }
+    
+    const duration = 8;
     const fps = 30;
+    const totalFrames = duration * fps;
+    let frameCount = 0;
     
-    let lastFrameTime = 0;
-    const frameInterval = 1000 / fps; // time between frames in ms
+    previewVideoElement.currentTime = 0;
+    previewVideoElement.play();
     
-    const videoElement = document.createElement('video');
-    videoElement.src = videoUrl!;
-    videoElement.muted = true;
-    videoElement.crossOrigin = "anonymous";
-    videoElement.playbackRate = 1.0; // Ensure normal playback rate
+    if (overlayVideoElement) {
+      overlayVideoElement.currentTime = 0;
+      overlayVideoElement.play();
+    }
     
-    videoElement.oncanplay = () => {
-      videoElement.play();
-      
-      let overlayVideoElement: HTMLVideoElement | null = null;
-      if (selectedOverlay !== null && overlays[selectedOverlay]) {
-        overlayVideoElement = document.createElement('video');
-        overlayVideoElement.src = overlays[selectedOverlay].url;
-        overlayVideoElement.muted = true;
-        overlayVideoElement.crossOrigin = "anonymous";
-        overlayVideoElement.playbackRate = 1.0; // Ensure normal playback rate
-        overlayVideoElement.play().catch(e => console.error("Error playing overlay video", e));
-      }
-      
-      const previewVideoElement = document.querySelector('.video-mockup-container video') as HTMLVideoElement | null;
-      if (previewVideoElement) {
-        videoElement.playbackRate = previewVideoElement.playbackRate;
-        if (overlayVideoElement) {
-          overlayVideoElement.playbackRate = previewVideoElement.playbackRate;
-        }
-      }
-      
-      const drawFrame = (timestamp: number) => {
-        if (timestamp - lastFrameTime < frameInterval) {
-          if (frameCount < maxFrames) {
-            requestAnimationFrame(drawFrame);
-          }
-          return;
+    const drawFrame = () => {
+      if (frameCount < totalFrames) {
+        ctx.drawImage(previewVideoElement, 0, 0, canvas.width, canvas.height);
+        
+        if (uploadedImage && savedPosition) {
+          ctx.save();
+          ctx.translate(
+            (savedPosition.left / previewContainer.clientWidth) * canvas.width,
+            (savedPosition.top / previewContainer.clientHeight) * canvas.height
+          );
+          ctx.rotate((savedPosition.angle || 0) * Math.PI / 180);
+          ctx.scale(savedPosition.scaleX, savedPosition.scaleY);
+          ctx.drawImage(
+            imageElement,
+            0, 0,
+            savedPosition.originalWidth,
+            savedPosition.originalHeight
+          );
+          ctx.restore();
+        } else if (uploadedImage) {
+          const imgWidth = canvas.width / 2;
+          const imgHeight = (imageElement.height / imageElement.width) * imgWidth;
+          ctx.drawImage(
+            imageElement,
+            canvas.width / 4,
+            canvas.height / 4,
+            imgWidth,
+            imgHeight
+          );
         }
         
-        lastFrameTime = timestamp;
-        
-        if (frameCount < maxFrames) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-          
-          if (uploadedImage && savedPosition) {
-            const img = new Image();
-            img.src = uploadedImage;
-            img.crossOrigin = "anonymous";
-            
-            ctx.save();
-            ctx.translate(savedPosition.left * scaleFactor, savedPosition.top * scaleFactor);
-            ctx.rotate((savedPosition.angle || 0) * Math.PI / 180);
-            ctx.scale(
-              savedPosition.scaleX * scaleFactor,
-              savedPosition.scaleY * scaleFactor
-            );
-            ctx.drawImage(
-              img,
-              0, 0,
-              savedPosition.originalWidth,
-              savedPosition.originalHeight
-            );
-            ctx.restore();
-          } else if (uploadedImage) {
-            const img = new Image();
-            img.src = uploadedImage;
-            img.crossOrigin = "anonymous";
-            
-            const imgWidth = canvas.width / 2;
-            const imgHeight = (img.height / img.width) * imgWidth;
-            ctx.drawImage(
-              img,
-              canvas.width / 4,
-              canvas.height / 4,
-              imgWidth,
-              imgHeight
-            );
-          }
-          
-          if (overlayVideoElement && selectedOverlay !== null) {
-            ctx.globalAlpha = 0.15;
-            ctx.drawImage(overlayVideoElement, 0, 0, canvas.width, canvas.height);
-            ctx.globalAlpha = 1.0;
-          }
-          
-          ctx.fillStyle = '#fff';
-          ctx.font = '30px Arial';
-          ctx.textAlign = 'center';
-          ctx.fillText('tothefknmoon', canvas.width/2, 50);
-          
-          frameCount++;
-          requestAnimationFrame(drawFrame);
-        } else {
-          mediaRecorder.stop();
-          videoElement.pause();
-          if (overlayVideoElement) overlayVideoElement.pause();
+        if (overlayVideoElement && selectedOverlay !== null) {
+          ctx.globalAlpha = 0.15;
+          ctx.drawImage(overlayVideoElement, 0, 0, canvas.width, canvas.height);
+          ctx.globalAlpha = 1.0;
         }
-      };
-      
-      requestAnimationFrame(drawFrame);
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = '30px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('tothefknmoon', canvas.width/2, 50);
+        
+        frameCount++;
+        requestAnimationFrame(drawFrame);
+      } else {
+        mediaRecorder.stop();
+        previewVideoElement.pause();
+        if (overlayVideoElement) overlayVideoElement.pause();
+      }
     };
     
-    videoElement.load();
+    Promise.all([
+      new Promise<void>(resolve => {
+        if (imageElement.complete) {
+          resolve();
+        } else {
+          imageElement.onload = () => resolve();
+          imageElement.onerror = () => resolve();
+        }
+      }),
+      new Promise<void>(resolve => {
+        if (overlayVideoElement) {
+          overlayVideoElement.oncanplay = () => resolve();
+          overlayVideoElement.onerror = () => resolve();
+        } else {
+          resolve();
+        }
+      })
+    ]).then(() => {
+      requestAnimationFrame(drawFrame);
+    });
   };
 
   const handleDownload = () => {
