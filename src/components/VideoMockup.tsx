@@ -457,6 +457,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
           </div>
         )}
 
+        {/* Remove the fixed size controls when position is saved */}
         {imageUrl && !isEditing && !savedPosition && (
           <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm rounded-md shadow-sm p-2 flex gap-2 items-center z-20">
             <span className="text-xs font-medium">Image Size:</span>
