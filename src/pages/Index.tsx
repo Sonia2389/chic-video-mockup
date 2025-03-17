@@ -158,7 +158,7 @@ const Index = () => {
     }
     
     canvas.width = 1280;
-    canvas.height = 720;
+    canvas.height = Math.round(1280 / videoAspectRatio);
     
     const chunks: Blob[] = [];
     const stream = canvas.captureStream(30);
@@ -166,7 +166,7 @@ const Index = () => {
     let mediaRecorder;
     try {
       mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm'
+        mimeType: 'video/webm;codecs=vp9'
       });
     } catch (e) {
       try {
@@ -175,11 +175,17 @@ const Index = () => {
         });
       } catch (e2) {
         try {
-          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder = new MediaRecorder(stream, {
+            mimeType: 'video/webm'
+          });
         } catch (e3) {
-          toast.error("Your browser doesn't support video recording");
-          setRendering(false);
-          return;
+          try {
+            mediaRecorder = new MediaRecorder(stream);
+          } catch (e4) {
+            toast.error("Your browser doesn't support video recording");
+            setRendering(false);
+            return;
+          }
         }
       }
     }
@@ -191,8 +197,7 @@ const Index = () => {
     };
     
     mediaRecorder.onstop = () => {
-      const mimeType = mediaRecorder.mimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
-      const blob = new Blob(chunks, { type: mimeType });
+      const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
       
       if (renderedVideoUrl) {
         URL.revokeObjectURL(renderedVideoUrl);
@@ -209,19 +214,36 @@ const Index = () => {
     mediaRecorder.start();
     
     let frameCount = 0;
-    const maxFrames = 90; // 3 seconds at 30fps
+    const maxFrames = 90;
     
     const videoElement = document.createElement('video');
-    videoElement.src = videoUrl;
+    videoElement.src = videoUrl!;
     videoElement.muted = true;
     videoElement.crossOrigin = "anonymous";
     
     videoElement.oncanplay = () => {
       videoElement.play();
       
+      let overlayVideoElement: HTMLVideoElement | null = null;
+      if (selectedOverlay !== null && overlays[selectedOverlay]) {
+        overlayVideoElement = document.createElement('video');
+        overlayVideoElement.src = overlays[selectedOverlay].url;
+        overlayVideoElement.muted = true;
+        overlayVideoElement.crossOrigin = "anonymous";
+        overlayVideoElement.play().catch(e => console.error("Error playing overlay video", e));
+      }
+      
       const drawFrame = () => {
         if (frameCount < maxFrames) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
           ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+          
+          if (overlayVideoElement && selectedOverlay !== null) {
+            ctx.globalAlpha = 0.3;
+            ctx.drawImage(overlayVideoElement, 0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = 1.0;
+          }
           
           if (uploadedImage) {
             const img = new Image();
@@ -229,20 +251,39 @@ const Index = () => {
             img.crossOrigin = "anonymous";
             
             if (savedPosition) {
+              const previewContainer = document.querySelector('.video-mockup-container');
+              let scaleFactor = 1;
+              
+              if (previewContainer) {
+                const previewWidth = previewContainer.clientWidth;
+                scaleFactor = canvas.width / previewWidth;
+              }
+              
               ctx.save();
-              ctx.translate(savedPosition.left, savedPosition.top);
+              ctx.translate(savedPosition.left * scaleFactor, savedPosition.top * scaleFactor);
               ctx.rotate((savedPosition.angle || 0) * Math.PI / 180);
-              ctx.scale(savedPosition.scaleX, savedPosition.scaleY);
-              ctx.drawImage(img, 0, 0, savedPosition.originalWidth, savedPosition.originalHeight);
+              ctx.scale(
+                savedPosition.scaleX * scaleFactor, 
+                savedPosition.scaleY * scaleFactor
+              );
+              ctx.drawImage(
+                img, 
+                0, 0, 
+                savedPosition.originalWidth, 
+                savedPosition.originalHeight
+              );
               ctx.restore();
             } else {
-              ctx.drawImage(img, canvas.width/4, canvas.height/4, canvas.width/2, canvas.height/2);
+              const imgWidth = canvas.width / 2;
+              const imgHeight = (img.height / img.width) * imgWidth;
+              ctx.drawImage(
+                img, 
+                canvas.width / 4, 
+                canvas.height / 4, 
+                imgWidth, 
+                imgHeight
+              );
             }
-          }
-          
-          if (selectedOverlay !== null && overlays[selectedOverlay]) {
-            ctx.fillStyle = 'rgba(0, 0, 255, 0.2)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
           }
           
           ctx.fillStyle = '#fff';
@@ -255,6 +296,7 @@ const Index = () => {
         } else {
           mediaRecorder.stop();
           videoElement.pause();
+          if (overlayVideoElement) overlayVideoElement.pause();
         }
       };
       
@@ -306,14 +348,16 @@ const Index = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            <VideoMockup 
-              imageUrl={uploadedImage} 
-              overlayIndex={selectedOverlay}
-              videoUrl={videoUrl || undefined}
-              overlays={overlays}
-              onPositionSave={handlePositionSave}
-              savedPosition={savedPosition}
-            />
+            <div className="video-mockup-container">
+              <VideoMockup 
+                imageUrl={uploadedImage} 
+                overlayIndex={selectedOverlay}
+                videoUrl={videoUrl || undefined}
+                overlays={overlays}
+                onPositionSave={handlePositionSave}
+                savedPosition={savedPosition}
+              />
+            </div>
             
             <RenderButton 
               onRender={handleRender} 

@@ -284,7 +284,7 @@ const VideoMockup = ({
   };
 
   return (
-    <Card className="overflow-hidden shadow-xl">
+    <Card className="overflow-hidden shadow-xl video-mockup-container">
       <CardContent className="p-0 relative">
         <div 
           ref={containerRef}
