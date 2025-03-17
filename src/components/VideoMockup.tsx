@@ -348,12 +348,17 @@ const VideoMockup = ({
                       />
                     )}
                     
-                    {!savedPosition && (
+                    {!savedPosition && imageUrl && (
                       <img 
                         src={imageUrl} 
                         alt="Uploaded content" 
-                        className="object-contain w-full h-full"
-                        style={{ zIndex: 1 }}
+                        className="object-contain w-auto h-auto max-w-full max-h-full absolute"
+                        style={{ 
+                          left: '50%', 
+                          top: '50%', 
+                          transform: 'translate(-50%, -50%)',
+                          zIndex: 1 
+                        }}
                       />
                     )}
                     
@@ -373,7 +378,7 @@ const VideoMockup = ({
                               width: '100%',
                               height: '100%',
                               pointerEvents: 'none',
-                              opacity: 0.15 // Changed from 0.3 to 0.15 (85% transparent)
+                              opacity: 0.15
                             }}
                           />
                         ) : (
@@ -381,7 +386,7 @@ const VideoMockup = ({
                             ref={overlayVideoRef}
                             src={overlays[overlayIndex].url}
                             className="w-full h-full object-cover"
-                            style={{ opacity: 0.15 }} // Changed from 0.3 to 0.15 (85% transparent)
+                            style={{ opacity: 0.15 }}
                             autoPlay
                             loop
                             muted
