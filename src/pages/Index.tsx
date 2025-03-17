@@ -8,11 +8,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Video, X } from "lucide-react";
 
-const SAMPLE_VIDEO = {
-  name: "Abstract Waves", 
-  url: "https://assets.mixkit.co/videos/preview/mixkit-white-waves-digital-animation-6580-large.mp4"
-};
-
 interface Overlay {
   type: "video";
   url: string;
@@ -339,7 +334,7 @@ const Index = () => {
 
   useEffect(() => {
     return () => {
-      if (videoUrl && videoUrl !== SAMPLE_VIDEO.url) {
+      if (videoUrl) {
         URL.revokeObjectURL(videoUrl);
       }
       if (renderedVideoUrl) {
@@ -415,18 +410,6 @@ const Index = () => {
                     </label>
                   </div>
                 )}
-
-                <div className="mt-4">
-                  <h3 className="text-sm font-medium mb-2">Or use sample video:</h3>
-                  <Button 
-                    variant="outline" 
-                    className="justify-start h-auto py-2 px-3 w-full"
-                    onClick={handleSelectSampleVideo}
-                  >
-                    <Video size={14} className="mr-2 text-primary" />
-                    <span className="text-xs">{SAMPLE_VIDEO.name}</span>
-                  </Button>
-                </div>
               </div>
             </div>
                 
