@@ -44,16 +44,32 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
   const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [originalImageDimensions, setOriginalImageDimensions] = useState<{width: number, height: number} | null>(null);
+  const [containerDimensions, setContainerDimensions] = useState<{width: number, height: number} | null>(null);
+
+  // Get and store container dimensions
+  useEffect(() => {
+    if (containerRef.current) {
+      const updateDimensions = () => {
+        const containerWidth = containerRef.current?.clientWidth || 0;
+        const containerHeight = containerWidth / videoAspectRatio;
+        setContainerDimensions({ width: containerWidth, height: containerHeight });
+      };
+      
+      updateDimensions();
+      window.addEventListener('resize', updateDimensions);
+      
+      return () => {
+        window.removeEventListener('resize', updateDimensions);
+      };
+    }
+  }, [videoAspectRatio]);
 
   useEffect(() => {
-    if (!canvasRef.current || !isEditing || !containerRef.current) return;
-    
-    const containerWidth = containerRef.current.clientWidth;
-    const containerHeight = containerWidth / videoAspectRatio;
+    if (!canvasRef.current || !isEditing || !containerRef.current || !containerDimensions) return;
     
     const canvas = new Canvas(canvasRef.current, {
-      width: containerWidth,
-      height: containerHeight,
+      width: containerDimensions.width,
+      height: containerDimensions.height,
       backgroundColor: 'transparent',
     });
     
@@ -86,13 +102,13 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
           });
         } else {
           const baseScale = Math.min(
-            (canvas.width! * 0.8) / img.width!,
-            (canvas.height! * 0.8) / img.height!
+            (containerDimensions.width * 0.8) / img.width!,
+            (containerDimensions.height * 0.8) / img.height!
           );
           
           img.set({
-            left: canvas.width! / 2 - (img.width! * baseScale) / 2,
-            top: canvas.height! / 2 - (img.height! * baseScale) / 2,
+            left: containerDimensions.width / 2 - (img.width! * baseScale) / 2,
+            top: containerDimensions.height / 2 - (img.height! * baseScale) / 2,
             scaleX: baseScale,
             scaleY: baseScale,
             cornerSize: 12,
@@ -114,7 +130,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
     return () => {
       canvas.dispose();
     };
-  }, [imageUrl, isEditing, videoAspectRatio, savedPosition, originalImageDimensions, containerRef]);
+  }, [imageUrl, isEditing, videoAspectRatio, savedPosition, originalImageDimensions, containerDimensions]);
 
   useEffect(() => {
     if (videoUrl) {
@@ -142,6 +158,10 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
     if (isEditing && fabricCanvas) {
       const activeObject = fabricCanvas.getActiveObject();
       if (activeObject) {
+        // Get the current container dimensions to ensure accurate position saving
+        const currentContainerWidth = containerRef.current?.clientWidth || 0;
+        const currentContainerHeight = currentContainerWidth / videoAspectRatio;
+        
         // Store exact position, scale and rotation information
         setSavedPosition({
           left: activeObject.left!,
@@ -295,7 +315,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
                         ref={imageRef}
                         src={imageUrl} 
                         alt="Uploaded content" 
-                        className="absolute object-contain"
+                        className="absolute"
                         style={{ 
                           left: `${savedPosition.left}px`,
                           top: `${savedPosition.top}px`,
@@ -309,7 +329,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
                       <img 
                         src={imageUrl} 
                         alt="Uploaded content" 
-                        className="object-cover w-full h-full"
+                        className="object-contain w-full h-full"
                       />
                     )}
                     
