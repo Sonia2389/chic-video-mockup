@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -94,8 +95,8 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-b from-secondary/50 to-background">
       <div className="container max-w-6xl mx-auto px-4 py-8">
         <header className="mb-8 text-center">
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400 mb-2">
-            Chic Video Mockup
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400 mb-2 font-cursive">
+            tothefknmoon
           </h1>
           <p className="text-muted-foreground">
             Upload your image, choose an overlay, create stunning video mockups
