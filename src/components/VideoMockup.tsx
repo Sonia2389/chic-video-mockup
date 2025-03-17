@@ -45,6 +45,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
   const imageRef = useRef<HTMLImageElement>(null);
   const [originalImageDimensions, setOriginalImageDimensions] = useState<{width: number, height: number} | null>(null);
   const [containerDimensions, setContainerDimensions] = useState<{width: number, height: number} | null>(null);
+  const [lastEditDimensions, setLastEditDimensions] = useState<{width: number, height: number} | null>(null);
 
   // Get and store container dimensions
   useEffect(() => {
@@ -66,6 +67,9 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
 
   useEffect(() => {
     if (!canvasRef.current || !isEditing || !containerRef.current || !containerDimensions) return;
+    
+    // Store the dimensions at edit time for consistent scaling
+    setLastEditDimensions(containerDimensions);
     
     const canvas = new Canvas(canvasRef.current, {
       width: containerDimensions.width,
@@ -158,11 +162,8 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
     if (isEditing && fabricCanvas) {
       const activeObject = fabricCanvas.getActiveObject();
       if (activeObject) {
-        // Get the current container dimensions to ensure accurate position saving
-        const currentContainerWidth = containerRef.current?.clientWidth || 0;
-        const currentContainerHeight = currentContainerWidth / videoAspectRatio;
-        
         // Store exact position, scale and rotation information
+        // Also save the current edit container dimensions to maintain scale ratios
         setSavedPosition({
           left: activeObject.left!,
           top: activeObject.top!,
@@ -261,6 +262,16 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
     
     activeObject.scale(newScale);
     fabricCanvas.renderAll();
+  };
+
+  // Calculate scaling factors if container size changed since last edit
+  const getScalingFactors = () => {
+    if (!containerDimensions || !lastEditDimensions) return { x: 1, y: 1 };
+    
+    return {
+      x: containerDimensions.width / lastEditDimensions.width,
+      y: containerDimensions.height / lastEditDimensions.height
+    };
   };
 
   return (
