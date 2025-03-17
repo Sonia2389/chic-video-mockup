@@ -146,38 +146,32 @@ const Index = () => {
       return;
     }
     
-    const videoWidth = previewVideoElement.videoWidth;
-    const videoHeight = previewVideoElement.videoHeight;
+    const containerWidth = previewContainer.clientWidth;
+    const containerHeight = previewContainer.clientHeight;
     
-    if (!videoWidth || !videoHeight) {
-      toast.error("Unable to determine video dimensions");
-      setRendering(false);
-      return;
-    }
-    
-    canvas.width = videoWidth;
-    canvas.height = videoHeight;
+    canvas.width = containerWidth;
+    canvas.height = containerHeight;
     
     const chunks: Blob[] = [];
-    const stream = canvas.captureStream(30);
+    const stream = canvas.captureStream(60);
     
     let mediaRecorder;
     try {
       mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'video/webm;codecs=vp9',
-        videoBitsPerSecond: 5000000
+        videoBitsPerSecond: 8000000
       });
     } catch (e) {
       try {
         mediaRecorder = new MediaRecorder(stream, {
           mimeType: 'video/webm;codecs=vp8',
-          videoBitsPerSecond: 5000000
+          videoBitsPerSecond: 8000000
         });
       } catch (e2) {
         try {
           mediaRecorder = new MediaRecorder(stream, {
             mimeType: 'video/webm',
-            videoBitsPerSecond: 5000000
+            videoBitsPerSecond: 8000000
           });
         } catch (e3) {
           try {
@@ -214,6 +208,10 @@ const Index = () => {
     
     mediaRecorder.start();
     
+    previewVideoElement.currentTime = 0;
+    previewVideoElement.playbackRate = 1.0;
+    previewVideoElement.play();
+    
     let overlayVideoElement: HTMLVideoElement | null = null;
     if (selectedOverlay !== null && overlays[selectedOverlay]) {
       overlayVideoElement = document.createElement('video');
@@ -221,6 +219,9 @@ const Index = () => {
       overlayVideoElement.muted = true;
       overlayVideoElement.crossOrigin = "anonymous";
       overlayVideoElement.load();
+      overlayVideoElement.currentTime = 0;
+      overlayVideoElement.playbackRate = 1.0;
+      overlayVideoElement.play();
     }
     
     const imageElement = new Image();
@@ -229,69 +230,59 @@ const Index = () => {
       imageElement.crossOrigin = "anonymous";
     }
     
+    const captureExactPreview = () => {
+      ctx.drawImage(previewVideoElement, 0, 0, canvas.width, canvas.height);
+      
+      if (uploadedImage && savedPosition) {
+        ctx.save();
+        
+        const scaleFactor = {
+          x: canvas.width / previewContainer.clientWidth,
+          y: canvas.height / previewContainer.clientHeight
+        };
+        
+        const scaledLeft = savedPosition.left * scaleFactor.x;
+        const scaledTop = savedPosition.top * scaleFactor.y;
+        
+        ctx.translate(scaledLeft, scaledTop);
+        ctx.rotate((savedPosition.angle || 0) * Math.PI / 180);
+        ctx.scale(savedPosition.scaleX, savedPosition.scaleY);
+        
+        ctx.drawImage(
+          imageElement,
+          0, 0,
+          savedPosition.originalWidth,
+          savedPosition.originalHeight
+        );
+        ctx.restore();
+      } else if (uploadedImage) {
+        const imgWidth = canvas.width / 2;
+        const imgHeight = (imageElement.height / imageElement.width) * imgWidth;
+        ctx.drawImage(
+          imageElement,
+          canvas.width / 4,
+          canvas.height / 4,
+          imgWidth,
+          imgHeight
+        );
+      }
+      
+      if (overlayVideoElement && selectedOverlay !== null) {
+        ctx.globalAlpha = 0.15;
+        ctx.drawImage(overlayVideoElement, 0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1.0;
+      }
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = `${Math.floor(canvas.height/20)}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.fillText('tothefknmoon', canvas.width/2, canvas.height/15);
+    };
+    
     const duration = 8;
-    const fps = 30;
+    const fps = 60;
     const totalFrames = duration * fps;
     let frameCount = 0;
-    
-    previewVideoElement.currentTime = 0;
-    previewVideoElement.play();
-    
-    if (overlayVideoElement) {
-      overlayVideoElement.currentTime = 0;
-      overlayVideoElement.play();
-    }
-    
-    const drawFrame = () => {
-      if (frameCount < totalFrames) {
-        ctx.drawImage(previewVideoElement, 0, 0, canvas.width, canvas.height);
-        
-        if (uploadedImage && savedPosition) {
-          ctx.save();
-          ctx.translate(
-            (savedPosition.left / previewContainer.clientWidth) * canvas.width,
-            (savedPosition.top / previewContainer.clientHeight) * canvas.height
-          );
-          ctx.rotate((savedPosition.angle || 0) * Math.PI / 180);
-          ctx.scale(savedPosition.scaleX, savedPosition.scaleY);
-          ctx.drawImage(
-            imageElement,
-            0, 0,
-            savedPosition.originalWidth,
-            savedPosition.originalHeight
-          );
-          ctx.restore();
-        } else if (uploadedImage) {
-          const imgWidth = canvas.width / 2;
-          const imgHeight = (imageElement.height / imageElement.width) * imgWidth;
-          ctx.drawImage(
-            imageElement,
-            canvas.width / 4,
-            canvas.height / 4,
-            imgWidth,
-            imgHeight
-          );
-        }
-        
-        if (overlayVideoElement && selectedOverlay !== null) {
-          ctx.globalAlpha = 0.15;
-          ctx.drawImage(overlayVideoElement, 0, 0, canvas.width, canvas.height);
-          ctx.globalAlpha = 1.0;
-        }
-        
-        ctx.fillStyle = '#fff';
-        ctx.font = '30px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('tothefknmoon', canvas.width/2, 50);
-        
-        frameCount++;
-        requestAnimationFrame(drawFrame);
-      } else {
-        mediaRecorder.stop();
-        previewVideoElement.pause();
-        if (overlayVideoElement) overlayVideoElement.pause();
-      }
-    };
     
     Promise.all([
       new Promise<void>(resolve => {
@@ -311,7 +302,20 @@ const Index = () => {
         }
       })
     ]).then(() => {
-      requestAnimationFrame(drawFrame);
+      const renderFrame = () => {
+        captureExactPreview();
+        frameCount++;
+        
+        if (frameCount < totalFrames) {
+          requestAnimationFrame(renderFrame);
+        } else {
+          mediaRecorder.stop();
+          previewVideoElement.pause();
+          if (overlayVideoElement) overlayVideoElement.pause();
+        }
+      };
+      
+      requestAnimationFrame(renderFrame);
     });
   };
 
