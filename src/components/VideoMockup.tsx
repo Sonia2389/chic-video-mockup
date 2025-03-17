@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Move, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -46,9 +45,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
   const [originalImageDimensions, setOriginalImageDimensions] = useState<{width: number, height: number} | null>(null);
   const [containerDimensions, setContainerDimensions] = useState<{width: number, height: number} | null>(null);
   const [lastEditDimensions, setLastEditDimensions] = useState<{width: number, height: number} | null>(null);
-  const [initialImageLoad, setInitialImageLoad] = useState(true);
 
-  // Get and store container dimensions
   useEffect(() => {
     if (containerRef.current) {
       const updateDimensions = () => {
@@ -69,7 +66,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
   useEffect(() => {
     if (!canvasRef.current || !isEditing || !containerRef.current || !containerDimensions) return;
     
-    // Store the dimensions at edit time for consistent scaling
     setLastEditDimensions(containerDimensions);
     
     const canvas = new Canvas(canvasRef.current, {
@@ -90,7 +86,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
         }
         
         if (savedPosition) {
-          // Apply exact saved position and transformations
           img.set({
             left: savedPosition.left,
             top: savedPosition.top,
@@ -163,8 +158,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
     if (isEditing && fabricCanvas) {
       const activeObject = fabricCanvas.getActiveObject();
       if (activeObject) {
-        // Store exact position, scale and rotation information
-        // Also save the current edit container dimensions to maintain scale ratios
         setSavedPosition({
           left: activeObject.left!,
           top: activeObject.top!,
@@ -177,6 +170,10 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
           originalHeight: activeObject.height!,
           angle: activeObject.angle
         });
+        
+        if (containerDimensions) {
+          setLastEditDimensions(containerDimensions);
+        }
       }
       setIsEditing(false);
       toast.success("Image position saved");
@@ -265,16 +262,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
     fabricCanvas.renderAll();
   };
 
-  // Calculate scaling factors if container size changed since last edit
-  const getScalingFactors = () => {
-    if (!containerDimensions || !lastEditDimensions) return { x: 1, y: 1 };
-    
-    return {
-      x: containerDimensions.width / lastEditDimensions.width,
-      y: containerDimensions.height / lastEditDimensions.height
-    };
-  };
-
   return (
     <Card className="overflow-hidden shadow-xl">
       <CardContent className="p-0 relative">
@@ -322,7 +309,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
               ) : (
                 <div className="absolute inset-0">
                   <div className="w-full h-full relative">
-                    {savedPosition ? (
+                    {savedPosition && (
                       <img 
                         ref={imageRef}
                         src={imageUrl} 
