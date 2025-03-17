@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
 import ImageUpload from "@/components/ImageUpload";
@@ -24,8 +24,12 @@ const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedOverlay, setSelectedOverlay] = useState<number | null>(null);
   const [rendering, setRendering] = useState(false);
+  const [renderProgress, setRenderProgress] = useState(0);
+  const [downloadReady, setDownloadReady] = useState(false);
+  const [renderedVideoUrl, setRenderedVideoUrl] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [overlays, setOverlays] = useState<Overlay[]>([]);
+  const downloadLinkRef = useRef<HTMLAnchorElement>(null);
 
   const handleImageUpload = (imageUrl: string) => {
     setUploadedImage(imageUrl);
@@ -86,13 +90,97 @@ const Index = () => {
       return;
     }
 
+    // Reset state
     setRendering(true);
+    setRenderProgress(0);
+    setDownloadReady(false);
     
-    setTimeout(() => {
-      setRendering(false);
-      toast.success("Video rendered successfully! Download ready.");
-    }, 3000);
+    // Simulate rendering progress
+    const interval = setInterval(() => {
+      setRenderProgress((prev) => {
+        const newProgress = prev + Math.floor(Math.random() * 10);
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            simulateVideoRender();
+          }, 500);
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 300);
   };
+
+  const simulateVideoRender = () => {
+    // Create a canvas to "render" our final video
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Set canvas dimensions
+    canvas.width = 1280;
+    canvas.height = 720;
+    
+    // Draw a fake background
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw image in the center
+    if (uploadedImage) {
+      const img = new Image();
+      img.src = uploadedImage;
+      ctx.drawImage(img, canvas.width/4, canvas.height/4, canvas.width/2, canvas.height/2);
+    }
+    
+    // Add text to indicate this is a simulated video
+    ctx.fillStyle = '#fff';
+    ctx.font = '30px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Generated Video', canvas.width/2, 50);
+    
+    // Convert canvas to blob
+    canvas.toBlob((blob) => {
+      if (blob) {
+        // Create URL for download
+        if (renderedVideoUrl) {
+          URL.revokeObjectURL(renderedVideoUrl);
+        }
+        
+        const url = URL.createObjectURL(blob);
+        setRenderedVideoUrl(url);
+        setRendering(false);
+        setDownloadReady(true);
+        
+        toast.success("Video rendered successfully!");
+      }
+    }, 'image/png');
+  };
+
+  const handleDownload = () => {
+    if (!renderedVideoUrl) return;
+    
+    // Create a temporary anchor element for downloading
+    const a = document.createElement('a');
+    a.href = renderedVideoUrl;
+    a.download = 'rendered-video.mp4';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    toast.success("Video downloaded successfully!");
+  };
+
+  // Clean up URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (videoUrl && videoUrl !== SAMPLE_VIDEO.url) {
+        URL.revokeObjectURL(videoUrl);
+      }
+      if (renderedVideoUrl) {
+        URL.revokeObjectURL(renderedVideoUrl);
+      }
+    };
+  }, [videoUrl, renderedVideoUrl]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-secondary/50 to-background">
@@ -119,6 +207,9 @@ const Index = () => {
               onRender={handleRender} 
               disabled={!uploadedImage || selectedOverlay === null || rendering}
               rendering={rendering}
+              progress={renderProgress}
+              downloadReady={downloadReady}
+              onDownload={handleDownload}
             />
           </div>
           
