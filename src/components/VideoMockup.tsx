@@ -1,9 +1,16 @@
+
 import { Card, CardContent } from "@/components/ui/card";
-import { Monitor, Move, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { Canvas, Image } from 'fabric';
-import { Button } from "@/components/ui/button";
+import { Canvas } from 'fabric';
 import { toast } from "sonner";
+
+// Import the new components
+import VideoContainer from "./video-mockup/VideoContainer";
+import ImageDisplay from "./video-mockup/ImageDisplay";
+import VideoOverlay from "./video-mockup/VideoOverlay";
+import EmptyState from "./video-mockup/EmptyState";
+import EditorControls from "./video-mockup/EditorControls";
+import CanvasEditor from "./video-mockup/CanvasEditor";
 
 interface Overlay {
   type: "image" | "video";
@@ -40,17 +47,11 @@ const VideoMockup = ({
   onPositionSave,
   savedPosition: externalSavedPosition
 }: VideoMockupProps) => {
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [videoAspectRatio, setVideoAspectRatio] = useState(16/9); // Default aspect ratio
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const overlayVideoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null);
   const [activeMode, setActiveMode] = useState<'select' | 'move'>('select');
   const [isEditing, setIsEditing] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(externalSavedPosition || null);
-  const imageRef = useRef<HTMLImageElement>(null);
   const [originalImageDimensions, setOriginalImageDimensions] = useState<{width: number, height: number} | null>(null);
   const [containerDimensions, setContainerDimensions] = useState<{width: number, height: number} | null>(null);
   const [lastEditDimensions, setLastEditDimensions] = useState<{width: number, height: number} | null>(null);
@@ -60,114 +61,6 @@ const VideoMockup = ({
       setSavedPosition(externalSavedPosition);
     }
   }, [externalSavedPosition]);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      const updateDimensions = () => {
-        const containerWidth = containerRef.current?.clientWidth || 0;
-        const containerHeight = containerWidth / videoAspectRatio;
-        setContainerDimensions({ width: containerWidth, height: containerHeight });
-      };
-      
-      updateDimensions();
-      window.addEventListener('resize', updateDimensions);
-      
-      return () => {
-        window.removeEventListener('resize', updateDimensions);
-      };
-    }
-  }, [videoAspectRatio]);
-
-  useEffect(() => {
-    if (!canvasRef.current || !isEditing || !containerRef.current || !containerDimensions) return;
-    
-    setLastEditDimensions(containerDimensions);
-    
-    const canvas = new Canvas(canvasRef.current, {
-      width: containerDimensions.width,
-      height: containerDimensions.height,
-      backgroundColor: 'transparent',
-    });
-    
-    setFabricCanvas(canvas);
-    
-    if (imageUrl) {
-      Image.fromURL(imageUrl).then(img => {
-        if (!originalImageDimensions) {
-          setOriginalImageDimensions({
-            width: img.width!,
-            height: img.height!
-          });
-        }
-        
-        if (savedPosition) {
-          img.set({
-            left: savedPosition.left,
-            top: savedPosition.top,
-            scaleX: savedPosition.scaleX,
-            scaleY: savedPosition.scaleY,
-            angle: savedPosition.angle || 0,
-            cornerSize: 12,
-            cornerColor: '#9b87f5',
-            borderColor: '#9b87f5',
-            cornerStyle: 'circle',
-            transparentCorners: false,
-            originX: 'left',
-            originY: 'top'
-          });
-        } else {
-          const baseScale = Math.min(
-            (containerDimensions.width * 0.8) / img.width!,
-            (containerDimensions.height * 0.8) / img.height!
-          );
-          
-          img.set({
-            left: containerDimensions.width / 2 - (img.width! * baseScale) / 2,
-            top: containerDimensions.height / 2 - (img.height! * baseScale) / 2,
-            scaleX: baseScale,
-            scaleY: baseScale,
-            cornerSize: 12,
-            cornerColor: '#9b87f5',
-            borderColor: '#9b87f5',
-            cornerStyle: 'circle',
-            transparentCorners: false,
-            originX: 'left',
-            originY: 'top'
-          });
-        }
-        
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
-      });
-    }
-    
-    return () => {
-      canvas.dispose();
-    };
-  }, [imageUrl, isEditing, videoAspectRatio, savedPosition, originalImageDimensions, containerDimensions]);
-
-  useEffect(() => {
-    if (videoUrl) {
-      const video = document.createElement('video');
-      video.src = videoUrl;
-      video.onloadedmetadata = () => {
-        setIsVideoLoaded(true);
-        if (video.videoWidth && video.videoHeight) {
-          setVideoAspectRatio(video.videoWidth / video.videoHeight);
-        }
-      };
-      video.onerror = () => console.error("Error loading video");
-    }
-  }, [videoUrl]);
-
-  useEffect(() => {
-    if (overlayIndex !== null && overlays[overlayIndex]?.type === "video" && overlayVideoRef.current) {
-      overlayVideoRef.current.play().catch(error => {
-        console.error("Error playing overlay video:", error);
-      });
-    }
-  }, [overlayIndex, overlays]);
 
   const handleEditToggle = () => {
     if (isEditing && fabricCanvas) {
@@ -286,226 +179,52 @@ const VideoMockup = ({
   return (
     <Card className="overflow-hidden shadow-xl video-mockup-container">
       <CardContent className="p-0 relative">
-        <div 
-          ref={containerRef}
-          className="relative overflow-hidden" 
-          style={{ 
-            paddingBottom: `${(1 / videoAspectRatio) * 100}%`,
-          }}
+        <VideoContainer 
+          videoUrl={videoUrl} 
+          videoAspectRatio={videoAspectRatio}
+          onAspectRatioChange={setVideoAspectRatio}
+          setContainerDimensions={setContainerDimensions}
         >
-          {videoUrl && (
-            <video 
-              ref={videoRef}
-              src={videoUrl}
-              className="absolute inset-0 w-full h-full object-cover"
-              autoPlay
-              loop
-              muted
-              playsInline
-              onLoadedMetadata={(e) => {
-                const video = e.currentTarget;
-                if (video.videoWidth && video.videoHeight) {
-                  setVideoAspectRatio(video.videoWidth / video.videoHeight);
-                }
-              }}
-            />
-          )}
-
-          {isEditing && (
-            <div className="absolute inset-0 z-20">
-              <canvas ref={canvasRef} className="w-full h-full" />
-            </div>
-          )}
+          <CanvasEditor
+            isEditing={isEditing}
+            imageUrl={imageUrl}
+            savedPosition={savedPosition}
+            containerDimensions={containerDimensions}
+            setOriginalImageDimensions={setOriginalImageDimensions}
+            originalImageDimensions={originalImageDimensions}
+            fabricCanvas={fabricCanvas}
+            setFabricCanvas={setFabricCanvas}
+          />
 
           {!isEditing && (
             <>
               {!imageUrl ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                  <Monitor size={48} className="text-muted-foreground/50 mb-3" />
-                  <h3 className="text-lg font-medium text-muted-foreground">Upload an image to preview</h3>
-                  <p className="text-sm text-muted-foreground/70 mt-2">
-                    Your image will appear here in the mockup
-                  </p>
-                </div>
+                <EmptyState />
               ) : (
-                <div className="absolute inset-0">
-                  <div className="w-full h-full relative">
-                    {savedPosition && (
-                      <img 
-                        ref={imageRef}
-                        src={imageUrl} 
-                        alt="Uploaded content" 
-                        className="absolute"
-                        style={{ 
-                          left: `${savedPosition.left}px`,
-                          top: `${savedPosition.top}px`,
-                          width: `${savedPosition.originalWidth}px`, 
-                          height: `${savedPosition.originalHeight}px`,
-                          transformOrigin: 'left top',
-                          transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
-                          zIndex: 1
-                        }}
-                      />
-                    )}
-                    
-                    {!savedPosition && imageUrl && (
-                      <img 
-                        src={imageUrl} 
-                        alt="Uploaded content" 
-                        className="object-contain w-auto h-auto max-w-full max-h-full absolute"
-                        style={{ 
-                          left: '50%', 
-                          top: '50%', 
-                          transform: 'translate(-50%, -50%)',
-                          zIndex: 1 
-                        }}
-                      />
-                    )}
-                    
-                    {overlayIndex !== null && overlays[overlayIndex] && (
-                      <div 
-                        className="absolute inset-0"
-                        aria-label="Overlay"
-                        style={{ zIndex: 2 }}
-                      >
-                        {overlays[overlayIndex].type === "image" ? (
-                          <div 
-                            style={{
-                              backgroundImage: `url(${overlays[overlayIndex].url})`,
-                              backgroundPosition: 'center',
-                              backgroundSize: 'contain',
-                              backgroundRepeat: 'no-repeat',
-                              width: '100%',
-                              height: '100%',
-                              pointerEvents: 'none',
-                              opacity: 0.15
-                            }}
-                          />
-                        ) : (
-                          <video
-                            ref={overlayVideoRef}
-                            src={overlays[overlayIndex].url}
-                            className="w-full h-full object-cover"
-                            style={{ opacity: 0.15 }}
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <ImageDisplay 
+                  imageUrl={imageUrl} 
+                  savedPosition={savedPosition}
+                  isEditing={isEditing}
+                />
               )}
             </>
           )}
-        </div>
 
-        {imageUrl && (
-          <div className="absolute top-2 right-2 flex items-center gap-2 z-30">
-            <Button 
-              size="sm" 
-              variant={isEditing ? "default" : "outline"} 
-              onClick={handleEditToggle}
-              className="h-8 text-xs"
-            >
-              {isEditing ? "Save Position" : "Edit Position"}
-            </Button>
-            
-            {isEditing && (
-              <div className="bg-white/90 backdrop-blur-sm rounded-md shadow-sm">
-                <div className="p-3 space-y-3">
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant={activeMode === 'select' ? "secondary" : "ghost"}
-                      onClick={() => handleModeChange('select')}
-                      className="h-8 w-8 p-0 flex-shrink-0"
-                      title="Select & Resize"
-                    >
-                      <Maximize size={14} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={activeMode === 'move' ? "secondary" : "ghost"}
-                      onClick={() => handleModeChange('move')}
-                      className="h-8 w-8 p-0 flex-shrink-0"
-                      title="Move"
-                    >
-                      <Move size={14} />
-                    </Button>
-                  </div>
+          <VideoOverlay 
+            overlayIndex={overlayIndex} 
+            overlays={overlays} 
+          />
+        </VideoContainer>
 
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => resizeImage(-0.1)}
-                      className="h-8 w-8 p-0 flex-shrink-0"
-                      title="Decrease Size"
-                    >
-                      <ZoomOut size={14} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => resizeImage(0.1)}
-                      className="h-8 w-8 p-0 flex-shrink-0"
-                      title="Increase Size"
-                    >
-                      <ZoomIn size={14} />
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-1">
-                    <div></div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => moveImage('up')}
-                      className="h-8 w-8 p-0 flex-shrink-0"
-                      title="Move Up"
-                    >
-                      <ArrowUp size={14} />
-                    </Button>
-                    <div></div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => moveImage('left')}
-                      className="h-8 w-8 p-0 flex-shrink-0"
-                      title="Move Left"
-                    >
-                      <ArrowLeft size={14} />
-                    </Button>
-                    <div></div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => moveImage('right')}
-                      className="h-8 w-8 p-0 flex-shrink-0"
-                      title="Move Right"
-                    >
-                      <ArrowRight size={14} />
-                    </Button>
-                    <div></div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => moveImage('down')}
-                      className="h-8 w-8 p-0 flex-shrink-0"
-                      title="Move Down"
-                    >
-                      <ArrowDown size={14} />
-                    </Button>
-                    <div></div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        <EditorControls 
+          isEditing={isEditing}
+          onEditToggle={handleEditToggle}
+          activeMode={activeMode}
+          onModeChange={handleModeChange}
+          onMove={moveImage}
+          onResize={resizeImage}
+          imageUrl={imageUrl}
+        />
       </CardContent>
     </Card>
   );
