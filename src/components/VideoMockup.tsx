@@ -1,9 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Monitor, Move, MousePointer, Maximize } from "lucide-react";
+import { Monitor, Move, MousePointer, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Canvas, Image as FabricImage } from 'fabric';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Slider } from "@/components/ui/slider";
 
 interface VideoMockupProps {
   imageUrl: string | null;
@@ -26,6 +27,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
   const [activeMode, setActiveMode] = useState<'select' | 'move'>('select');
   const [isEditing, setIsEditing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [imageScale, setImageScale] = useState(0.8);
 
   // Initialize Fabric.js canvas
   useEffect(() => {
@@ -41,34 +43,37 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     
     // Add the image to the canvas if available
     if (imageUrl) {
-      FabricImage.fromURL(imageUrl, (img) => {
-        // Scale image to fit canvas while maintaining aspect ratio
-        const scale = Math.min(
-          (canvas.width! * 0.8) / img.width!,
-          (canvas.height! * 0.8) / img.height!
-        );
-        
-        img.scale(scale);
-        img.set({
-          left: canvas.width! / 2 - (img.width! * scale) / 2,
-          top: canvas.height! / 2 - (img.height! * scale) / 2,
+      FabricImage.fromURL(imageUrl, {
+        objectOptions: {
           cornerSize: 12,
           cornerColor: '#9b87f5',
           borderColor: '#9b87f5',
           cornerStyle: 'circle',
           transparentCorners: false,
-        });
-        
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
+        },
+        onComplete: (img) => {
+          const scale = Math.min(
+            (canvas.width! * imageScale) / img.width!,
+            (canvas.height! * imageScale) / img.height!
+          );
+          
+          img.scale(scale);
+          img.set({
+            left: canvas.width! / 2 - (img.width! * scale) / 2,
+            top: canvas.height! / 2 - (img.height! * scale) / 2,
+          });
+          
+          canvas.add(img);
+          canvas.setActiveObject(img);
+          canvas.renderAll();
+        }
       });
     }
     
     return () => {
       canvas.dispose();
     };
-  }, [imageUrl, isEditing, videoAspectRatio]);
+  }, [imageUrl, isEditing, videoAspectRatio, imageScale]);
 
   // Update canvas dimensions when video aspect ratio changes
   useEffect(() => {
@@ -144,6 +149,65 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
       }
       fabricCanvas.renderAll();
     }
+  };
+
+  const moveImage = (direction: 'up' | 'down' | 'left' | 'right') => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (!activeObject) {
+      if (fabricCanvas.getObjects().length > 0) {
+        fabricCanvas.setActiveObject(fabricCanvas.getObjects()[0]);
+        fabricCanvas.renderAll();
+        return;
+      }
+      toast.error("No image selected");
+      return;
+    }
+
+    const MOVE_AMOUNT = 10; // pixels to move
+    
+    switch (direction) {
+      case 'up':
+        activeObject.set('top', activeObject.top! - MOVE_AMOUNT);
+        break;
+      case 'down':
+        activeObject.set('top', activeObject.top! + MOVE_AMOUNT);
+        break;
+      case 'left':
+        activeObject.set('left', activeObject.left! - MOVE_AMOUNT);
+        break;
+      case 'right':
+        activeObject.set('left', activeObject.left! + MOVE_AMOUNT);
+        break;
+    }
+    
+    fabricCanvas.renderAll();
+  };
+
+  const resizeImage = (scaleChange: number) => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (!activeObject) {
+      if (fabricCanvas.getObjects().length > 0) {
+        fabricCanvas.setActiveObject(fabricCanvas.getObjects()[0]);
+        fabricCanvas.renderAll();
+        return;
+      }
+      toast.error("No image selected");
+      return;
+    }
+    
+    const currentScale = activeObject.scaleX!;
+    const newScale = Math.max(0.1, currentScale + scaleChange); // Prevent scaling to zero or negative
+    
+    activeObject.scale(newScale);
+    fabricCanvas.renderAll();
+  };
+
+  const handleImageScale = (value: number[]) => {
+    setImageScale(value[0] / 100);
   };
 
   return (
@@ -234,25 +298,106 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
             </Button>
             
             {isEditing && (
-              <div className="bg-white/90 backdrop-blur-sm rounded-md flex shadow-sm">
-                <Button
-                  size="sm"
-                  variant={activeMode === 'select' ? "secondary" : "ghost"}
-                  onClick={() => handleModeChange('select')}
-                  className="h-8 w-8 p-0"
-                  title="Select & Resize"
-                >
-                  <Maximize size={14} />
-                </Button>
-                <Button
-                  size="sm"
-                  variant={activeMode === 'move' ? "secondary" : "ghost"}
-                  onClick={() => handleModeChange('move')}
-                  className="h-8 w-8 p-0"
-                  title="Move"
-                >
-                  <Move size={14} />
-                </Button>
+              <div className="bg-white/90 backdrop-blur-sm rounded-md shadow-sm">
+                <div className="p-3 space-y-3">
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant={activeMode === 'select' ? "secondary" : "ghost"}
+                      onClick={() => handleModeChange('select')}
+                      className="h-8 w-8 p-0 flex-shrink-0"
+                      title="Select & Resize"
+                    >
+                      <Maximize size={14} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={activeMode === 'move' ? "secondary" : "ghost"}
+                      onClick={() => handleModeChange('move')}
+                      className="h-8 w-8 p-0 flex-shrink-0"
+                      title="Move"
+                    >
+                      <Move size={14} />
+                    </Button>
+                  </div>
+
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => resizeImage(-0.1)}
+                      className="h-8 w-8 p-0 flex-shrink-0"
+                      title="Decrease Size"
+                    >
+                      <ZoomOut size={14} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => resizeImage(0.1)}
+                      className="h-8 w-8 p-0 flex-shrink-0"
+                      title="Increase Size"
+                    >
+                      <ZoomIn size={14} />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1">
+                    <div></div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => moveImage('up')}
+                      className="h-8 w-8 p-0 flex-shrink-0"
+                      title="Move Up"
+                    >
+                      <ArrowUp size={14} />
+                    </Button>
+                    <div></div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => moveImage('left')}
+                      className="h-8 w-8 p-0 flex-shrink-0"
+                      title="Move Left"
+                    >
+                      <ArrowLeft size={14} />
+                    </Button>
+                    <div></div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => moveImage('right')}
+                      className="h-8 w-8 p-0 flex-shrink-0"
+                      title="Move Right"
+                    >
+                      <ArrowRight size={14} />
+                    </Button>
+                    <div></div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => moveImage('down')}
+                      className="h-8 w-8 p-0 flex-shrink-0"
+                      title="Move Down"
+                    >
+                      <ArrowDown size={14} />
+                    </Button>
+                    <div></div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium">Image Scale</label>
+                    <Slider 
+                      defaultValue={[imageScale * 100]} 
+                      max={100}
+                      min={10}
+                      step={5}
+                      onValueChange={handleImageScale}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -263,3 +408,4 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
 };
 
 export default VideoMockup;
+
