@@ -1,7 +1,8 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Move, MousePointer, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { Canvas, Image as FabricImage } from 'fabric';
+import { Canvas, Image } from 'fabric';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
@@ -41,7 +42,8 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     setFabricCanvas(canvas);
     
     if (imageUrl) {
-      FabricImage.fromURL(imageUrl, (img) => {
+      // Fix: Use the correct API for Fabric.js v6
+      Image.fromURL(imageUrl).then(img => {
         const scale = Math.min(
           (canvas.width! * imageScale) / img.width!,
           (canvas.height! * imageScale) / img.height!
