@@ -173,7 +173,7 @@ const Index = () => {
             <Separator className="bg-primary/10" />
             
             <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
-              <h2 className="text-lg font-semibold mb-4">Choose Video Overlay</h2>
+              <h2 className="text-lg font-semibold mb-4">Step 3: Add video overlay</h2>
               <VideoOverlays 
                 selectedOverlay={selectedOverlay} 
                 onSelectOverlay={handleSelectOverlay} 
