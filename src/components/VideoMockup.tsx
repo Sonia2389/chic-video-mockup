@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Move, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -46,11 +45,14 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
   const [originalImageDimensions, setOriginalImageDimensions] = useState<{width: number, height: number} | null>(null);
 
   useEffect(() => {
-    if (!canvasRef.current || !isEditing) return;
+    if (!canvasRef.current || !isEditing || !containerRef.current) return;
+    
+    const containerWidth = containerRef.current.clientWidth;
+    const containerHeight = containerWidth / videoAspectRatio;
     
     const canvas = new Canvas(canvasRef.current, {
-      width: containerRef.current?.clientWidth || 800,
-      height: (containerRef.current?.clientWidth || 800) / videoAspectRatio,
+      width: containerWidth,
+      height: containerHeight,
       backgroundColor: 'transparent',
     });
     
@@ -106,7 +108,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
     return () => {
       canvas.dispose();
     };
-  }, [imageUrl, isEditing, videoAspectRatio, savedPosition, originalImageDimensions]);
+  }, [imageUrl, isEditing, videoAspectRatio, savedPosition, originalImageDimensions, containerRef]);
 
   useEffect(() => {
     if (videoUrl) {
@@ -122,7 +124,6 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
     }
   }, [videoUrl]);
 
-  // Start playing the overlay video when it becomes visible
   useEffect(() => {
     if (overlayIndex !== null && overlays[overlayIndex]?.type === "video" && overlayVideoRef.current) {
       overlayVideoRef.current.play().catch(error => {
@@ -132,9 +133,9 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
   }, [overlayIndex, overlays]);
 
   const handleEditToggle = () => {
-    if (isEditing) {
-      if (fabricCanvas && fabricCanvas.getActiveObject()) {
-        const activeObject = fabricCanvas.getActiveObject();
+    if (isEditing && fabricCanvas) {
+      const activeObject = fabricCanvas.getActiveObject();
+      if (activeObject) {
         setSavedPosition({
           left: activeObject.left!,
           top: activeObject.top!,
@@ -320,7 +321,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
                               width: '100%',
                               height: '100%',
                               pointerEvents: 'none',
-                              opacity: 0.3 // Added 30% opacity (70% transparency)
+                              opacity: 0.3 // 30% opacity (70% transparency)
                             }}
                           />
                         ) : (
@@ -328,7 +329,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl, overlays }: VideoMockup
                             ref={overlayVideoRef}
                             src={overlays[overlayIndex].url}
                             className="w-full h-full object-contain"
-                            style={{ opacity: 0.3 }} // Added 30% opacity (70% transparency)
+                            style={{ opacity: 0.3 }} // 30% opacity (70% transparency)
                             autoPlay
                             loop
                             muted
