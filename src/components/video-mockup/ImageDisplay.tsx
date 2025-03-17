@@ -1,6 +1,5 @@
 
 import { useRef } from "react";
-import { Image } from 'fabric';
 
 interface ImagePosition {
   left: number;

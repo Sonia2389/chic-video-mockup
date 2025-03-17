@@ -51,6 +51,7 @@ const CanvasEditor = ({
     
     if (imageUrl) {
       Image.fromURL(imageUrl).then(img => {
+        // Store original dimensions if not already stored
         if (!originalImageDimensions) {
           setOriginalImageDimensions({
             width: img.width!,
@@ -59,12 +60,15 @@ const CanvasEditor = ({
         }
         
         if (savedPosition) {
+          // Apply exact saved position with transformations
           img.set({
             left: savedPosition.left,
             top: savedPosition.top,
             scaleX: savedPosition.scaleX,
             scaleY: savedPosition.scaleY,
             angle: savedPosition.angle || 0,
+            width: savedPosition.originalWidth,
+            height: savedPosition.originalHeight,
             cornerSize: 12,
             cornerColor: '#9b87f5',
             borderColor: '#9b87f5',
@@ -74,6 +78,7 @@ const CanvasEditor = ({
             originY: 'top'
           });
         } else {
+          // Center the image initially with appropriate scaling
           const baseScale = Math.min(
             (containerDimensions.width * 0.8) / img.width!,
             (containerDimensions.height * 0.8) / img.height!

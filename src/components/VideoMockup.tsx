@@ -66,10 +66,11 @@ const VideoMockup = ({
     if (isEditing && fabricCanvas) {
       const activeObject = fabricCanvas.getActiveObject();
       if (activeObject) {
+        // Save the exact position and dimensions of the image
         const newPosition = {
           left: activeObject.left!,
           top: activeObject.top!,
-          scale: activeObject.scaleX!,
+          scale: Math.max(activeObject.scaleX!, activeObject.scaleY!),
           scaleX: activeObject.scaleX!,
           scaleY: activeObject.scaleY!,
           width: activeObject.width! * activeObject.scaleX!,
