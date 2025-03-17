@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Move, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -12,6 +13,12 @@ interface VideoMockupProps {
   videoUrl?: string;
 }
 
+interface ImagePosition {
+  left: number;
+  top: number;
+  scale: number;
+}
+
 const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [videoAspectRatio, setVideoAspectRatio] = useState(16/9); // Default aspect ratio
@@ -24,6 +31,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
   const [imageScale, setImageScale] = useState(0.8);
   const [userImageSize, setUserImageSize] = useState(100); // User image size (percentage)
   const [customOverlays, setCustomOverlays] = useState<string[]>([]);
+  const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current || !isEditing) return;
@@ -46,15 +54,31 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
         const adjustedScale = baseScale * (userImageSize / 100);
         
         img.scale(adjustedScale);
-        img.set({
-          left: canvas.width! / 2 - (img.width! * adjustedScale) / 2,
-          top: canvas.height! / 2 - (img.height! * adjustedScale) / 2,
-          cornerSize: 12,
-          cornerColor: '#9b87f5',
-          borderColor: '#9b87f5',
-          cornerStyle: 'circle',
-          transparentCorners: false,
-        });
+        
+        // Use saved position if available
+        if (savedPosition) {
+          img.set({
+            left: savedPosition.left,
+            top: savedPosition.top,
+            scaleX: savedPosition.scale,
+            scaleY: savedPosition.scale,
+            cornerSize: 12,
+            cornerColor: '#9b87f5',
+            borderColor: '#9b87f5',
+            cornerStyle: 'circle',
+            transparentCorners: false,
+          });
+        } else {
+          img.set({
+            left: canvas.width! / 2 - (img.width! * adjustedScale) / 2,
+            top: canvas.height! / 2 - (img.height! * adjustedScale) / 2,
+            cornerSize: 12,
+            cornerColor: '#9b87f5',
+            borderColor: '#9b87f5',
+            cornerStyle: 'circle',
+            transparentCorners: false,
+          });
+        }
         
         canvas.add(img);
         canvas.setActiveObject(img);
@@ -65,7 +89,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
     return () => {
       canvas.dispose();
     };
-  }, [imageUrl, isEditing, videoAspectRatio, imageScale, userImageSize]);
+  }, [imageUrl, isEditing, videoAspectRatio, imageScale, userImageSize, savedPosition]);
 
   useEffect(() => {
     if (videoUrl) {
@@ -83,6 +107,15 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
 
   const handleEditToggle = () => {
     if (isEditing) {
+      // Save the position before closing edit mode
+      if (fabricCanvas && fabricCanvas.getActiveObject()) {
+        const activeObject = fabricCanvas.getActiveObject();
+        setSavedPosition({
+          left: activeObject.left!,
+          top: activeObject.top!,
+          scale: activeObject.scaleX!,
+        });
+      }
       setIsEditing(false);
       toast.success("Image position saved");
     } else {
@@ -225,15 +258,29 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
               ) : (
                 <div className="absolute inset-0">
                   <div className="w-full h-full relative">
-                    <img 
-                      src={imageUrl} 
-                      alt="Uploaded content" 
-                      className="object-cover w-full h-full"
-                      style={{ 
-                        transform: `scale(${userImageSize / 100})`,
-                        transformOrigin: 'center'
-                      }}
-                    />
+                    {savedPosition ? (
+                      <img 
+                        src={imageUrl} 
+                        alt="Uploaded content" 
+                        className="absolute object-contain"
+                        style={{ 
+                          left: `${savedPosition.left}px`,
+                          top: `${savedPosition.top}px`,
+                          transform: `scale(${savedPosition.scale})`,
+                          transformOrigin: 'left top'
+                        }}
+                      />
+                    ) : (
+                      <img 
+                        src={imageUrl} 
+                        alt="Uploaded content" 
+                        className="object-cover w-full h-full"
+                        style={{ 
+                          transform: `scale(${userImageSize / 100})`,
+                          transformOrigin: 'center'
+                        }}
+                      />
+                    )}
                     
                     {overlayIndex !== null && (
                       <div 
@@ -393,7 +440,7 @@ const VideoMockup = ({ imageUrl, overlayIndex, videoUrl }: VideoMockupProps) => 
           </div>
         )}
 
-        {imageUrl && !isEditing && (
+        {imageUrl && !isEditing && !savedPosition && (
           <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm rounded-md shadow-sm p-2 flex gap-2 items-center z-20">
             <span className="text-xs font-medium">Image Size:</span>
             <Slider 
