@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -157,8 +158,21 @@ const Index = () => {
       return;
     }
     
-    canvas.width = 1280;
-    canvas.height = Math.round(1280 / videoAspectRatio);
+    // Get the preview container dimensions to match the aspect ratio exactly
+    const previewContainer = document.querySelector('.video-mockup-container');
+    if (!previewContainer) {
+      toast.error("Preview container not found");
+      setRendering(false);
+      return;
+    }
+    
+    // Set the canvas dimensions to match the preview's aspect ratio
+    const previewWidth = previewContainer.clientWidth;
+    const previewHeight = previewContainer.clientHeight; 
+    canvas.width = 1280; // Use a higher resolution for quality
+    canvas.height = Math.round(1280 * (previewHeight / previewWidth));
+    
+    const scaleFactor = canvas.width / previewWidth;
     
     const chunks: Blob[] = [];
     const stream = canvas.captureStream(30);
@@ -214,7 +228,7 @@ const Index = () => {
     mediaRecorder.start();
     
     let frameCount = 0;
-    const maxFrames = 90;
+    const maxFrames = 90; // 3 seconds at 30fps
     
     const videoElement = document.createElement('video');
     videoElement.src = videoUrl!;
@@ -237,55 +251,55 @@ const Index = () => {
         if (frameCount < maxFrames) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           
+          // Draw background video
           ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
           
+          // Draw overlay video
           if (overlayVideoElement && selectedOverlay !== null) {
             ctx.globalAlpha = 0.3;
             ctx.drawImage(overlayVideoElement, 0, 0, canvas.width, canvas.height);
             ctx.globalAlpha = 1.0;
           }
           
-          if (uploadedImage) {
+          // Draw the user image with the exact same position and transformation as in the preview
+          if (uploadedImage && savedPosition) {
             const img = new Image();
             img.src = uploadedImage;
             img.crossOrigin = "anonymous";
             
-            if (savedPosition) {
-              const previewContainer = document.querySelector('.video-mockup-container');
-              let scaleFactor = 1;
-              
-              if (previewContainer) {
-                const previewWidth = previewContainer.clientWidth;
-                scaleFactor = canvas.width / previewWidth;
-              }
-              
-              ctx.save();
-              ctx.translate(savedPosition.left * scaleFactor, savedPosition.top * scaleFactor);
-              ctx.rotate((savedPosition.angle || 0) * Math.PI / 180);
-              ctx.scale(
-                savedPosition.scaleX * scaleFactor, 
-                savedPosition.scaleY * scaleFactor
-              );
-              ctx.drawImage(
-                img, 
-                0, 0, 
-                savedPosition.originalWidth, 
-                savedPosition.originalHeight
-              );
-              ctx.restore();
-            } else {
-              const imgWidth = canvas.width / 2;
-              const imgHeight = (img.height / img.width) * imgWidth;
-              ctx.drawImage(
-                img, 
-                canvas.width / 4, 
-                canvas.height / 4, 
-                imgWidth, 
-                imgHeight
-              );
-            }
+            // Apply the same transformations as in the preview, but scaled to the output resolution
+            ctx.save();
+            ctx.translate(savedPosition.left * scaleFactor, savedPosition.top * scaleFactor);
+            ctx.rotate((savedPosition.angle || 0) * Math.PI / 180);
+            ctx.scale(
+              savedPosition.scaleX * scaleFactor,
+              savedPosition.scaleY * scaleFactor
+            );
+            ctx.drawImage(
+              img,
+              0, 0,
+              savedPosition.originalWidth,
+              savedPosition.originalHeight
+            );
+            ctx.restore();
+          } else if (uploadedImage) {
+            // If no position is saved, center the image
+            const img = new Image();
+            img.src = uploadedImage;
+            img.crossOrigin = "anonymous";
+            
+            const imgWidth = canvas.width / 2;
+            const imgHeight = (img.height / img.width) * imgWidth;
+            ctx.drawImage(
+              img,
+              canvas.width / 4,
+              canvas.height / 4,
+              imgWidth,
+              imgHeight
+            );
           }
           
+          // Add watermark
           ctx.fillStyle = '#fff';
           ctx.font = '30px Arial';
           ctx.textAlign = 'center';
