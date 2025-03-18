@@ -3,10 +3,12 @@ import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
 import ImageUpload from "@/components/ImageUpload";
 import RenderButton from "@/components/RenderButton";
+import ApiRenderButton from "@/components/ApiRenderButton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Video, X } from "lucide-react";
+import { Video, X, Server } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Overlay {
   type: "video";
@@ -403,14 +405,40 @@ const Index = () => {
               />
             </div>
             
-            <RenderButton 
-              onRender={handleRender} 
-              disabled={!uploadedImage || selectedOverlay === null || rendering}
-              rendering={rendering}
-              progress={renderProgress}
-              downloadReady={downloadReady}
-              onDownload={handleDownload}
-            />
+            <Tabs defaultValue="browser" className="w-full">
+              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-4">
+                <TabsTrigger value="browser">Browser Rendering</TabsTrigger>
+                <TabsTrigger value="api">API Rendering</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="browser" className="mt-0">
+                <RenderButton 
+                  onRender={handleRender} 
+                  disabled={!uploadedImage || selectedOverlay === null || rendering}
+                  rendering={rendering}
+                  progress={renderProgress}
+                  downloadReady={downloadReady}
+                  onDownload={handleDownload}
+                />
+              </TabsContent>
+              
+              <TabsContent value="api" className="mt-0">
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded shadow-sm">
+                  <p className="text-sm text-yellow-700">
+                    <strong>Note:</strong> This API rendering feature requires implementation of a separate backend service. 
+                    See the documentation in <code>src/docs/api-implementation-guide.md</code> for implementation details.
+                  </p>
+                </div>
+                <ApiRenderButton
+                  backgroundVideoUrl={videoUrl}
+                  imageUrl={uploadedImage}
+                  overlayVideoUrl={selectedOverlay !== null && overlays[selectedOverlay] ? overlays[selectedOverlay].url : null}
+                  savedPosition={savedPosition}
+                  videoAspectRatio={videoAspectRatio}
+                  disabled={!uploadedImage || selectedOverlay === null}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
           
           <div className="space-y-6">
