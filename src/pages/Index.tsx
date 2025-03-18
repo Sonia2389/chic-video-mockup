@@ -139,7 +139,7 @@ const Index = () => {
     }
     
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) {
       toast.error("Error creating video");
       setRendering(false);
@@ -149,8 +149,9 @@ const Index = () => {
     const containerWidth = previewContainer.clientWidth;
     const containerHeight = previewContainer.clientHeight;
     
-    canvas.width = containerWidth;
-    canvas.height = containerHeight;
+    const scaleFactor = 2;
+    canvas.width = containerWidth * scaleFactor;
+    canvas.height = containerHeight * scaleFactor;
     
     const videoFps = previewVideoElement.videoWidth > 0 ? 
       Math.round(previewVideoElement.getVideoPlaybackQuality?.().totalVideoFrames || 30) : 30;
@@ -164,23 +165,25 @@ const Index = () => {
     try {
       mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'video/webm;codecs=vp9',
-        videoBitsPerSecond: 8000000
+        videoBitsPerSecond: 12000000
       });
     } catch (e) {
       try {
         mediaRecorder = new MediaRecorder(stream, {
           mimeType: 'video/webm;codecs=vp8',
-          videoBitsPerSecond: 8000000
+          videoBitsPerSecond: 12000000
         });
       } catch (e2) {
         try {
           mediaRecorder = new MediaRecorder(stream, {
             mimeType: 'video/webm',
-            videoBitsPerSecond: 8000000
+            videoBitsPerSecond: 12000000
           });
         } catch (e3) {
           try {
-            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder = new MediaRecorder(stream, {
+              videoBitsPerSecond: 12000000
+            });
           } catch (e4) {
             toast.error("Your browser doesn't support video recording");
             setRendering(false);
@@ -225,7 +228,7 @@ const Index = () => {
       overlayVideoElement.crossOrigin = "anonymous";
       overlayVideoElement.load();
       overlayVideoElement.currentTime = 0;
-      overlayVideoElement.playbackRate = 1.0;
+      overlayVideoElement.playbackRate = previewVideoElement.playbackRate;
       overlayVideoElement.play();
     }
     
@@ -236,7 +239,14 @@ const Index = () => {
     }
     
     const captureExactPreview = () => {
-      ctx.drawImage(previewVideoElement, 0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.drawImage(
+        previewVideoElement, 
+        0, 0, 
+        canvas.width, canvas.height
+      );
       
       if (uploadedImage && savedPosition) {
         ctx.save();
@@ -248,16 +258,20 @@ const Index = () => {
         
         const scaledLeft = savedPosition.left * scaleFactor.x;
         const scaledTop = savedPosition.top * scaleFactor.y;
+        const scaledWidth = savedPosition.width * scaleFactor.x;
+        const scaledHeight = savedPosition.height * scaleFactor.y;
         
         ctx.translate(scaledLeft, scaledTop);
         ctx.rotate((savedPosition.angle || 0) * Math.PI / 180);
-        ctx.scale(savedPosition.scaleX, savedPosition.scaleY);
         
         ctx.drawImage(
           imageElement,
           0, 0,
           savedPosition.originalWidth,
-          savedPosition.originalHeight
+          savedPosition.originalHeight,
+          0, 0,
+          scaledWidth / savedPosition.scaleX,
+          scaledHeight / savedPosition.scaleY
         );
         ctx.restore();
       } else if (uploadedImage) {
@@ -278,8 +292,9 @@ const Index = () => {
         ctx.globalAlpha = 1.0;
       }
       
+      const fontSize = Math.floor(canvas.height/20);
       ctx.fillStyle = '#fff';
-      ctx.font = `${Math.floor(canvas.height/20)}px Arial`;
+      ctx.font = `bold ${fontSize}px Arial`;
       ctx.textAlign = 'center';
       ctx.fillText('tothefknmoon', canvas.width/2, canvas.height/15);
     };
