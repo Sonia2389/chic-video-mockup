@@ -35,6 +35,11 @@ const ApiRenderButton = ({
       return;
     }
 
+    if (!savedPosition) {
+      toast.error("Please position your image overlay before rendering");
+      return;
+    }
+
     try {
       setRendering(true);
       setRenderProgress(0);
@@ -42,40 +47,57 @@ const ApiRenderButton = ({
 
       // Convert URL objects to Blob files
       const backgroundVideoBlob = await fetch(backgroundVideoUrl).then(r => r.blob());
-      const backgroundVideoFile = new File([backgroundVideoBlob], "background.mp4", { type: "video/mp4" });
+      const backgroundVideoFile = new File(
+        [backgroundVideoBlob], 
+        "background.mp4", 
+        { type: backgroundVideoBlob.type || "video/mp4" }
+      );
       
       const imageBlob = await fetch(imageUrl).then(r => r.blob());
-      const imageFile = new File([imageBlob], "overlay.png", { type: "image/png" });
+      const imageFile = new File(
+        [imageBlob], 
+        "overlay.png", 
+        { type: imageBlob.type || "image/png" }
+      );
 
       let overlayVideoFile = undefined;
       if (overlayVideoUrl) {
         const overlayVideoBlob = await fetch(overlayVideoUrl).then(r => r.blob());
-        overlayVideoFile = new File([overlayVideoBlob], "overlay.mp4", { type: "video/mp4" });
+        overlayVideoFile = new File(
+          [overlayVideoBlob], 
+          "overlay.mp4", 
+          { type: overlayVideoBlob.type || "video/mp4" }
+        );
       }
+
+      toast.info("Preparing files and sending to rendering API...");
 
       // Start the rendering process
       const newJobId = await startVideoRender({
         backgroundVideo: backgroundVideoFile,
         overlayImage: imageFile,
-        overlayPosition: savedPosition || {
-          left: 0,
-          top: 0,
-          width: 0,
-          height: 0,
-          scaleX: 1,
-          scaleY: 1,
-          originalWidth: 0,
-          originalHeight: 0
-        },
+        overlayPosition: savedPosition,
         overlayVideo: overlayVideoFile,
         aspectRatio: videoAspectRatio
       });
       
       setJobId(newJobId);
+      toast.success("Rendering job started! Tracking progress...");
       
       // Start polling for status
+      let pollCount = 0;
+      const maxPolls = 60; // Stop after about 2 minutes (60 * 2sec)
+      
       const checkInterval = setInterval(async () => {
         try {
+          pollCount++;
+          if (pollCount > maxPolls) {
+            clearInterval(checkInterval);
+            setRendering(false);
+            toast.error("Rendering is taking too long. Please check status manually later.");
+            return;
+          }
+          
           const status = await checkRenderStatus(newJobId);
           
           switch (status.status) {
@@ -99,16 +121,28 @@ const ApiRenderButton = ({
               break;
           }
         } catch (error) {
-          clearInterval(checkInterval);
-          setRendering(false);
-          toast.error("Error checking render status");
+          if (error instanceof Error) {
+            toast.error(`Error checking render status: ${error.message}`);
+          } else {
+            toast.error("Error checking render status");
+          }
           console.error(error);
+          
+          // Don't clear interval on first few errors, API might still be starting up
+          if (pollCount > 3) {
+            clearInterval(checkInterval);
+            setRendering(false);
+          }
         }
       }, 2000);
       
     } catch (error) {
       setRendering(false);
-      toast.error("Error starting video render");
+      if (error instanceof Error) {
+        toast.error(`Error starting video render: ${error.message}`);
+      } else {
+        toast.error("Error starting video render");
+      }
       console.error(error);
     }
   };
@@ -124,7 +158,14 @@ const ApiRenderButton = ({
   return (
     <div className="flex flex-col justify-center items-center gap-3">
       {rendering && (
-        <Progress value={renderProgress} className="w-full max-w-md" />
+        <div className="w-full max-w-md space-y-2">
+          <Progress value={renderProgress} className="w-full" />
+          <p className="text-xs text-center text-muted-foreground">
+            {downloadReady 
+              ? "Rendering complete!" 
+              : `Rendering video on server... ${renderProgress}%`}
+          </p>
+        </div>
       )}
       
       <Button

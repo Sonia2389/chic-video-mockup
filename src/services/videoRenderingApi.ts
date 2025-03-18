@@ -35,9 +35,8 @@ interface RenderResponse {
  * Sends a request to start rendering a video on the backend API
  */
 export const startVideoRender = async (params: RenderVideoParams): Promise<string> => {
-  // This is a placeholder for the actual API implementation
-  // Replace with your actual API URL
-  const API_URL = "https://your-rendering-api.example.com/api/render";
+  // You should replace this with your actual API URL when deploying
+  const API_URL = "http://localhost:3000/api/render";
   
   try {
     // Create form data to send files
@@ -51,6 +50,11 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
       formData.append('overlayVideo', params.overlayVideo);
     }
 
+    console.log("Sending render request to API:", API_URL);
+    console.log("Background video size:", params.backgroundVideo.size);
+    console.log("Overlay image size:", params.overlayImage.size);
+    console.log("Overlay position:", JSON.stringify(params.overlayPosition));
+
     // Send the request
     const response = await fetch(API_URL, {
       method: 'POST',
@@ -59,10 +63,13 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to start rendering');
+      const errorMessage = errorData.message || `Server error: ${response.status}`;
+      console.error("API error:", errorMessage);
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
+    console.log("Render job started, ID:", data.id);
     return data.id; // Return the job ID for status checking
   } catch (error) {
     console.error('Error starting video render:', error);
@@ -74,18 +81,23 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
  * Checks the status of a rendering job
  */
 export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> => {
-  // Replace with your actual API URL
-  const API_URL = `https://your-rendering-api.example.com/api/render/${jobId}`;
+  // You should replace this with your actual API URL when deploying
+  const API_URL = `http://localhost:3000/api/render/${jobId}`;
   
   try {
+    console.log("Checking render status for job:", jobId);
     const response = await fetch(API_URL);
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to check rendering status');
+      const errorMessage = errorData.message || `Server error: ${response.status}`;
+      console.error("API status check error:", errorMessage);
+      throw new Error(errorMessage);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log("Render status:", data.status);
+    return data;
   } catch (error) {
     console.error('Error checking render status:', error);
     throw error;
@@ -96,6 +108,8 @@ export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> 
  * Downloads the rendered video
  */
 export const downloadRenderedVideo = (downloadUrl: string, filename = 'tothefknmoon-video.mp4'): void => {
+  console.log("Downloading video from:", downloadUrl);
+  
   const a = document.createElement('a');
   a.href = downloadUrl;
   a.download = filename;
