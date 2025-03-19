@@ -42,11 +42,26 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     const renderScaleFactor = calculateRenderScaleFactor(
       canvas.width,
       canvas.height,
-      params.containerWidth,
-      params.containerHeight
+      params.containerWidth || 0,
+      params.containerHeight || 0
     );
     
-    console.log("Render scale factors:", renderScaleFactor);
+    // Log dimensions for debugging
+    console.log("Render dimensions:", {
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      containerWidth: params.containerWidth,
+      containerHeight: params.containerHeight,
+      scaleFactorX: renderScaleFactor.x,
+      scaleFactorY: renderScaleFactor.y
+    });
+    
+    console.log("Image dimensions:", {
+      imgWidth: img.width,
+      imgHeight: img.height,
+      originalWidth: params.overlayPosition.originalWidth,
+      originalHeight: params.overlayPosition.originalHeight
+    });
     
     recorder.onstop = () => {
       const blob = new Blob(chunks, { type: mimeType || "video/webm" });
@@ -71,14 +86,14 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       
       // LAYER 2: Overlay image (middle layer)
       if (img && params.overlayPosition) {
-        const { left, top, scaleX, scaleY, angle } = params.overlayPosition;
+        const { left, top, scaleX, scaleY, angle, originalWidth, originalHeight } = params.overlayPosition;
         
         // Save current context state
         ctx.save();
         
         // Scale the positioning values to match the video dimensions
-        const scaledLeft = left * renderScaleFactor.x;
-        const scaledTop = top * renderScaleFactor.y;
+        const scaledLeft = Math.round(left * renderScaleFactor.x);
+        const scaledTop = Math.round(top * renderScaleFactor.y);
         
         // Apply transformations in order: translate → rotate → scale
         ctx.translate(scaledLeft, scaledTop);
@@ -87,29 +102,40 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
           ctx.rotate((angle * Math.PI) / 180);
         }
         
-        // Apply the scale
-        ctx.scale(scaleX, scaleY);
+        // Scale properly based on original dimensions
+        const scaledScaleX = scaleX * renderScaleFactor.x;
+        const scaledScaleY = scaleY * renderScaleFactor.y;
+        
+        // Log actual position for each frame
+        console.log("Frame rendering:", {
+          left, top, 
+          scaledLeft, scaledTop,
+          scaleX, scaleY,
+          scaledScaleX, scaledScaleY,
+          angle
+        });
         
         // Draw the image at the origin (we've already translated)
-        ctx.drawImage(
-          img,
-          0, 0,
-          img.naturalWidth, img.naturalHeight
-        );
+        if (originalWidth && originalHeight) {
+          ctx.drawImage(
+            img,
+            0, 0,
+            originalWidth * scaledScaleX, 
+            originalHeight * scaledScaleY
+          );
+        } else {
+          // Fallback if original dimensions not provided
+          ctx.scale(scaledScaleX, scaledScaleY);
+          ctx.drawImage(
+            img,
+            0, 0,
+            img.naturalWidth, 
+            img.naturalHeight
+          );
+        }
         
         // Restore context state
         ctx.restore();
-        
-        // Log actual position for debugging
-        console.log("Drawing image at:", {
-          originalLeft: left,
-          originalTop: top,
-          scaledLeft,
-          scaledTop,
-          scaleX,
-          scaleY,
-          angle
-        });
       }
       
       // LAYER 3: Overlay video (top layer)

@@ -19,6 +19,21 @@ export function useDimensions() {
     }
   }, [containerDimensions]);
 
+  // Monitor ratio consistency between editor and renderer
+  useEffect(() => {
+    if (containerDimensions && originalImageDimensions) {
+      const containerRatio = containerDimensions.width / containerDimensions.height;
+      console.log("Dimension relationships:", {
+        containerWidth: containerDimensions.width,
+        containerHeight: containerDimensions.height,
+        containerRatio: containerRatio.toFixed(2),
+        imageWidth: originalImageDimensions.width,
+        imageHeight: originalImageDimensions.height,
+        imageRatio: (originalImageDimensions.width / originalImageDimensions.height).toFixed(2)
+      });
+    }
+  }, [containerDimensions, originalImageDimensions]);
+
   return {
     containerDimensions,
     setContainerDimensions,

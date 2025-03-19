@@ -53,17 +53,45 @@ export const setupMediaRecorder = (canvas: HTMLCanvasElement): {
 
 /**
  * Calculates the render scale factor between preview and final output
+ * Enhanced to handle edge cases and prevent division by zero
  */
 export const calculateRenderScaleFactor = (
   canvasWidth: number,
   canvasHeight: number,
-  containerWidth?: number,
-  containerHeight?: number
+  containerWidth: number = 0,
+  containerHeight: number = 0
 ): { x: number; y: number } => {
-  return {
-    x: canvasWidth / (containerWidth || canvasWidth),
-    y: canvasHeight / (containerHeight || canvasHeight)
-  };
+  // Prevent division by zero
+  if (!containerWidth || !containerHeight || !canvasWidth || !canvasHeight) {
+    console.warn("Invalid dimensions in scale factor calculation, using 1:1 ratio");
+    return { x: 1, y: 1 };
+  }
+
+  // Validate that dimensions are reasonable
+  if (containerWidth < 10 || containerHeight < 10) {
+    console.warn("Container dimensions suspiciously small, using 1:1 ratio");
+    return { x: 1, y: 1 };
+  }
+
+  if (canvasWidth < 10 || canvasHeight < 10) {
+    console.warn("Canvas dimensions suspiciously small, using 1:1 ratio");
+    return { x: 1, y: 1 };
+  }
+
+  // Calculate scaling factors
+  const scaleX = canvasWidth / containerWidth;
+  const scaleY = canvasHeight / containerHeight;
+
+  console.log("Scale factor calculation:", {
+    canvasWidth,
+    canvasHeight,
+    containerWidth,
+    containerHeight,
+    scaleX,
+    scaleY
+  });
+
+  return { x: scaleX, y: scaleY };
 };
 
 /**
@@ -84,6 +112,7 @@ export const loadVideoElement = async (videoFile: File): Promise<HTMLVideoElemen
     video.load();
   });
   
+  console.log(`Video loaded: ${videoFile.name}, dimensions: ${video.videoWidth}x${video.videoHeight}`);
   return video;
 };
 
@@ -96,7 +125,10 @@ export const loadImageElement = async (imageFile: File): Promise<HTMLImageElemen
   
   // Load the image
   await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
+    img.onload = () => {
+      console.log(`Image loaded: ${imageFile.name}, dimensions: ${img.naturalWidth}x${img.naturalHeight}`);
+      resolve();
+    };
     img.onerror = () => reject(new Error("Failed to load image"));
     img.src = URL.createObjectURL(imageFile);
   });
