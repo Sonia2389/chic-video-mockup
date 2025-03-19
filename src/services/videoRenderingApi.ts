@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 
 interface RenderVideoParams {
@@ -32,6 +33,9 @@ export const API_URL = process.env.NODE_ENV === 'production'
   ? "https://api.yourserver.com/api/render"  // Replace with your production API URL
   : "http://localhost:3001/api/render";  // Updated local development server URL
 
+// A flag to track if we've shown the API connection error already
+let apiErrorShown = false;
+
 /**
  * Sends a request to start rendering a video on the backend API
  */
@@ -59,10 +63,17 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
     console.log("Overlay position:", JSON.stringify(params.overlayPosition));
     console.log("Quality setting:", params.quality || 'standard');
 
+    // Set timeout for the fetch request
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
     // Send the request
     const response = await fetch(API_URL, {
       method: 'POST',
       body: formData,
+      signal: controller.signal
+    }).finally(() => {
+      clearTimeout(timeoutId);
     });
 
     if (!response.ok) {
@@ -77,6 +88,24 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
     return data.id; // Return the job ID for status checking
   } catch (error) {
     console.error('Error starting video render:', error);
+    
+    // Check if this is a network error (API server not running)
+    if (
+      error instanceof TypeError && 
+      (error.message.includes('NetworkError') || error.message.includes('Failed to fetch'))
+    ) {
+      if (!apiErrorShown) {
+        toast.error("Cannot connect to video rendering API server. Please make sure the server is running at " + API_URL);
+        apiErrorShown = true;
+        
+        setTimeout(() => {
+          toast.info("See API implementation guide in src/docs/api-implementation-guide.md for instructions");
+          apiErrorShown = false;
+        }, 3000);
+      }
+      throw new Error("API server not available. Please check your server implementation.");
+    }
+    
     throw error;
   }
 };
@@ -89,7 +118,16 @@ export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> 
   
   try {
     console.log("Checking render status for job:", jobId);
-    const response = await fetch(statusUrl);
+    
+    // Set timeout for the fetch request
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    const response = await fetch(statusUrl, {
+      signal: controller.signal
+    }).finally(() => {
+      clearTimeout(timeoutId);
+    });
     
     if (!response.ok) {
       const errorData = await response.json();
@@ -103,6 +141,15 @@ export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> 
     return data;
   } catch (error) {
     console.error('Error checking render status:', error);
+    
+    // Check if this is a network error (API server not running)
+    if (
+      error instanceof TypeError && 
+      (error.message.includes('NetworkError') || error.message.includes('Failed to fetch'))
+    ) {
+      throw new Error("API server not available. Please check your server implementation.");
+    }
+    
     throw error;
   }
 };
@@ -121,4 +168,26 @@ export const downloadRenderedVideo = (downloadUrl: string, filename = 'tothefknm
   document.body.removeChild(a);
   
   toast.success("Video downloaded successfully!");
+};
+
+/**
+ * Checks if the API server is reachable
+ */
+export const checkApiAvailability = async (): Promise<boolean> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+    
+    const response = await fetch(API_URL.replace(/\/render$/, '/health'), {
+      method: 'GET',
+      signal: controller.signal
+    }).finally(() => {
+      clearTimeout(timeoutId);
+    });
+    
+    return response.ok;
+  } catch (error) {
+    console.log('API server not available:', error);
+    return false;
+  }
 };
