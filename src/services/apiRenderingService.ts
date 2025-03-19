@@ -1,6 +1,14 @@
-
 import { RenderVideoParams, RenderResponse } from "./types/renderingTypes";
 import { API_URL } from "./config/apiConfig";
+
+/**
+ * Utility function to create a timeout for the request
+ */
+const createTimeoutController = (timeout: number) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  return { controller, timeoutId };
+};
 
 /**
  * Sends a request to start rendering a video on the backend API
@@ -12,21 +20,19 @@ export const apiStartVideoRender = async (params: RenderVideoParams): Promise<st
   formData.append('overlayImage', params.overlayImage);
   formData.append('overlayPosition', JSON.stringify(params.overlayPosition));
   formData.append('aspectRatio', params.aspectRatio.toString());
-  
+
   if (params.overlayVideo) {
     formData.append('overlayVideo', params.overlayVideo);
   }
-  
-  // Add quality parameter if specified
+
   if (params.quality) {
     formData.append('quality', params.quality);
   }
-  
-  // Add new parameters for exact preview matching
+
   if (params.preserveOriginalSpeed !== undefined) {
     formData.append('preserveOriginalSpeed', params.preserveOriginalSpeed.toString());
   }
-  
+
   if (params.exactPositioning !== undefined) {
     formData.append('exactPositioning', params.exactPositioning.toString());
   }
@@ -39,22 +45,17 @@ export const apiStartVideoRender = async (params: RenderVideoParams): Promise<st
   console.log("Preserve original speed:", params.preserveOriginalSpeed);
   console.log("Exact positioning:", params.exactPositioning);
 
-  // Set timeout for the fetch request
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+  const { controller, timeoutId } = createTimeoutController(10000); // 10 second timeout
 
   try {
-    // Send the request
     const response = await fetch(API_URL, {
       method: 'POST',
       body: formData,
-      signal: controller.signal
-    }).finally(() => {
-      clearTimeout(timeoutId);
-    });
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeoutId));
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.message || `Server error: ${response.status}`;
       console.error("API error:", errorMessage);
       throw new Error(errorMessage);
@@ -76,20 +77,16 @@ export const apiCheckRenderStatus = async (jobId: string): Promise<RenderRespons
   const statusUrl = `${API_URL}/${jobId}`;
   
   console.log("Checking render status for job:", jobId);
-  
-  // Set timeout for the fetch request
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-  
+
+  const { controller, timeoutId } = createTimeoutController(5000); // 5 second timeout
+
   try {
     const response = await fetch(statusUrl, {
       signal: controller.signal
-    }).finally(() => {
-      clearTimeout(timeoutId);
-    });
-    
+    }).finally(() => clearTimeout(timeoutId));
+
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.message || `Server error: ${response.status}`;
       console.error("API status check error:", errorMessage);
       throw new Error(errorMessage);
@@ -109,16 +106,13 @@ export const apiCheckRenderStatus = async (jobId: string): Promise<RenderRespons
  */
 export const checkApiAvailability = async (): Promise<boolean> => {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-    
+    const { controller, timeoutId } = createTimeoutController(3000); // 3 second timeout
+
     const response = await fetch(API_URL.replace(/\/render$/, '/health'), {
       method: 'GET',
       signal: controller.signal
-    }).finally(() => {
-      clearTimeout(timeoutId);
-    });
-    
+    }).finally(() => clearTimeout(timeoutId));
+
     return response.ok;
   } catch (error) {
     console.log('API server not available:', error);
