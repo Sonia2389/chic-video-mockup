@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { RenderVideoParams, RenderResponse } from "./types/renderingTypes";
 import { API_URL, apiErrorShown, setApiErrorShown } from "./config/apiConfig";
@@ -12,10 +11,22 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
   try {
     // For demonstration, check if we should use the mock implementation
     if (API_URL.includes('mockify.onrender.com')) {
-      return mockRenderProcess(params);
+      console.log("Using mock rendering service...");
+      return mockRenderProcess(params); // Use mock rendering if API_URL points to mockify
     }
     
-    return await apiStartVideoRender(params);
+    // Ensure that the rendering API receives all necessary params
+    console.log("Sending video render request to API with params:", params);
+
+    // Adjust parameters to ensure original speed and position are preserved
+    const adjustedParams = { 
+      ...params, 
+      preserveOriginalSpeed: params.preserveOriginalSpeed ?? true, // Default to true if not specified
+      exactPositioning: params.exactPositioning ?? false, // Default to false if not specified
+    };
+
+    // Call the actual API to start the rendering
+    return await apiStartVideoRender(adjustedParams);
   } catch (error) {
     console.error('Error starting video render:', error);
     
@@ -34,7 +45,7 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
         }, 3000);
       }
       
-      // Fall back to mock implementation
+      // Fall back to mock implementation if API is unavailable
       return mockRenderProcess(params);
     }
     
@@ -48,10 +59,12 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
 export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> => {
   // For demonstration, check if we should use the mock implementation
   if (API_URL.includes('mockify.onrender.com')) {
-    return mockCheckStatus(jobId);
+    console.log("Using mock status check...");
+    return mockCheckStatus(jobId); // Use mock status check if API_URL points to mockify
   }
-  
+
   try {
+    // Call the actual API to check the render status
     return await apiCheckRenderStatus(jobId);
   } catch (error) {
     console.error('Error checking render status:', error);
@@ -61,7 +74,7 @@ export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> 
       error instanceof TypeError && 
       (error.message.includes('NetworkError') || error.message.includes('Failed to fetch'))
     ) {
-      // Fall back to mock implementation
+      // Fall back to mock implementation if API is unavailable
       return mockCheckStatus(jobId);
     }
     
