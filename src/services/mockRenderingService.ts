@@ -84,7 +84,7 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
-      // Create an image element for the overlay
+      // Create an image element for the overlay image
       const img = new Image();
       img.crossOrigin = "anonymous";
       
@@ -94,6 +94,29 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
         img.onerror = () => reject(new Error("Failed to load overlay image"));
         img.src = URL.createObjectURL(params.overlayImage);
       });
+      
+      // Check if we have an overlay video
+      let overlayVideo: HTMLVideoElement | null = null;
+      if (params.overlayVideo) {
+        overlayVideo = document.createElement('video');
+        overlayVideo.muted = true;
+        overlayVideo.playsInline = true;
+        overlayVideo.loop = true;
+        overlayVideo.crossOrigin = "anonymous";
+        
+        // Load the overlay video
+        await new Promise<void>((resolve, reject) => {
+          if (!overlayVideo) return reject(new Error("Overlay video element not created"));
+          
+          overlayVideo.onloadedmetadata = () => resolve();
+          overlayVideo.onerror = () => reject(new Error("Failed to load overlay video"));
+          overlayVideo.src = URL.createObjectURL(params.overlayVideo);
+          overlayVideo.load();
+        });
+        
+        // Start playing the overlay video
+        await overlayVideo.play();
+      }
       
       // Set up for recording
       const chunks: Blob[] = [];
@@ -151,21 +174,23 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
       // Start recording
       recorder.start();
       
-      // Play the video and render frames with overlay
+      // Play the background video
       video.play();
       
       console.log("Drawing with overlay position:", JSON.stringify(params.overlayPosition));
       
       // Render function to draw each frame
       const render = () => {
-        // Draw the background video
+        // Clear the canvas first
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 1. Draw the background video first (bottom layer)
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // Draw the overlay image with the correct positioning and transformation
-        // Use the exact positioning provided from the editor
-        ctx.save();
+        // 2. Draw the overlay image with the correct positioning (middle layer)
+        const { left, top, scaleX, scaleY, angle } = params.overlayPosition;
         
-        const { left, top, width, height, scaleX, scaleY, angle } = params.overlayPosition;
+        ctx.save();
         
         // Apply transformations in the correct order: translate -> rotate -> scale
         ctx.translate(left, top);
@@ -175,7 +200,7 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
           ctx.rotate((angle * Math.PI) / 180);
         }
         
-        // Draw the image with its original dimensions and let the scale handle the size
+        // Apply the scale
         ctx.scale(scaleX, scaleY);
         
         // Draw the image at origin (0,0) since we've already translated
@@ -187,12 +212,24 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
         
         ctx.restore();
         
+        // 3. Draw the overlay video if present (top layer)
+        if (overlayVideo) {
+          // Draw the overlay video with slight transparency (opacity 0.15)
+          ctx.save();
+          ctx.globalAlpha = 0.15;
+          ctx.drawImage(overlayVideo, 0, 0, canvas.width, canvas.height);
+          ctx.restore();
+        }
+        
         // Continue rendering until the end of the video
         if (video.currentTime < video.duration) {
           requestAnimationFrame(render);
         } else {
           recorder.stop();
           video.pause();
+          if (overlayVideo) {
+            overlayVideo.pause();
+          }
         }
       };
       
@@ -203,6 +240,9 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
         if (recorder.state === "recording") {
           recorder.stop();
           video.pause();
+          if (overlayVideo) {
+            overlayVideo.pause();
+          }
         }
       }, 20000); // Limit to 20 seconds max
       
