@@ -35,14 +35,17 @@ export const API_URL = process.env.NODE_ENV === 'production'
 // A flag to track if we've shown the API connection error already
 let apiErrorShown = false;
 
+// Map to store mock job data without using sessionStorage
+const mockJobsMap = new Map();
+
 // Mock implementation for demonstration purposes
 const mockRenderProcess = async (params: RenderVideoParams): Promise<string> => {
   console.log("Using mock API implementation");
   // Generate a random job ID
   const jobId = Math.random().toString(36).substring(2, 15);
   
-  // Store job info in sessionStorage for later retrieval
-  sessionStorage.setItem(`render_job_${jobId}`, JSON.stringify({
+  // Store job info in our Map instead of sessionStorage
+  mockJobsMap.set(jobId, {
     id: jobId,
     status: 'processing',
     progress: 0,
@@ -51,39 +54,36 @@ const mockRenderProcess = async (params: RenderVideoParams): Promise<string> => 
       aspectRatio: params.aspectRatio,
       quality: params.quality || 'standard'
     }
-  }));
+  });
   
   // Start mock processing
   setTimeout(() => {
-    const jobInfo = JSON.parse(sessionStorage.getItem(`render_job_${jobId}`) || '{}');
+    const jobInfo = mockJobsMap.get(jobId) || {};
     jobInfo.progress = 25;
-    sessionStorage.setItem(`render_job_${jobId}`, JSON.stringify(jobInfo));
+    mockJobsMap.set(jobId, jobInfo);
   }, 3000);
   
   setTimeout(() => {
-    const jobInfo = JSON.parse(sessionStorage.getItem(`render_job_${jobId}`) || '{}');
+    const jobInfo = mockJobsMap.get(jobId) || {};
     jobInfo.progress = 50;
-    sessionStorage.setItem(`render_job_${jobId}`, JSON.stringify(jobInfo));
+    mockJobsMap.set(jobId, jobInfo);
   }, 6000);
   
   setTimeout(() => {
-    const jobInfo = JSON.parse(sessionStorage.getItem(`render_job_${jobId}`) || '{}');
+    const jobInfo = mockJobsMap.get(jobId) || {};
     jobInfo.progress = 75;
-    sessionStorage.setItem(`render_job_${jobId}`, JSON.stringify(jobInfo));
+    mockJobsMap.set(jobId, jobInfo);
   }, 9000);
   
   setTimeout(() => {
-    const jobInfo = JSON.parse(sessionStorage.getItem(`render_job_${jobId}`) || '{}');
+    const jobInfo = mockJobsMap.get(jobId) || {};
     jobInfo.status = 'completed';
     jobInfo.progress = 100;
     
-    // Create a data URL for the "rendered" video (using the background video)
-    const reader = new FileReader();
-    reader.onload = function() {
-      jobInfo.downloadUrl = reader.result;
-      sessionStorage.setItem(`render_job_${jobId}`, JSON.stringify(jobInfo));
-    };
-    reader.readAsDataURL(params.backgroundVideo);
+    // Instead of storing the whole data URL in sessionStorage (which causes quota issues)
+    // We'll create a fake URL that doesn't actually contain the video data
+    jobInfo.downloadUrl = URL.createObjectURL(params.backgroundVideo);
+    mockJobsMap.set(jobId, jobInfo);
   }, 12000);
   
   return jobId;
@@ -92,9 +92,9 @@ const mockRenderProcess = async (params: RenderVideoParams): Promise<string> => 
 // Mock implementation for checking render status
 const mockCheckStatus = async (jobId: string): Promise<RenderResponse> => {
   console.log("Using mock status check implementation");
-  const jobInfo = JSON.parse(sessionStorage.getItem(`render_job_${jobId}`) || '{}');
+  const jobInfo = mockJobsMap.get(jobId);
   
-  if (!jobInfo.id) {
+  if (!jobInfo || !jobInfo.id) {
     throw new Error("Job not found");
   }
   
