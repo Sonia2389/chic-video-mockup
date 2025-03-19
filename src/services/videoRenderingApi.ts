@@ -1,8 +1,3 @@
-/**
- * This file contains the functions to interact with the video rendering API.
- * Use this as a reference for the API implementation in your separate project.
- */
-
 import { toast } from "sonner";
 
 interface RenderVideoParams {
@@ -33,10 +28,9 @@ interface RenderResponse {
 }
 
 // You can replace this with your production API URL when deploying
-// const API_URL = "http://localhost:3000/api/render";
-export const API_URL = process.env.NODE_ENV === 'production' 
+const API_URL = process.env.NODE_ENV === 'production' 
   ? "https://your-production-api.com/api/render"  // Replace with your production API URL
-  : "http://localhost:3000/api/render";
+  : "http://localhost:3000/api/render";  // Local server URL (for development)
 
 /**
  * Sends a request to start rendering a video on the backend API
