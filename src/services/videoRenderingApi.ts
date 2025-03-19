@@ -1,4 +1,3 @@
-
 /**
  * This file contains the functions to interact with the video rendering API.
  * Use this as a reference for the API implementation in your separate project.
@@ -35,7 +34,7 @@ interface RenderResponse {
 
 // You can replace this with your production API URL when deploying
 // const API_URL = "http://localhost:3000/api/render";
-const API_URL = process.env.NODE_ENV === 'production' 
+export const API_URL = process.env.NODE_ENV === 'production' 
   ? "https://your-production-api.com/api/render"  // Replace with your production API URL
   : "http://localhost:3000/api/render";
 
@@ -129,4 +128,3 @@ export const downloadRenderedVideo = (downloadUrl: string, filename = 'tothefknm
   
   toast.success("Video downloaded successfully!");
 };
-

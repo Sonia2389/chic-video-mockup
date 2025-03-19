@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Video, X, Server } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { API_URL } from "@/services/videoRenderingApi";
 
 interface Overlay {
   type: "video";
@@ -48,7 +49,6 @@ const Index = () => {
   const handleImageUpload = (imageUrl: string) => {
     setUploadedImage(imageUrl);
     
-    // Convert the image URL to a File object
     fetch(imageUrl)
       .then(res => res.blob())
       .then(blob => {
@@ -63,7 +63,6 @@ const Index = () => {
   const handleSelectOverlay = (index: number) => {
     setSelectedOverlay(index);
     
-    // Convert the overlay video URL to a File object if it exists
     if (overlays[index]) {
       fetch(overlays[index].url)
         .then(res => res.blob())
