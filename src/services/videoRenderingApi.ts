@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 interface RenderVideoParams {
@@ -28,11 +27,10 @@ interface RenderResponse {
   progress?: number;
 }
 
-// Update this URL to point to your actual video rendering API
-// For demonstration, we're using a mock API that works without a backend
+// Update this URL to point to the mockify API service
 export const API_URL = process.env.NODE_ENV === 'production' 
-  ? "https://api.yourserver.com/api/render"  // Replace with your production API URL
-  : "https://mockapi.io/api/mock/render";    // Mock API for demonstration
+  ? "https://mockify.onrender.com/api/render"  // Use mockify.onrender.com for production
+  : "https://mockify.onrender.com/api/render";  // Use mockify.onrender.com for development
 
 // A flag to track if we've shown the API connection error already
 let apiErrorShown = false;
@@ -114,7 +112,7 @@ const mockCheckStatus = async (jobId: string): Promise<RenderResponse> => {
 export const startVideoRender = async (params: RenderVideoParams): Promise<string> => {
   try {
     // For demonstration, check if we should use the mock implementation
-    if (API_URL.includes('mockapi.io')) {
+    if (API_URL.includes('mockify.onrender.com')) {
       return mockRenderProcess(params);
     }
     
@@ -194,7 +192,7 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
  */
 export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> => {
   // For demonstration, check if we should use the mock implementation
-  if (API_URL.includes('mockapi.io')) {
+  if (API_URL.includes('mockify.onrender.com')) {
     return mockCheckStatus(jobId);
   }
   
@@ -259,7 +257,7 @@ export const downloadRenderedVideo = (downloadUrl: string, filename = 'tothefknm
  * Checks if the API server is reachable
  */
 export const checkApiAvailability = async (): Promise<boolean> => {
-  if (API_URL.includes('mockapi.io')) {
+  if (API_URL.includes('mockify.onrender.com')) {
     return true; // Mock API is always available
   }
   
