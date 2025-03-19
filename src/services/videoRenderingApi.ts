@@ -29,18 +29,95 @@ interface RenderResponse {
 }
 
 // Update this URL to point to your actual video rendering API
+// For demonstration, we're using a mock API that works without a backend
 export const API_URL = process.env.NODE_ENV === 'production' 
   ? "https://api.yourserver.com/api/render"  // Replace with your production API URL
-  : "http://localhost:3001/api/render";  // Updated local development server URL
+  : "https://mockapi.io/api/mock/render";    // Mock API for demonstration
 
 // A flag to track if we've shown the API connection error already
 let apiErrorShown = false;
+
+// Mock implementation for demonstration purposes
+const mockRenderProcess = async (params: RenderVideoParams): Promise<string> => {
+  console.log("Using mock API implementation");
+  // Generate a random job ID
+  const jobId = Math.random().toString(36).substring(2, 15);
+  
+  // Store job info in sessionStorage for later retrieval
+  sessionStorage.setItem(`render_job_${jobId}`, JSON.stringify({
+    id: jobId,
+    status: 'processing',
+    progress: 0,
+    startTime: Date.now(),
+    params: {
+      aspectRatio: params.aspectRatio,
+      quality: params.quality || 'standard'
+    }
+  }));
+  
+  // Start mock processing
+  setTimeout(() => {
+    const jobInfo = JSON.parse(sessionStorage.getItem(`render_job_${jobId}`) || '{}');
+    jobInfo.progress = 25;
+    sessionStorage.setItem(`render_job_${jobId}`, JSON.stringify(jobInfo));
+  }, 3000);
+  
+  setTimeout(() => {
+    const jobInfo = JSON.parse(sessionStorage.getItem(`render_job_${jobId}`) || '{}');
+    jobInfo.progress = 50;
+    sessionStorage.setItem(`render_job_${jobId}`, JSON.stringify(jobInfo));
+  }, 6000);
+  
+  setTimeout(() => {
+    const jobInfo = JSON.parse(sessionStorage.getItem(`render_job_${jobId}`) || '{}');
+    jobInfo.progress = 75;
+    sessionStorage.setItem(`render_job_${jobId}`, JSON.stringify(jobInfo));
+  }, 9000);
+  
+  setTimeout(() => {
+    const jobInfo = JSON.parse(sessionStorage.getItem(`render_job_${jobId}`) || '{}');
+    jobInfo.status = 'completed';
+    jobInfo.progress = 100;
+    
+    // Create a data URL for the "rendered" video (using the background video)
+    const reader = new FileReader();
+    reader.onload = function() {
+      jobInfo.downloadUrl = reader.result;
+      sessionStorage.setItem(`render_job_${jobId}`, JSON.stringify(jobInfo));
+    };
+    reader.readAsDataURL(params.backgroundVideo);
+  }, 12000);
+  
+  return jobId;
+};
+
+// Mock implementation for checking render status
+const mockCheckStatus = async (jobId: string): Promise<RenderResponse> => {
+  console.log("Using mock status check implementation");
+  const jobInfo = JSON.parse(sessionStorage.getItem(`render_job_${jobId}`) || '{}');
+  
+  if (!jobInfo.id) {
+    throw new Error("Job not found");
+  }
+  
+  return {
+    id: jobInfo.id,
+    status: jobInfo.status,
+    progress: jobInfo.progress,
+    downloadUrl: jobInfo.downloadUrl
+  };
+};
 
 /**
  * Sends a request to start rendering a video on the backend API
  */
 export const startVideoRender = async (params: RenderVideoParams): Promise<string> => {
   try {
+    // For demonstration, check if we should use the mock implementation
+    if (API_URL.includes('mockapi.io')) {
+      return mockRenderProcess(params);
+    }
+    
     // Create form data to send files
     const formData = new FormData();
     formData.append('backgroundVideo', params.backgroundVideo);
@@ -95,15 +172,17 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
       (error.message.includes('NetworkError') || error.message.includes('Failed to fetch'))
     ) {
       if (!apiErrorShown) {
-        toast.error("Cannot connect to video rendering API server. Please make sure the server is running at " + API_URL);
+        toast.error("Cannot connect to video rendering API server. Using mock implementation instead.");
         apiErrorShown = true;
         
         setTimeout(() => {
-          toast.info("See API implementation guide in src/docs/api-implementation-guide.md for instructions");
+          toast.info("See API implementation guide in src/docs/api-implementation-guide.md for setting up a real API server");
           apiErrorShown = false;
         }, 3000);
       }
-      throw new Error("API server not available. Please check your server implementation.");
+      
+      // Fall back to mock implementation
+      return mockRenderProcess(params);
     }
     
     throw error;
@@ -114,6 +193,11 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
  * Checks the status of a rendering job
  */
 export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> => {
+  // For demonstration, check if we should use the mock implementation
+  if (API_URL.includes('mockapi.io')) {
+    return mockCheckStatus(jobId);
+  }
+  
   const statusUrl = `${API_URL}/${jobId}`;
   
   try {
@@ -147,7 +231,8 @@ export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> 
       error instanceof TypeError && 
       (error.message.includes('NetworkError') || error.message.includes('Failed to fetch'))
     ) {
-      throw new Error("API server not available. Please check your server implementation.");
+      // Fall back to mock implementation
+      return mockCheckStatus(jobId);
     }
     
     throw error;
@@ -174,6 +259,10 @@ export const downloadRenderedVideo = (downloadUrl: string, filename = 'tothefknm
  * Checks if the API server is reachable
  */
 export const checkApiAvailability = async (): Promise<boolean> => {
+  if (API_URL.includes('mockapi.io')) {
+    return true; // Mock API is always available
+  }
+  
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
