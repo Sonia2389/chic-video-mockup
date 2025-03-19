@@ -40,6 +40,8 @@ const RenderButton = ({
       setRenderProgress(0);
       setDownloadReady(false);
 
+      console.log("Rendering with saved position:", JSON.stringify(savedPosition));
+
       // Start the rendering process with exact parameters matching the preview
       const newJobId = await startVideoRender({
         backgroundVideo,

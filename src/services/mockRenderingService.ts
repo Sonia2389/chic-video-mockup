@@ -10,6 +10,8 @@ const mockJobsMap = new Map<string, JobInfo>();
  */
 export const mockRenderProcess = async (params: RenderVideoParams): Promise<string> => {
   console.log("Using mock API implementation");
+  console.log("Overlay position:", JSON.stringify(params.overlayPosition));
+  
   // Generate a random job ID
   const jobId = Math.random().toString(36).substring(2, 15);
   
@@ -21,7 +23,9 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
     startTime: Date.now(),
     params: {
       aspectRatio: params.aspectRatio,
-      quality: params.quality || 'standard'
+      quality: params.quality || 'standard',
+      preserveOriginalSpeed: params.preserveOriginalSpeed,
+      exactPositioning: params.exactPositioning
     }
   });
   
@@ -150,36 +154,35 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
       // Play the video and render frames with overlay
       video.play();
       
+      console.log("Drawing with overlay position:", JSON.stringify(params.overlayPosition));
+      
       // Render function to draw each frame
       const render = () => {
         // Draw the background video
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         // Draw the overlay image with the correct positioning and transformation
+        // Use the exact positioning provided from the editor
         ctx.save();
         
-        // Calculate scaled position based on canvas size vs original container
-        const scaleFactor = {
-          x: canvas.width / (params.overlayPosition.originalWidth * 2),  // Estimate original container width
-          y: canvas.height / (params.overlayPosition.originalHeight * 2)  // Estimate original container height
-        };
+        const { left, top, width, height, scaleX, scaleY, angle } = params.overlayPosition;
         
-        const scaledLeft = params.overlayPosition.left * scaleFactor.x;
-        const scaledTop = params.overlayPosition.top * scaleFactor.y;
+        // Apply transformations in the correct order: translate -> rotate -> scale
+        ctx.translate(left, top);
         
-        // Apply transformations in the correct order
-        ctx.translate(scaledLeft, scaledTop);
-        if (params.overlayPosition.angle) {
-          ctx.rotate((params.overlayPosition.angle * Math.PI) / 180);
+        if (angle) {
+          // Convert degrees to radians for rotation
+          ctx.rotate((angle * Math.PI) / 180);
         }
         
+        // Draw the image with its original dimensions and let the scale handle the size
+        ctx.scale(scaleX, scaleY);
+        
+        // Draw the image at origin (0,0) since we've already translated
         ctx.drawImage(
           img,
           0, 0,
-          img.width, img.height,
-          0, 0,
-          params.overlayPosition.width * scaleFactor.x,
-          params.overlayPosition.height * scaleFactor.y
+          img.naturalWidth, img.naturalHeight
         );
         
         ctx.restore();
