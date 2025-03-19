@@ -1,14 +1,13 @@
+
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
 import ImageUpload from "@/components/ImageUpload";
 import RenderButton from "@/components/RenderButton";
-import ApiRenderButton from "@/components/ApiRenderButton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Video, X, Server } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Video, X } from "lucide-react";
 import { API_URL } from "@/services/videoRenderingApi";
 
 interface Overlay {
@@ -32,16 +31,10 @@ interface ImagePosition {
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedOverlay, setSelectedOverlay] = useState<number | null>(null);
-  const [rendering, setRendering] = useState(false);
-  const [renderProgress, setRenderProgress] = useState(0);
-  const [downloadReady, setDownloadReady] = useState(false);
-  const [renderedVideoUrl, setRenderedVideoUrl] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(null);
   const [videoAspectRatio, setVideoAspectRatio] = useState<number>(16/9);
-  const downloadLinkRef = useRef<HTMLAnchorElement>(null);
-  const [useApiRendering, setUseApiRendering] = useState(true);
   const [backgroundVideoFile, setBackgroundVideoFile] = useState<File | null>(null);
   const [overlayImageFile, setOverlayImageFile] = useState<File | null>(null);
   const [overlayVideoFile, setOverlayVideoFile] = useState<File | null>(null);
@@ -115,282 +108,6 @@ const Index = () => {
     }
   };
 
-  const handleRender = () => {
-    if (!uploadedImage) {
-      toast.error("Please upload an image first");
-      return;
-    }
-    
-    if (selectedOverlay === null) {
-      toast.error("Please select a video overlay");
-      return;
-    }
-
-    if (!videoUrl) {
-      toast.error("Please select a background video");
-      return;
-    }
-
-    setRendering(true);
-    setRenderProgress(0);
-    setDownloadReady(false);
-    
-    const interval = setInterval(() => {
-      setRenderProgress((prev) => {
-        const newProgress = prev + Math.floor(Math.random() * 10);
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            simulateVideoRender();
-          }, 500);
-          return 100;
-        }
-        return newProgress;
-      });
-    }, 300);
-  };
-
-  const simulateVideoRender = () => {
-    const previewVideoElement = document.querySelector('.video-mockup-container video') as HTMLVideoElement | null;
-    
-    if (!previewVideoElement) {
-      toast.error("Preview video not found");
-      setRendering(false);
-      return;
-    }
-    
-    const previewContainer = document.querySelector('.video-mockup-container');
-    if (!previewContainer) {
-      toast.error("Preview container not found");
-      setRendering(false);
-      return;
-    }
-    
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', { alpha: false });
-    if (!ctx) {
-      toast.error("Error creating video");
-      setRendering(false);
-      return;
-    }
-    
-    const containerWidth = previewContainer.clientWidth;
-    const containerHeight = previewContainer.clientHeight;
-    
-    const scaleFactor = 2;
-    canvas.width = containerWidth * scaleFactor;
-    canvas.height = containerHeight * scaleFactor;
-    
-    const videoFps = previewVideoElement.videoWidth > 0 ? 
-      Math.round(previewVideoElement.getVideoPlaybackQuality?.().totalVideoFrames || 30) : 30;
-    
-    const targetFps = Math.min(Math.max(videoFps, 24), 60);
-    
-    const chunks: Blob[] = [];
-    const stream = canvas.captureStream(targetFps);
-    
-    let mediaRecorder;
-    try {
-      mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9',
-        videoBitsPerSecond: 12000000
-      });
-    } catch (e) {
-      try {
-        mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'video/webm;codecs=vp8',
-          videoBitsPerSecond: 12000000
-        });
-      } catch (e2) {
-        try {
-          mediaRecorder = new MediaRecorder(stream, {
-            mimeType: 'video/webm',
-            videoBitsPerSecond: 12000000
-          });
-        } catch (e3) {
-          try {
-            mediaRecorder = new MediaRecorder(stream, {
-              videoBitsPerSecond: 12000000
-            });
-          } catch (e4) {
-            toast.error("Your browser doesn't support video recording");
-            setRendering(false);
-            return;
-          }
-        }
-      }
-    }
-    
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        chunks.push(e.data);
-      }
-    };
-    
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
-      
-      if (renderedVideoUrl) {
-        URL.revokeObjectURL(renderedVideoUrl);
-      }
-      
-      const url = URL.createObjectURL(blob);
-      setRenderedVideoUrl(url);
-      setRendering(false);
-      setDownloadReady(true);
-      
-      toast.success("Video rendered successfully!");
-    };
-    
-    mediaRecorder.start();
-    
-    previewVideoElement.currentTime = 0;
-    previewVideoElement.playbackRate = 1.0;
-    previewVideoElement.play();
-    
-    let overlayVideoElement: HTMLVideoElement | null = null;
-    if (selectedOverlay !== null && overlays[selectedOverlay]) {
-      overlayVideoElement = document.createElement('video');
-      overlayVideoElement.src = overlays[selectedOverlay].url;
-      overlayVideoElement.muted = true;
-      overlayVideoElement.crossOrigin = "anonymous";
-      overlayVideoElement.load();
-      overlayVideoElement.currentTime = 0;
-      overlayVideoElement.playbackRate = previewVideoElement.playbackRate;
-      overlayVideoElement.play();
-    }
-    
-    const imageElement = new Image();
-    if (uploadedImage) {
-      imageElement.src = uploadedImage;
-      imageElement.crossOrigin = "anonymous";
-    }
-    
-    const captureExactPreview = () => {
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      ctx.drawImage(
-        previewVideoElement, 
-        0, 0, 
-        canvas.width, canvas.height
-      );
-      
-      if (uploadedImage && savedPosition) {
-        ctx.save();
-        
-        const scaleFactor = {
-          x: canvas.width / previewContainer.clientWidth,
-          y: canvas.height / previewContainer.clientHeight
-        };
-        
-        const scaledLeft = savedPosition.left * scaleFactor.x;
-        const scaledTop = savedPosition.top * scaleFactor.y;
-        const scaledWidth = savedPosition.width * scaleFactor.x;
-        const scaledHeight = savedPosition.height * scaleFactor.y;
-        
-        ctx.translate(scaledLeft, scaledTop);
-        ctx.rotate((savedPosition.angle || 0) * Math.PI / 180);
-        
-        ctx.drawImage(
-          imageElement,
-          0, 0,
-          savedPosition.originalWidth,
-          savedPosition.originalHeight,
-          0, 0,
-          scaledWidth / savedPosition.scaleX,
-          scaledHeight / savedPosition.scaleY
-        );
-        ctx.restore();
-      } else if (uploadedImage) {
-        const imgWidth = canvas.width / 2;
-        const imgHeight = (imageElement.height / imageElement.width) * imgWidth;
-        ctx.drawImage(
-          imageElement,
-          canvas.width / 4,
-          canvas.height / 4,
-          imgWidth,
-          imgHeight
-        );
-      }
-      
-      if (overlayVideoElement && selectedOverlay !== null) {
-        ctx.globalAlpha = 0.15;
-        ctx.drawImage(overlayVideoElement, 0, 0, canvas.width, canvas.height);
-        ctx.globalAlpha = 1.0;
-      }
-      
-      const fontSize = Math.floor(canvas.height/20);
-      ctx.fillStyle = '#fff';
-      ctx.font = `bold ${fontSize}px Arial`;
-      ctx.textAlign = 'center';
-      ctx.fillText('tothefknmoon', canvas.width/2, canvas.height/15);
-    };
-    
-    const baseDuration = 8;
-    const duration = baseDuration / previewVideoElement.playbackRate;
-    const fps = targetFps;
-    const totalFrames = Math.round(duration * fps);
-    let frameCount = 0;
-    
-    const frameInterval = 1000 / fps;
-    let lastFrameTime = 0;
-    
-    Promise.all([
-      new Promise<void>(resolve => {
-        if (imageElement.complete) {
-          resolve();
-        } else {
-          imageElement.onload = () => resolve();
-          imageElement.onerror = () => resolve();
-        }
-      }),
-      new Promise<void>(resolve => {
-        if (overlayVideoElement) {
-          overlayVideoElement.oncanplay = () => resolve();
-          overlayVideoElement.onerror = () => resolve();
-        } else {
-          resolve();
-        }
-      })
-    ]).then(() => {
-      const renderFrame = (timestamp: number) => {
-        if (!lastFrameTime) lastFrameTime = timestamp;
-        
-        const elapsed = timestamp - lastFrameTime;
-        
-        if (elapsed >= frameInterval) {
-          lastFrameTime = timestamp;
-          captureExactPreview();
-          frameCount++;
-        }
-        
-        if (frameCount < totalFrames) {
-          requestAnimationFrame(renderFrame);
-        } else {
-          mediaRecorder.stop();
-          previewVideoElement.pause();
-          if (overlayVideoElement) overlayVideoElement.pause();
-        }
-      };
-      
-      requestAnimationFrame(renderFrame);
-    });
-  };
-
-  const handleDownload = () => {
-    if (!renderedVideoUrl) return;
-    
-    const a = document.createElement('a');
-    a.href = renderedVideoUrl;
-    a.download = 'tothefknmoon-video.mp4';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    toast.success("Video downloaded successfully!");
-  };
-
   const handlePositionSave = (position: ImagePosition) => {
     setSavedPosition(position);
   };
@@ -400,11 +117,8 @@ const Index = () => {
       if (videoUrl) {
         URL.revokeObjectURL(videoUrl);
       }
-      if (renderedVideoUrl) {
-        URL.revokeObjectURL(renderedVideoUrl);
-      }
     };
-  }, [videoUrl, renderedVideoUrl]);
+  }, [videoUrl]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-secondary/50 to-background">
@@ -431,48 +145,22 @@ const Index = () => {
               />
             </div>
             
-            <Tabs defaultValue="api" className="w-full">
-              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-4">
-                <TabsTrigger value="browser" onClick={() => setUseApiRendering(false)}>Browser Rendering</TabsTrigger>
-                <TabsTrigger value="api" onClick={() => setUseApiRendering(true)}>API Rendering</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="browser" className="mt-0">
-                <RenderButton 
-                  onRender={handleRender} 
-                  disabled={!uploadedImage || selectedOverlay === null || rendering}
-                  rendering={rendering}
-                  progress={renderProgress}
-                  downloadReady={downloadReady}
-                  onDownload={handleDownload}
-                  useApi={false}
-                />
-              </TabsContent>
-              
-              <TabsContent value="api" className="mt-0">
-                {!API_URL.includes("your-production-api.com") ? (
-                  <RenderButton
-                    onRender={() => {}} // Not used with API rendering
-                    disabled={!uploadedImage || selectedOverlay === null}
-                    rendering={false}
-                    downloadReady={false}
-                    backgroundVideo={backgroundVideoFile || undefined}
-                    overlayImage={overlayImageFile || undefined}
-                    overlayVideo={overlayVideoFile || undefined}
-                    savedPosition={savedPosition}
-                    videoAspectRatio={videoAspectRatio}
-                    useApi={true}
-                  />
-                ) : (
-                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded shadow-sm">
-                    <p className="text-sm text-yellow-700">
-                      <strong>Note:</strong> To enable high-quality API rendering, update the API_URL in <code>src/services/videoRenderingApi.ts</code> to point to your rendering server. 
-                      See the documentation in <code>src/docs/api-implementation-guide.md</code> for implementation details.
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+            <RenderButton
+              disabled={!uploadedImage || selectedOverlay === null}
+              backgroundVideo={backgroundVideoFile || undefined}
+              overlayImage={overlayImageFile || undefined}
+              overlayVideo={overlayVideoFile || undefined}
+              savedPosition={savedPosition}
+              videoAspectRatio={videoAspectRatio}
+            />
+            
+            {!API_URL.includes("mockify.onrender.com") && (
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded shadow-sm">
+                <p className="text-sm text-yellow-700">
+                  <strong>Note:</strong> Currently using a mock implementation. For production rendering, update the API_URL in <code>src/services/config/apiConfig.ts</code>.
+                </p>
+              </div>
+            )}
           </div>
           
           <div className="space-y-6">
