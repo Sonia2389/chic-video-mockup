@@ -14,7 +14,7 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
       console.log("Using mock rendering service...");
       return mockRenderProcess(params); // Use mock rendering if API_URL points to mockify
     }
-    
+
     // Ensure that the rendering API receives all necessary params
     console.log("Sending video render request to API with params:", params);
 
@@ -25,11 +25,21 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
       exactPositioning: params.exactPositioning ?? false, // Default to false if not specified
     };
 
+    // Log and confirm overlay position and other params are as expected
+    console.log("Adjusted params for rendering:", adjustedParams);
+
+    // Ensure overlayPosition is passed correctly (stringified or as an object)
+    if (adjustedParams.overlayPosition) {
+      console.log("Overlay position being sent to API:", JSON.stringify(adjustedParams.overlayPosition));
+    } else {
+      console.warn("Overlay position is not defined or not set correctly.");
+    }
+
     // Call the actual API to start the rendering
     return await apiStartVideoRender(adjustedParams);
   } catch (error) {
     console.error('Error starting video render:', error);
-    
+
     // Check if this is a network error (API server not running)
     if (
       error instanceof TypeError && 
@@ -44,11 +54,11 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
           setApiErrorShown(false);
         }, 3000);
       }
-      
+
       // Fall back to mock implementation if API is unavailable
       return mockRenderProcess(params);
     }
-    
+
     throw error;
   }
 };
@@ -68,7 +78,7 @@ export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> 
     return await apiCheckRenderStatus(jobId);
   } catch (error) {
     console.error('Error checking render status:', error);
-    
+
     // Check if this is a network error (API server not running)
     if (
       error instanceof TypeError && 
@@ -77,7 +87,7 @@ export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> 
       // Fall back to mock implementation if API is unavailable
       return mockCheckStatus(jobId);
     }
-    
+
     throw error;
   }
 };
@@ -87,14 +97,14 @@ export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> 
  */
 export const downloadRenderedVideo = (downloadUrl: string, filename = 'tothefknmoon-video.mp4'): void => {
   console.log("Downloading video from:", downloadUrl);
-  
+
   const a = document.createElement('a');
   a.href = downloadUrl;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  
+
   toast.success("Video downloaded successfully!");
 };
 
