@@ -179,57 +179,82 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
       
       console.log("Drawing with overlay position:", JSON.stringify(params.overlayPosition));
       
-      // Render function to draw each frame - LAYERING ORDER IS CRUCIAL HERE
+      // Calculate the correct scaling factor between preview and render
+      // This ensures the coordinate systems match
+      const renderScaleFactor = {
+        x: canvas.width / (params.containerWidth || canvas.width),
+        y: canvas.height / (params.containerHeight || canvas.height)
+      };
+      
+      console.log("Render scale factors:", renderScaleFactor);
+      
+      // Render function to draw each frame - EXACT LAYERING ORDER: background → image → overlay
       const render = () => {
-        // Clear the canvas first to start with a clean slate each frame
+        // Clear the canvas for a clean slate each frame
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // LAYER 1: Draw the background video (bottom layer)
+        // LAYER 1: Background video (bottom layer)
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // LAYER 2: Draw the overlay image with correct positioning (middle layer)
+        // LAYER 2: Overlay image (middle layer)
         if (img && params.overlayPosition) {
           const { left, top, scaleX, scaleY, angle } = params.overlayPosition;
           
-          // Save the current context state before applying transformations
+          // Save current context state
           ctx.save();
           
-          // Apply transformations in the correct order: translate -> rotate -> scale
-          ctx.translate(left, top);
+          // Scale the positioning values to match the video dimensions
+          const scaledLeft = left * renderScaleFactor.x;
+          const scaledTop = top * renderScaleFactor.y;
+          
+          // Apply transformations in order: translate → rotate → scale
+          ctx.translate(scaledLeft, scaledTop);
           
           if (angle) {
-            // Convert degrees to radians for rotation
             ctx.rotate((angle * Math.PI) / 180);
           }
           
           // Apply the scale
           ctx.scale(scaleX, scaleY);
           
-          // Draw the image at origin (0,0) since we've already translated
+          // Draw the image at the origin (we've already translated)
           ctx.drawImage(
             img,
             0, 0,
             img.naturalWidth, img.naturalHeight
           );
           
-          // Restore the context to its state before transformations
+          // Restore context state
           ctx.restore();
+          
+          // Log actual position for debugging
+          console.log("Drawing image at:", {
+            originalLeft: left,
+            originalTop: top,
+            scaledLeft,
+            scaledTop,
+            scaleX,
+            scaleY,
+            angle
+          });
         }
         
-        // LAYER 3: Draw the overlay video if present (top layer)
+        // LAYER 3: Overlay video (top layer)
         if (overlayVideo) {
-          // Draw the overlay video with slight transparency (opacity 0.15)
           ctx.save();
-          ctx.globalAlpha = 0.15; // Transparency level
+          // Make the overlay slightly transparent but clearly visible
+          ctx.globalAlpha = 0.6;
           ctx.drawImage(overlayVideo, 0, 0, canvas.width, canvas.height);
           ctx.restore();
+          
+          console.log("Drawing overlay video at full canvas size");
         }
         
-        // Continue rendering until the end of the video
+        // Continue rendering until the video ends
         if (video.currentTime < video.duration) {
           requestAnimationFrame(render);
         } else {
-          // Stop recording when the video ends
+          // Stop recording when done
           recorder.stop();
           video.pause();
           if (overlayVideo) {

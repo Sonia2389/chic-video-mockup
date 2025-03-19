@@ -13,6 +13,7 @@ interface RenderButtonProps {
   overlayVideo?: File;
   savedPosition?: any;
   videoAspectRatio?: number;
+  containerDimensions?: { width: number, height: number } | null;
 }
 
 const RenderButton = ({ 
@@ -21,7 +22,8 @@ const RenderButton = ({
   overlayImage,
   overlayVideo,
   savedPosition,
-  videoAspectRatio = 16/9
+  videoAspectRatio = 16/9,
+  containerDimensions
 }: RenderButtonProps) => {
   const [isRendering, setIsRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
@@ -41,6 +43,7 @@ const RenderButton = ({
       setDownloadReady(false);
 
       console.log("Rendering with saved position:", JSON.stringify(savedPosition));
+      console.log("Container dimensions:", containerDimensions);
 
       // Start the rendering process with exact parameters matching the preview
       const newJobId = await startVideoRender({
@@ -51,7 +54,9 @@ const RenderButton = ({
         aspectRatio: videoAspectRatio,
         quality: 'high', // Use high quality by default for best match to preview
         preserveOriginalSpeed: true, // Ensure video speed matches the preview
-        exactPositioning: true // Use exact pixel positioning from the preview
+        exactPositioning: true, // Use exact pixel positioning from the preview
+        containerWidth: containerDimensions?.width,
+        containerHeight: containerDimensions?.height
       });
       
       setJobId(newJobId);

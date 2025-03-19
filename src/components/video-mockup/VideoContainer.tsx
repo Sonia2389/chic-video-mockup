@@ -1,83 +1,107 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 
 interface VideoContainerProps {
   videoUrl?: string;
-  videoAspectRatio: number;
-  onAspectRatioChange: (ratio: number) => void;
-  setContainerDimensions: (dimensions: { width: number, height: number } | null) => void;
+  videoAspectRatio?: number;
+  onAspectRatioChange?: (ratio: number) => void;
   children: React.ReactNode;
+  setContainerDimensions?: (dimensions: { width: number, height: number } | null) => void;
 }
 
 const VideoContainer = ({ 
   videoUrl, 
-  videoAspectRatio, 
+  videoAspectRatio = 16/9, 
   onAspectRatioChange,
   setContainerDimensions,
   children 
 }: VideoContainerProps) => {
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [containerReady, setContainerReady] = useState(false);
 
+  // Update aspect ratio when video loads
   useEffect(() => {
-    if (videoUrl) {
-      const video = document.createElement('video');
-      video.src = videoUrl;
-      video.onloadedmetadata = () => {
-        setIsVideoLoaded(true);
-        if (video.videoWidth && video.videoHeight) {
-          onAspectRatioChange(video.videoWidth / video.videoHeight);
+    if (!videoRef.current || !videoUrl) return;
+    
+    const videoElement = videoRef.current;
+    
+    const handleMetadataLoaded = () => {
+      if (videoElement.videoWidth && videoElement.videoHeight) {
+        const aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
+        if (onAspectRatioChange) {
+          onAspectRatioChange(aspectRatio);
         }
-      };
-      video.onerror = () => console.error("Error loading video");
-    }
+      }
+    };
+    
+    videoElement.addEventListener('loadedmetadata', handleMetadataLoaded);
+    
+    return () => {
+      videoElement.removeEventListener('loadedmetadata', handleMetadataLoaded);
+    };
   }, [videoUrl, onAspectRatioChange]);
 
+  // Update container dimensions when they change
   useEffect(() => {
-    if (containerRef.current) {
-      const updateDimensions = () => {
-        const containerWidth = containerRef.current?.clientWidth || 0;
-        const containerHeight = containerWidth / videoAspectRatio;
-        setContainerDimensions({ width: containerWidth, height: containerHeight });
-      };
+    if (!containerRef.current) return;
+    
+    const updateDimensions = () => {
+      if (containerRef.current && setContainerDimensions) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
+        setContainerDimensions({ width, height });
+        setContainerReady(true);
+      }
+    };
+    
+    // Initial measurement
+    updateDimensions();
+    
+    // Set up observer for size changes
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    resizeObserver.observe(containerRef.current);
+    
+    // Also listen for window resize
+    window.addEventListener('resize', updateDimensions);
+    
+    return () => {
+      if (containerRef.current) {
+        resizeObserver.unobserve(containerRef.current);
+      }
+      window.removeEventListener('resize', updateDimensions);
       
-      updateDimensions();
-      window.addEventListener('resize', updateDimensions);
-      
-      return () => {
-        window.removeEventListener('resize', updateDimensions);
-      };
-    }
-  }, [videoAspectRatio, setContainerDimensions]);
+      // Clear dimensions when component unmounts
+      if (setContainerDimensions) {
+        setContainerDimensions(null);
+      }
+    };
+  }, [setContainerDimensions]);
 
   return (
     <div 
       ref={containerRef}
-      className="relative overflow-hidden" 
+      className="relative w-full overflow-hidden bg-black"
       style={{ 
         paddingBottom: `${(1 / videoAspectRatio) * 100}%`,
       }}
     >
-      {videoUrl && (
-        <video 
-          ref={videoRef}
-          src={videoUrl}
-          className="absolute inset-0 w-full h-full object-cover"
-          autoPlay
-          loop
-          muted
-          playsInline
-          onLoadedMetadata={(e) => {
-            const video = e.currentTarget;
-            if (video.videoWidth && video.videoHeight) {
-              onAspectRatioChange(video.videoWidth / video.videoHeight);
-            }
-          }}
-        />
-      )}
-
-      {children}
+      <div className="absolute inset-0">
+        {videoUrl ? (
+          <video 
+            ref={videoRef}
+            src={videoUrl}
+            className="w-full h-full object-cover"
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-800" />
+        )}
+        
+        {containerReady && children}
+      </div>
     </div>
   );
 };

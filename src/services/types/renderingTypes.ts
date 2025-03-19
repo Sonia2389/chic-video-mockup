@@ -2,30 +2,32 @@
 export interface RenderVideoParams {
   backgroundVideo: File;
   overlayImage: File;
+  overlayVideo?: File;
   overlayPosition: {
     left: number;
     top: number;
-    width: number;
-    height: number;
     scaleX: number;
     scaleY: number;
-    originalWidth: number;
-    originalHeight: number;
+    width?: number;
+    height?: number;
+    originalWidth?: number;
+    originalHeight?: number;
     angle?: number;
   };
-  overlayVideo?: File;
   aspectRatio: number;
-  quality?: 'standard' | 'high' | 'ultra';
+  quality?: 'low' | 'standard' | 'high';
   preserveOriginalSpeed?: boolean;
   exactPositioning?: boolean;
+  containerWidth?: number;
+  containerHeight?: number;
 }
 
 export interface RenderResponse {
   id: string;
   status: 'processing' | 'completed' | 'failed';
+  progress: number;
   downloadUrl?: string;
   error?: string;
-  progress?: number;
 }
 
 export interface JobInfo {
@@ -33,9 +35,9 @@ export interface JobInfo {
   status: 'processing' | 'completed' | 'failed';
   progress: number;
   startTime: number;
-  params?: {
+  params: {
     aspectRatio: number;
-    quality?: 'standard' | 'high' | 'ultra';
+    quality: string;
     preserveOriginalSpeed?: boolean;
     exactPositioning?: boolean;
   };

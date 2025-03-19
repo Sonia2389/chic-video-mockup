@@ -38,6 +38,7 @@ const Index = () => {
   const [backgroundVideoFile, setBackgroundVideoFile] = useState<File | null>(null);
   const [overlayImageFile, setOverlayImageFile] = useState<File | null>(null);
   const [overlayVideoFile, setOverlayVideoFile] = useState<File | null>(null);
+  const [containerDimensions, setContainerDimensions] = useState<{width: number, height: number} | null>(null);
 
   const handleImageUpload = (imageUrl: string) => {
     setUploadedImage(imageUrl);
@@ -112,6 +113,11 @@ const Index = () => {
     setSavedPosition(position);
   };
 
+  const handleContainerDimensions = (dimensions: {width: number, height: number} | null) => {
+    setContainerDimensions(dimensions);
+    console.log("Container dimensions updated:", dimensions);
+  };
+
   useEffect(() => {
     return () => {
       if (videoUrl) {
@@ -152,6 +158,7 @@ const Index = () => {
               overlayVideo={overlayVideoFile || undefined}
               savedPosition={savedPosition}
               videoAspectRatio={videoAspectRatio}
+              containerDimensions={containerDimensions}
             />
             
             {!API_URL.includes("mockify.onrender.com") && (
