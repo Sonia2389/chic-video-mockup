@@ -27,10 +27,10 @@ interface RenderResponse {
   progress?: number;
 }
 
-// You can replace this with your production API URL when deploying
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? "https://your-production-api.com/api/render"  // Replace with your production API URL
-  : "http://localhost:3000/api/render";  // Local server URL (for development)
+// Update this URL to point to your actual video rendering API
+export const API_URL = process.env.NODE_ENV === 'production' 
+  ? "https://api.yourserver.com/api/render"  // Replace with your production API URL
+  : "http://localhost:3001/api/render";  // Updated local development server URL
 
 /**
  * Sends a request to start rendering a video on the backend API
