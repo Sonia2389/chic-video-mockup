@@ -35,6 +35,10 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
       console.warn("Overlay position is not defined or not set correctly.");
     }
 
+    // Ensure that the aspect ratio and quality are correctly passed if provided
+    console.log("Aspect Ratio:", adjustedParams.aspectRatio);
+    console.log("Video Quality:", adjustedParams.quality);
+
     // Call the actual API to start the rendering
     return await apiStartVideoRender(adjustedParams);
   } catch (error) {
