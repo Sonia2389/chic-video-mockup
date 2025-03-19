@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Canvas } from 'fabric';
 import { toast } from "sonner";
@@ -108,4 +107,3 @@ const PositionManager = ({
 };
 
 export default PositionManager;
-export type { ImagePosition };
