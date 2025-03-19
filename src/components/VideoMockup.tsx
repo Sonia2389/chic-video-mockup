@@ -1,33 +1,24 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Canvas } from 'fabric';
 import { toast } from "sonner";
 
-// Import the new components
+// Import components and hooks
 import VideoContainer from "./video-mockup/VideoContainer";
 import ImageDisplay from "./video-mockup/ImageDisplay";
 import VideoOverlay from "./video-mockup/VideoOverlay";
 import EmptyState from "./video-mockup/EmptyState";
 import EditorControls from "./video-mockup/EditorControls";
 import CanvasEditor from "./video-mockup/CanvasEditor";
+import PositionManager, { ImagePosition } from "./video-mockup/PositionManager";
+import ImageTransformer from "./video-mockup/ImageTransformer";
+import { useEditingMode } from "@/hooks/useEditingMode";
+import { useDimensions } from "@/hooks/useDimensions";
 
 interface Overlay {
   type: "image" | "video";
   url: string;
-}
-
-interface ImagePosition {
-  left: number;
-  top: number;
-  scale: number;
-  width: number;
-  height: number;
-  scaleX: number;
-  scaleY: number;
-  originalWidth: number;
-  originalHeight: number;
-  angle?: number;
 }
 
 interface VideoMockupProps {
@@ -49,25 +40,17 @@ const VideoMockup = ({
 }: VideoMockupProps) => {
   const [videoAspectRatio, setVideoAspectRatio] = useState(16/9); // Default aspect ratio
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null);
-  const [activeMode, setActiveMode] = useState<'select' | 'move'>('select');
   const [isEditing, setIsEditing] = useState(false);
   const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(externalSavedPosition || null);
-  const [originalImageDimensions, setOriginalImageDimensions] = useState<{width: number, height: number} | null>(null);
-  const [containerDimensions, setContainerDimensions] = useState<{width: number, height: number} | null>(null);
-  const [lastEditDimensions, setLastEditDimensions] = useState<{width: number, height: number} | null>(null);
-
-  // Export container dimensions for rendering engine
-  useEffect(() => {
-    // This ensures Index.tsx can access containerDimensions when needed
-    if (window && typeof window.dispatchEvent === 'function') {
-      window.dispatchEvent(new CustomEvent('containerDimensionsChange', { 
-        detail: containerDimensions 
-      }));
-      
-      // Log dimensions to help with debugging
-      console.log("Container dimensions changed:", containerDimensions);
-    }
-  }, [containerDimensions]);
+  const { activeMode, changeMode } = useEditingMode(fabricCanvas);
+  const { 
+    containerDimensions, setContainerDimensions,
+    originalImageDimensions, setOriginalImageDimensions,
+    lastEditDimensions, setLastEditDimensions
+  } = useDimensions();
+  
+  // Initialize the image transformer for moving and resizing
+  const imageTransformer = fabricCanvas ? ImageTransformer({ fabricCanvas }) : null;
 
   useEffect(() => {
     if (externalSavedPosition) {
@@ -118,80 +101,12 @@ const VideoMockup = ({
     }
   };
 
-  const handleModeChange = (mode: 'select' | 'move') => {
-    setActiveMode(mode);
-    if (fabricCanvas) {
-      if (mode === 'select') {
-        fabricCanvas.selection = true;
-        fabricCanvas.getObjects().forEach(obj => {
-          obj.selectable = true;
-          obj.evented = true;
-        });
-      } else {
-        fabricCanvas.selection = false;
-        fabricCanvas.getObjects().forEach(obj => {
-          obj.selectable = false;
-          obj.evented = true;
-        });
-        fabricCanvas.discardActiveObject();
-      }
-      fabricCanvas.renderAll();
+  const handlePositionSave = (position: ImagePosition) => {
+    setSavedPosition(position);
+    
+    if (onPositionSave) {
+      onPositionSave(position);
     }
-  };
-
-  const moveImage = (direction: 'up' | 'down' | 'left' | 'right') => {
-    if (!fabricCanvas) return;
-    
-    const activeObject = fabricCanvas.getActiveObject();
-    if (!activeObject) {
-      if (fabricCanvas.getObjects().length > 0) {
-        fabricCanvas.setActiveObject(fabricCanvas.getObjects()[0]);
-        fabricCanvas.renderAll();
-        return;
-      }
-      toast.error("No image selected");
-      return;
-    }
-
-    const MOVE_AMOUNT = 10; // pixels to move
-    
-    switch (direction) {
-      case 'up':
-        activeObject.set('top', activeObject.top! - MOVE_AMOUNT);
-        break;
-      case 'down':
-        activeObject.set('top', activeObject.top! + MOVE_AMOUNT);
-        break;
-      case 'left':
-        activeObject.set('left', activeObject.left! - MOVE_AMOUNT);
-        break;
-      case 'right':
-        activeObject.set('left', activeObject.left! + MOVE_AMOUNT);
-        break;
-    }
-    
-    fabricCanvas.renderAll();
-  };
-
-  const resizeImage = (scaleChange: number) => {
-    if (!fabricCanvas) return;
-    
-    const activeObject = fabricCanvas.getActiveObject();
-    if (!activeObject) {
-      if (fabricCanvas.getObjects().length > 0) {
-        fabricCanvas.setActiveObject(fabricCanvas.getObjects()[0]);
-        fabricCanvas.renderAll();
-        return;
-      }
-      toast.error("No image selected");
-      return;
-    }
-    
-    const currentScale = activeObject.scaleX!;
-    const newScale = Math.max(0.1, currentScale + scaleChange); // Prevent scaling to zero or negative
-    
-    activeObject.scale(newScale);
-    fabricCanvas.renderAll();
   };
 
   return (
@@ -232,15 +147,23 @@ const VideoMockup = ({
             overlayIndex={overlayIndex} 
             overlays={overlays} 
           />
+          
+          <PositionManager
+            isEditing={isEditing}
+            fabricCanvas={fabricCanvas}
+            onSave={handlePositionSave}
+            containerDimensions={containerDimensions}
+            setLastEditDimensions={setLastEditDimensions}
+          />
         </VideoContainer>
 
         <EditorControls 
           isEditing={isEditing}
           onEditToggle={handleEditToggle}
           activeMode={activeMode}
-          onModeChange={handleModeChange}
-          onMove={moveImage}
-          onResize={resizeImage}
+          onModeChange={changeMode}
+          onMove={imageTransformer?.moveImage || (() => {})}
+          onResize={imageTransformer?.resizeImage || (() => {})}
           imageUrl={imageUrl}
         />
       </CardContent>
