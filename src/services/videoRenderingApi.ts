@@ -28,11 +28,12 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
     // Log and confirm overlay position and other params are as expected
     console.log("Adjusted params for rendering:", adjustedParams);
 
-    // Ensure overlayPosition is passed correctly (stringified or as an object)
-    if (adjustedParams.overlayPosition) {
+    // Ensure overlayPosition and size are passed correctly (both position and size)
+    if (adjustedParams.overlayPosition && adjustedParams.overlaySize) {
       console.log("Overlay position being sent to API:", JSON.stringify(adjustedParams.overlayPosition));
+      console.log("Overlay size being sent to API:", JSON.stringify(adjustedParams.overlaySize));
     } else {
-      console.warn("Overlay position is not defined or not set correctly.");
+      console.warn("Overlay position or size is not defined or not set correctly.");
     }
 
     // Ensure that the aspect ratio and quality are correctly passed if provided
