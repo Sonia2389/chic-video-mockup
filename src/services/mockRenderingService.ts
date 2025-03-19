@@ -27,21 +27,27 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
   
   // Start mock processing
   setTimeout(() => {
-    const jobInfo = mockJobsMap.get(jobId) || {};
-    jobInfo.progress = 25;
-    mockJobsMap.set(jobId, jobInfo);
+    const jobInfo = mockJobsMap.get(jobId);
+    if (jobInfo) {
+      jobInfo.progress = 25;
+      mockJobsMap.set(jobId, jobInfo);
+    }
   }, 3000);
   
   setTimeout(() => {
-    const jobInfo = mockJobsMap.get(jobId) || {};
-    jobInfo.progress = 50;
-    mockJobsMap.set(jobId, jobInfo);
+    const jobInfo = mockJobsMap.get(jobId);
+    if (jobInfo) {
+      jobInfo.progress = 50;
+      mockJobsMap.set(jobId, jobInfo);
+    }
   }, 6000);
   
   setTimeout(() => {
-    const jobInfo = mockJobsMap.get(jobId) || {};
-    jobInfo.progress = 75;
-    mockJobsMap.set(jobId, jobInfo);
+    const jobInfo = mockJobsMap.get(jobId);
+    if (jobInfo) {
+      jobInfo.progress = 75;
+      mockJobsMap.set(jobId, jobInfo);
+    }
   }, 9000);
   
   // Actually create a composite video with the overlay
@@ -88,10 +94,38 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
       // Set up for recording
       const chunks: Blob[] = [];
       const stream = canvas.captureStream(30);
-      const recorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9',
-        videoBitsPerSecond: 5000000
-      });
+      
+      // Try different mime types to find one that the browser supports
+      let mimeType = '';
+      let recorder: MediaRecorder;
+      
+      // Test different codecs in order of preference
+      const mimeTypes = [
+        'video/webm;codecs=vp9',
+        'video/webm;codecs=vp8',
+        'video/webm',
+        'video/mp4',
+        ''  // Default, let browser decide
+      ];
+      
+      // Find the first supported mime type
+      for (const type of mimeTypes) {
+        if (type === '' || MediaRecorder.isTypeSupported(type)) {
+          mimeType = type;
+          break;
+        }
+      }
+      
+      // Create the MediaRecorder with the supported mime type
+      try {
+        recorder = new MediaRecorder(stream, {
+          mimeType: mimeType || undefined,
+          videoBitsPerSecond: 5000000
+        });
+      } catch (e) {
+        console.error("MediaRecorder error:", e);
+        throw new Error("Your browser doesn't support video recording");
+      }
       
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
@@ -100,12 +134,14 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
       };
       
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: "video/webm" });
-        const jobInfo = mockJobsMap.get(jobId) || {};
-        jobInfo.status = 'completed';
-        jobInfo.progress = 100;
-        jobInfo.downloadUrl = URL.createObjectURL(blob);
-        mockJobsMap.set(jobId, jobInfo);
+        const blob = new Blob(chunks, { type: mimeType || "video/webm" });
+        const jobInfo = mockJobsMap.get(jobId);
+        if (jobInfo) {
+          jobInfo.status = 'completed';
+          jobInfo.progress = 100;
+          jobInfo.downloadUrl = URL.createObjectURL(blob);
+          mockJobsMap.set(jobId, jobInfo);
+        }
       };
       
       // Start recording
@@ -169,10 +205,12 @@ export const mockRenderProcess = async (params: RenderVideoParams): Promise<stri
       
     } catch (error) {
       console.error("Error in mock video rendering:", error);
-      const jobInfo = mockJobsMap.get(jobId) || {};
-      jobInfo.status = 'failed';
-      jobInfo.error = error instanceof Error ? error.message : 'Unknown error';
-      mockJobsMap.set(jobId, jobInfo);
+      const jobInfo = mockJobsMap.get(jobId);
+      if (jobInfo) {
+        jobInfo.status = 'failed';
+        jobInfo.error = error instanceof Error ? error.message : 'Unknown error';
+        mockJobsMap.set(jobId, jobInfo);
+      }
     }
   }, 12000);
   
