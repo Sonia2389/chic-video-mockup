@@ -22,6 +22,7 @@ interface RenderVideoParams {
   };
   overlayVideo?: File;
   aspectRatio: number;
+  quality?: 'standard' | 'high' | 'ultra';  // Added quality parameter
 }
 
 interface RenderResponse {
@@ -29,15 +30,19 @@ interface RenderResponse {
   status: 'processing' | 'completed' | 'failed';
   downloadUrl?: string;
   error?: string;
+  progress?: number;
 }
+
+// You can replace this with your production API URL when deploying
+// const API_URL = "http://localhost:3000/api/render";
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? "https://your-production-api.com/api/render"  // Replace with your production API URL
+  : "http://localhost:3000/api/render";
 
 /**
  * Sends a request to start rendering a video on the backend API
  */
 export const startVideoRender = async (params: RenderVideoParams): Promise<string> => {
-  // You should replace this with your actual API URL when deploying
-  const API_URL = "http://localhost:3000/api/render";
-  
   try {
     // Create form data to send files
     const formData = new FormData();
@@ -49,11 +54,17 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
     if (params.overlayVideo) {
       formData.append('overlayVideo', params.overlayVideo);
     }
+    
+    // Add quality parameter if specified
+    if (params.quality) {
+      formData.append('quality', params.quality);
+    }
 
     console.log("Sending render request to API:", API_URL);
     console.log("Background video size:", params.backgroundVideo.size);
     console.log("Overlay image size:", params.overlayImage.size);
     console.log("Overlay position:", JSON.stringify(params.overlayPosition));
+    console.log("Quality setting:", params.quality || 'standard');
 
     // Send the request
     const response = await fetch(API_URL, {
@@ -81,12 +92,11 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
  * Checks the status of a rendering job
  */
 export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> => {
-  // You should replace this with your actual API URL when deploying
-  const API_URL = `http://localhost:3000/api/render/${jobId}`;
+  const statusUrl = `${API_URL}/${jobId}`;
   
   try {
     console.log("Checking render status for job:", jobId);
-    const response = await fetch(API_URL);
+    const response = await fetch(statusUrl);
     
     if (!response.ok) {
       const errorData = await response.json();
@@ -96,7 +106,7 @@ export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> 
     }
 
     const data = await response.json();
-    console.log("Render status:", data.status);
+    console.log("Render status:", data.status, "Progress:", data.progress || "unknown");
     return data;
   } catch (error) {
     console.error('Error checking render status:', error);
@@ -119,3 +129,4 @@ export const downloadRenderedVideo = (downloadUrl: string, filename = 'tothefknm
   
   toast.success("Video downloaded successfully!");
 };
+

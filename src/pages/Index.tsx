@@ -40,14 +40,40 @@ const Index = () => {
   const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(null);
   const [videoAspectRatio, setVideoAspectRatio] = useState<number>(16/9);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
+  const [useApiRendering, setUseApiRendering] = useState(true);
+  const [backgroundVideoFile, setBackgroundVideoFile] = useState<File | null>(null);
+  const [overlayImageFile, setOverlayImageFile] = useState<File | null>(null);
+  const [overlayVideoFile, setOverlayVideoFile] = useState<File | null>(null);
 
   const handleImageUpload = (imageUrl: string) => {
     setUploadedImage(imageUrl);
+    
+    // Convert the image URL to a File object
+    fetch(imageUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], "overlay.png", { type: "image/png" });
+        setOverlayImageFile(file);
+      })
+      .catch(err => console.error("Error converting image URL to File:", err));
+      
     toast.success("Image uploaded successfully");
   };
 
   const handleSelectOverlay = (index: number) => {
     setSelectedOverlay(index);
+    
+    // Convert the overlay video URL to a File object if it exists
+    if (overlays[index]) {
+      fetch(overlays[index].url)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "overlay.mp4", { type: "video/mp4" });
+          setOverlayVideoFile(file);
+        })
+        .catch(err => console.error("Error converting overlay URL to File:", err));
+    }
+    
     toast.success(`Overlay selected`);
   };
 
@@ -67,6 +93,7 @@ const Index = () => {
       
       const url = URL.createObjectURL(file);
       setVideoUrl(url);
+      setBackgroundVideoFile(file);
       
       const video = document.createElement('video');
       video.src = url;
@@ -405,10 +432,10 @@ const Index = () => {
               />
             </div>
             
-            <Tabs defaultValue="browser" className="w-full">
+            <Tabs defaultValue="api" className="w-full">
               <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-4">
-                <TabsTrigger value="browser">Browser Rendering</TabsTrigger>
-                <TabsTrigger value="api">API Rendering</TabsTrigger>
+                <TabsTrigger value="browser" onClick={() => setUseApiRendering(false)}>Browser Rendering</TabsTrigger>
+                <TabsTrigger value="api" onClick={() => setUseApiRendering(true)}>API Rendering</TabsTrigger>
               </TabsList>
               
               <TabsContent value="browser" className="mt-0">
@@ -419,24 +446,32 @@ const Index = () => {
                   progress={renderProgress}
                   downloadReady={downloadReady}
                   onDownload={handleDownload}
+                  useApi={false}
                 />
               </TabsContent>
               
               <TabsContent value="api" className="mt-0">
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded shadow-sm">
-                  <p className="text-sm text-yellow-700">
-                    <strong>Note:</strong> This API rendering feature requires implementation of a separate backend service. 
-                    See the documentation in <code>src/docs/api-implementation-guide.md</code> for implementation details.
-                  </p>
-                </div>
-                <ApiRenderButton
-                  backgroundVideoUrl={videoUrl}
-                  imageUrl={uploadedImage}
-                  overlayVideoUrl={selectedOverlay !== null && overlays[selectedOverlay] ? overlays[selectedOverlay].url : null}
-                  savedPosition={savedPosition}
-                  videoAspectRatio={videoAspectRatio}
-                  disabled={!uploadedImage || selectedOverlay === null}
-                />
+                {!API_URL.includes("your-production-api.com") ? (
+                  <RenderButton
+                    onRender={() => {}} // Not used with API rendering
+                    disabled={!uploadedImage || selectedOverlay === null}
+                    rendering={false}
+                    downloadReady={false}
+                    backgroundVideo={backgroundVideoFile || undefined}
+                    overlayImage={overlayImageFile || undefined}
+                    overlayVideo={overlayVideoFile || undefined}
+                    savedPosition={savedPosition}
+                    videoAspectRatio={videoAspectRatio}
+                    useApi={true}
+                  />
+                ) : (
+                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded shadow-sm">
+                    <p className="text-sm text-yellow-700">
+                      <strong>Note:</strong> To enable high-quality API rendering, update the API_URL in <code>src/services/videoRenderingApi.ts</code> to point to your rendering server. 
+                      See the documentation in <code>src/docs/api-implementation-guide.md</code> for implementation details.
+                    </p>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>
