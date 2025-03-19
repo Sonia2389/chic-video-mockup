@@ -38,6 +38,9 @@ POST /api/render
   ```
 - `overlayVideo`: (Optional) Video overlay file
 - `aspectRatio`: Number representing the aspect ratio (e.g., 16/9)
+- `quality`: (Optional) Quality level: "standard", "high", or "ultra"
+- `preserveOriginalSpeed`: (Optional) Boolean to maintain original video speed
+- `exactPositioning`: (Optional) Boolean to ensure exact positioning as in preview
 
 **Response**: 
 ```json
@@ -58,6 +61,7 @@ GET /api/render/:jobId
 {
   "id": "job-unique-id",
   "status": "processing|completed|failed",
+  "progress": number (0-100),
   "downloadUrl": "https://url-to-download-video.mp4" (if completed),
   "error": "Error message" (if failed)
 }
@@ -109,6 +113,16 @@ For more complex overlays with rotation and scaling:
 ```bash
 ffmpeg -i background.mp4 -i overlay.png -filter_complex "[1:v]rotate=30*PI/180:c=none:ow=rotw(30*PI/180):oh=roth(30*PI/180)[rotated];[0:v][rotated]overlay=100:100:enable='between(t,0,5)'" -c:v libx264 -crf 18 -preset veryslow -c:a copy output.mp4
 ```
+
+## Ensuring Exact Preview Matching
+
+To ensure the rendered video matches exactly what users see in the preview:
+
+1. Use the exact overlay positioning parameters from the frontend
+2. Maintain the original video speed when `preserveOriginalSpeed` is set to true
+3. Use high-quality encoding settings for visual accuracy
+4. Preserve the aspect ratio throughout the rendering process
+5. Apply the exact rotation and scaling factors to the overlay image
 
 ## Performance Considerations
 

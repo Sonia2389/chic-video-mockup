@@ -21,12 +21,23 @@ export const apiStartVideoRender = async (params: RenderVideoParams): Promise<st
   if (params.quality) {
     formData.append('quality', params.quality);
   }
+  
+  // Add new parameters for exact preview matching
+  if (params.preserveOriginalSpeed !== undefined) {
+    formData.append('preserveOriginalSpeed', params.preserveOriginalSpeed.toString());
+  }
+  
+  if (params.exactPositioning !== undefined) {
+    formData.append('exactPositioning', params.exactPositioning.toString());
+  }
 
   console.log("Sending render request to API:", API_URL);
   console.log("Background video size:", params.backgroundVideo.size);
   console.log("Overlay image size:", params.overlayImage.size);
   console.log("Overlay position:", JSON.stringify(params.overlayPosition));
   console.log("Quality setting:", params.quality || 'standard');
+  console.log("Preserve original speed:", params.preserveOriginalSpeed);
+  console.log("Exact positioning:", params.exactPositioning);
 
   // Set timeout for the fetch request
   const controller = new AbortController();

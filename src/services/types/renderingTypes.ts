@@ -16,6 +16,8 @@ export interface RenderVideoParams {
   overlayVideo?: File;
   aspectRatio: number;
   quality?: 'standard' | 'high' | 'ultra';
+  preserveOriginalSpeed?: boolean;
+  exactPositioning?: boolean;
 }
 
 export interface RenderResponse {
@@ -34,6 +36,8 @@ export interface JobInfo {
   params?: {
     aspectRatio: number;
     quality?: 'standard' | 'high' | 'ultra';
+    preserveOriginalSpeed?: boolean;
+    exactPositioning?: boolean;
   };
   downloadUrl?: string;
   error?: string;

@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { PlayCircle, Loader2, Download, Server } from "lucide-react";
+import { Server, Loader2, Download } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { startVideoRender, checkRenderStatus, downloadRenderedVideo } from "@/services/videoRenderingApi";
 import { useState } from "react";
@@ -40,14 +40,16 @@ const RenderButton = ({
       setRenderProgress(0);
       setDownloadReady(false);
 
-      // Start the rendering process
+      // Start the rendering process with exact parameters matching the preview
       const newJobId = await startVideoRender({
         backgroundVideo,
         overlayImage,
         overlayPosition: savedPosition,
         overlayVideo: overlayVideo || undefined,
         aspectRatio: videoAspectRatio,
-        quality: 'high' // Use high quality by default
+        quality: 'high', // Use high quality by default for best match to preview
+        preserveOriginalSpeed: true, // Ensure video speed matches the preview
+        exactPositioning: true // Use exact pixel positioning from the preview
       });
       
       setJobId(newJobId);
