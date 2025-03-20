@@ -24,9 +24,9 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
 
   if (overlayIndex === null || !overlays[overlayIndex]) return null;
   
-  // When editing, set z-index to 0 so it's completely behind the canvas and image
+  // When editing, set z-index to -1 so it's completely behind everything
   // In preview mode, keep it on top with z-index 30
-  const zIndexValue = isEditing ? 0 : 30;
+  const zIndexValue = isEditing ? -1 : 30;
 
   return (
     <div 

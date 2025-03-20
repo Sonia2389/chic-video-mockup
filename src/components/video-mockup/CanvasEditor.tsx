@@ -149,8 +149,9 @@ const CanvasEditor = ({
     <div 
       className="absolute inset-0 overflow-visible" 
       style={{ 
-        zIndex: 50, // Significantly higher z-index to ensure it's above everything else
-        pointerEvents: 'auto' 
+        zIndex: 100, // Very high z-index to ensure it's above everything else
+        pointerEvents: 'auto',
+        position: 'relative' // Ensure stacking context is correctly established
       }}
     >
       <canvas ref={canvasRef} className="w-full h-full" />
