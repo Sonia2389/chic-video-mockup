@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Canvas, Image } from 'fabric';
 import VideoOverlay from "./video-mockup/VideoOverlay";
@@ -98,7 +97,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       {/* Background video */}
       {videoUrl && (
         <video
-          className="absolute inset-0 w-full h-full object-contain" // Changed from object-cover to object-contain
+          className="absolute inset-0 w-full h-full object-cover" // Changed back to object-cover
           src={videoUrl}
           autoPlay
           loop
