@@ -149,9 +149,10 @@ const CanvasEditor = ({
     <div 
       className="absolute inset-0 overflow-visible" 
       style={{ 
-        zIndex: 20, // Higher z-index than the overlay but not too high
+        zIndex: 50, // Higher z-index to ensure it's above everything
         pointerEvents: 'auto',
-        position: 'absolute' // Changed from 'relative' to 'absolute' to properly stack
+        position: 'absolute',
+        backgroundColor: 'transparent'
       }}
     >
       <canvas ref={canvasRef} className="w-full h-full" />

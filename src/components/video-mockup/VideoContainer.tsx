@@ -91,13 +91,14 @@ const VideoContainer = ({
             ref={videoRef}
             src={videoUrl}
             className="w-full h-full object-cover"
+            style={{ zIndex: -10 }} // Ensure video stays behind all other elements
             autoPlay
             loop
             muted
             playsInline
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-800" />
+          <div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-800" style={{ zIndex: -10 }} />
         )}
         
         {containerReady && children}
