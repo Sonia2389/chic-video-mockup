@@ -56,8 +56,13 @@ const CanvasEditor = ({
     setFabricCanvas(canvas);
     
     if (imageUrl) {
-      // Load the image using the correct Fabric.js v6 API
-      Image.fromURL(imageUrl, (img) => {
+      // Use the Fabric.js v6 API correctly
+      Image.fromURL(imageUrl, {
+        crossOrigin: 'anonymous',
+        onError: (err) => {
+          console.error('Error loading image:', err);
+        }
+      }).then((img) => {
         // Store original dimensions if not already stored
         if (!originalImageDimensions) {
           setOriginalImageDimensions({
@@ -140,7 +145,9 @@ const CanvasEditor = ({
         });
         
         canvas.renderAll();
-      }, { crossOrigin: 'anonymous' });
+      }).catch(error => {
+        console.error("Error creating image:", error);
+      });
     }
     
     return () => {
@@ -155,7 +162,7 @@ const CanvasEditor = ({
     <div 
       className="absolute inset-0 overflow-visible" 
       style={{ 
-        zIndex: 200, // Higher z-index to ensure canvas is above all elements
+        zIndex: 50, // Higher z-index to ensure canvas is above other elements
         pointerEvents: 'auto',
         position: 'absolute',
         backgroundColor: 'transparent'

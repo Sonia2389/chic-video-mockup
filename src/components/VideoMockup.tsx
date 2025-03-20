@@ -1,83 +1,182 @@
-Image.fromURL(imageUrl, (img) => {
-  if (!img) return;
 
-  // Store original dimensions if not already stored
-  if (!originalImageDimensions) {
-    setOriginalImageDimensions({
-      width: img.width!,
-      height: img.height!
-    });
-  }
+import React, { useState, useEffect, useRef } from "react";
+import { Canvas, Image } from 'fabric';
+import VideoOverlay from "./video-mockup/VideoOverlay";
+import { useDimensions } from "@/hooks/useDimensions";
+import CanvasEditor from "./video-mockup/CanvasEditor";
 
-  if (savedPosition) {
-    // Apply saved transformations
-    img.set({
-      left: savedPosition.left,
-      top: savedPosition.top,
-      scaleX: savedPosition.scaleX,
-      scaleY: savedPosition.scaleY,
-      angle: savedPosition.angle || 0,
-      width: savedPosition.originalWidth,
-      height: savedPosition.originalHeight,
-      cornerSize: 12,
-      cornerColor: '#9b87f5',
-      borderColor: '#9b87f5',
-      cornerStyle: 'circle',
-      transparentCorners: false,
-      originX: 'left',
-      originY: 'top',
-      selectable: true,
-      hasControls: true,
-      hasBorders: true
-    });
-  } else {
-    // Center the image initially with appropriate scaling
-    const baseScale = Math.min(
-      (containerDimensions.width * 0.8) / img.width!,
-      (containerDimensions.height * 0.8) / img.height!
-    );
+interface ImagePosition {
+  left: number;
+  top: number;
+  scale: number;
+  width: number;
+  height: number;
+  scaleX: number;
+  scaleY: number;
+  originalWidth: number;
+  originalHeight: number;
+  angle?: number;
+}
 
-    img.set({
-      left: containerDimensions.width / 2 - (img.width! * baseScale) / 2,
-      top: containerDimensions.height / 2 - (img.height! * baseScale) / 2,
-      scaleX: baseScale,
-      scaleY: baseScale,
-      cornerSize: 12,
-      cornerColor: '#9b87f5',
-      borderColor: '#9b87f5',
-      cornerStyle: 'circle',
-      transparentCorners: false,
-      originX: 'left',
-      originY: 'top',
-      selectable: true,
-      hasControls: true,
-      hasBorders: true
-    });
-  }
+interface Overlay {
+  type: "image" | "video";
+  url: string;
+}
 
-  canvas.add(img);
-  canvas.setActiveObject(img);
+interface VideoMockupProps {
+  imageUrl: string | null;
+  overlayIndex: number | null;
+  videoUrl?: string;
+  overlays: Overlay[];
+  onPositionSave: (position: ImagePosition) => void;
+  savedPosition: ImagePosition | null;
+}
 
-  // Enable free movement and scaling
-  canvas.on('object:scaling', function () {
-    const activeObj = canvas.getActiveObject();
-    if (activeObj) {
-      const bounds = activeObj.getBoundingRect();
-      console.log("Object dimensions during scaling:", {
-        width: bounds.width,
-        height: bounds.height,
-        top: bounds.top,
-        left: bounds.left
-      });
+const VideoMockup: React.FC<VideoMockupProps> = ({
+  imageUrl,
+  overlayIndex,
+  videoUrl,
+  overlays,
+  onPositionSave,
+  savedPosition
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const { 
+    containerDimensions, 
+    setContainerDimensions,
+    originalImageDimensions,
+    setOriginalImageDimensions
+  } = useDimensions();
+  const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null);
+
+  // Handle container size detection
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
+        setContainerDimensions({ width, height });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+    };
+  }, [setContainerDimensions]);
+
+  // Save position when exiting edit mode
+  const handleSavePosition = () => {
+    if (fabricCanvas && fabricCanvas.getObjects().length > 0) {
+      const activeObject = fabricCanvas.getActiveObject() || fabricCanvas.getObjects()[0];
+      
+      if (activeObject) {
+        const coords = activeObject.getBoundingRect();
+        
+        onPositionSave({
+          left: activeObject.left || 0,
+          top: activeObject.top || 0,
+          scale: 1,
+          width: coords.width,
+          height: coords.height,
+          scaleX: activeObject.scaleX || 1,
+          scaleY: activeObject.scaleY || 1,
+          originalWidth: activeObject.width || 0,
+          originalHeight: activeObject.height || 0,
+          angle: activeObject.angle || 0
+        });
+      }
     }
-  });
+    
+    setIsEditing(false);
+  };
 
-  canvas.on('object:moving', function (e) {
-    const obj = e.target;
-    if (obj) {
-      obj.setCoords();
-    }
-  });
+  return (
+    <div className="relative w-full h-0 pb-[56.25%] bg-gray-900 rounded-lg overflow-hidden shadow-xl" ref={containerRef}>
+      {/* Background video */}
+      {videoUrl && (
+        <video
+          className="absolute inset-0 w-full h-full object-cover"
+          src={videoUrl}
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{ zIndex: 10 }}
+        />
+      )}
+      
+      {/* Video overlay */}
+      <VideoOverlay 
+        overlayIndex={overlayIndex} 
+        overlays={overlays} 
+        isEditing={isEditing}
+      />
+      
+      {/* Editing interface */}
+      {isEditing ? (
+        <>
+          <CanvasEditor
+            isEditing={isEditing}
+            imageUrl={imageUrl}
+            savedPosition={savedPosition}
+            containerDimensions={containerDimensions}
+            setOriginalImageDimensions={setOriginalImageDimensions}
+            originalImageDimensions={originalImageDimensions}
+            fabricCanvas={fabricCanvas}
+            setFabricCanvas={setFabricCanvas}
+          />
+          <div className="absolute bottom-4 right-4 z-[200] flex gap-2">
+            <button
+              onClick={handleSavePosition}
+              className="bg-primary text-white px-4 py-2 rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+            >
+              Save Position
+            </button>
+            <button
+              onClick={() => setIsEditing(false)}
+              className="bg-gray-700 text-white px-4 py-2 rounded-full shadow-lg hover:bg-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="absolute bottom-4 right-4 z-30">
+          {imageUrl && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="bg-primary text-white px-4 py-2 rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+            >
+              Edit Position
+            </button>
+          )}
+        </div>
+      )}
+      
+      {/* Display uploaded image */}
+      {!isEditing && imageUrl && savedPosition && (
+        <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 20 }}>
+          <img
+            src={imageUrl}
+            alt="Uploaded image"
+            style={{
+              position: 'absolute',
+              left: savedPosition.left,
+              top: savedPosition.top,
+              width: savedPosition.originalWidth,
+              height: savedPosition.originalHeight,
+              transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
+              transformOrigin: 'top left',
+              pointerEvents: 'none'
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
-  canvas.renderAll();
-}, { crossOrigin: 'anonymous' });
+export default VideoMockup;

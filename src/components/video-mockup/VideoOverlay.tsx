@@ -25,8 +25,9 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
 
   if (overlayIndex === null || !overlays[overlayIndex]) return null;
   
-  // For editing mode vs. preview mode - ensure overlays are behind the canvas in edit mode
-  const zIndexValue = isEditing ? -15 : 30;
+  // For editing mode vs. preview mode - ensure overlays are behind the fabric canvas in edit mode
+  const zIndexValue = isEditing ? 25 : 30;
+  const opacityValue = isEditing ? 0.2 : 0.6; // Reduce opacity even more during editing
 
   return (
     <div 
@@ -47,7 +48,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
             width: '100%',
             height: '100%',
             pointerEvents: 'none',
-            opacity: isEditing ? 0.3 : 0.6 // Lower opacity in edit mode
+            opacity: opacityValue // Lower opacity in edit mode
           }}
         />
       ) : (
@@ -55,7 +56,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
           ref={overlayVideoRef}
           src={overlays[overlayIndex].url}
           className="w-full h-full object-cover"
-          style={{ opacity: isEditing ? 0.3 : 0.6 }} // Lower opacity in edit mode
+          style={{ opacity: opacityValue }} // Lower opacity in edit mode
           autoPlay
           loop
           muted
