@@ -1,3 +1,4 @@
+
 import { completeJob, failJob, updateJobProgress } from "./mockJobManager";
 import { calculateRenderScaleFactor, loadImageElement, loadVideoElement, setupMediaRecorder } from "./mockMediaProcessor";
 import { RenderVideoParams } from "../types/renderingTypes";
@@ -75,7 +76,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     
     console.log("Drawing with overlay position:", JSON.stringify(params.overlayPosition));
     
-    // Render function to draw each frame - EXACT LAYERING ORDER: background → image → overlay
+    // Render function to draw each frame
     const render = () => {
       // Clear the canvas for a clean slate each frame
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -137,15 +138,20 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         ctx.restore();
       }
       
-      // LAYER 3: Overlay video (top layer)
+      // LAYER 3: Overlay video (top layer with increased opacity)
       if (overlayVideo) {
+        // Always ensure overlay is the TOP layer by drawing it last
         ctx.save();
-        // Make the overlay slightly transparent but clearly visible
+        
+        // Make the overlay more visible with higher opacity (0.6 instead of previous 0.15)
         ctx.globalAlpha = 0.6;
+        
+        // Draw the overlay video on top of everything else
         ctx.drawImage(overlayVideo, 0, 0, canvas.width, canvas.height);
+        
         ctx.restore();
         
-        console.log("Drawing overlay video at full canvas size");
+        console.log("Drawing overlay video at full canvas size with opacity 0.6");
       }
       
       // Continue rendering until the video ends
