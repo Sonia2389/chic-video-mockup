@@ -1,4 +1,3 @@
-
 import { completeJob, failJob, updateJobProgress } from "./mockJobManager";
 import { calculateRenderScaleFactor, loadImageElement, loadVideoElement, setupMediaRecorder } from "./mockMediaProcessor";
 import { RenderVideoParams } from "../types/renderingTypes";
@@ -190,4 +189,4 @@ export const simulateProgress = (jobId: string): void => {
   setTimeout(() => updateJobProgress(jobId, 25), 3000);
   setTimeout(() => updateJobProgress(jobId, 50), 6000);
   setTimeout(() => updateJobProgress(jobId, 75), 9000);
-};
+}
