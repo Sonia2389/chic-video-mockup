@@ -149,7 +149,7 @@ const CanvasEditor = ({
     <div 
       className="absolute inset-0 overflow-visible" 
       style={{ 
-        zIndex: 50, // Higher z-index to ensure it's above everything
+        zIndex: 100, // Ensure editor is above everything else
         pointerEvents: 'auto',
         position: 'absolute',
         backgroundColor: 'transparent'

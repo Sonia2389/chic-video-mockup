@@ -116,6 +116,7 @@ const VideoMockup = ({
           videoAspectRatio={videoAspectRatio}
           onAspectRatioChange={setVideoAspectRatio}
           setContainerDimensions={setContainerDimensions}
+          isEditing={isEditing}
         >
           <CanvasEditor
             isEditing={isEditing}

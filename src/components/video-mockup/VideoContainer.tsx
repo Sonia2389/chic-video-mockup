@@ -7,6 +7,7 @@ interface VideoContainerProps {
   onAspectRatioChange?: (ratio: number) => void;
   children: React.ReactNode;
   setContainerDimensions?: (dimensions: { width: number, height: number } | null) => void;
+  isEditing?: boolean;
 }
 
 const VideoContainer = ({ 
@@ -14,6 +15,7 @@ const VideoContainer = ({
   videoAspectRatio = 16/9, 
   onAspectRatioChange,
   setContainerDimensions,
+  isEditing = false,
   children 
 }: VideoContainerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -91,14 +93,17 @@ const VideoContainer = ({
             ref={videoRef}
             src={videoUrl}
             className="w-full h-full object-cover"
-            style={{ zIndex: -10 }} // Ensure video stays behind all other elements
+            style={{ zIndex: isEditing ? -20 : -10 }} // Lower z-index during editing
             autoPlay
             loop
             muted
             playsInline
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-800" style={{ zIndex: -10 }} />
+          <div 
+            className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-800" 
+            style={{ zIndex: isEditing ? -20 : -10 }} 
+          />
         )}
         
         {containerReady && children}

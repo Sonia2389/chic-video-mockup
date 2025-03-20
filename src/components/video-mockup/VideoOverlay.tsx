@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 
 interface Overlay {
@@ -24,9 +25,8 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
 
   if (overlayIndex === null || !overlays[overlayIndex]) return null;
   
-  // When editing, send the overlay behind everything
-  // In preview mode, keep it on top with z-index 30
-  const zIndexValue = isEditing ? -5 : 30;
+  // For editing mode vs. preview mode
+  const zIndexValue = isEditing ? -15 : 30;
 
   return (
     <div 
