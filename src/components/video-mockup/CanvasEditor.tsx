@@ -146,7 +146,13 @@ const CanvasEditor = ({
   if (!isEditing) return null;
 
   return (
-    <div className="absolute inset-0 z-20 overflow-visible" style={{ pointerEvents: 'auto' }}>
+    <div 
+      className="absolute inset-0 overflow-visible" 
+      style={{ 
+        zIndex: 50, // Significantly higher z-index to ensure it's above everything else
+        pointerEvents: 'auto' 
+      }}
+    >
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );
