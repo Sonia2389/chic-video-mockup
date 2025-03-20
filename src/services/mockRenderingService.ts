@@ -1,3 +1,4 @@
+
 import { RenderVideoParams, RenderResponse } from "./types/renderingTypes";
 import { createJob, getJobInfo } from "./mock/mockJobManager";
 import { renderVideo, simulateProgress } from "./mock/mockRenderingEngine";
@@ -46,7 +47,7 @@ export const mockCheckStatus = async (jobId: string): Promise<RenderResponse> =>
   // Return the job information with a fallback to safe defaults if the information is incomplete
   return {
     id: jobInfo.id,
-    status: jobInfo.status || 'unknown',
+    status: jobInfo.status || 'processing', // Changed from 'unknown' to 'processing' to match allowed types
     progress: jobInfo.progress || 0,
     downloadUrl: jobInfo.downloadUrl || ''
   };
