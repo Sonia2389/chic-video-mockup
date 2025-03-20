@@ -26,7 +26,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
   if (overlayIndex === null || !overlays[overlayIndex]) return null;
   
   // For editing mode vs. preview mode - ensure overlays are behind the canvas in edit mode
-  const zIndexValue = isEditing ? -25 : 30;
+  const zIndexValue = isEditing ? -15 : 30;
 
   return (
     <div 
@@ -47,7 +47,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
             width: '100%',
             height: '100%',
             pointerEvents: 'none',
-            opacity: 0.6 // Match the opacity used in rendering (60%)
+            opacity: isEditing ? 0.3 : 0.6 // Lower opacity in edit mode
           }}
         />
       ) : (
@@ -55,7 +55,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
           ref={overlayVideoRef}
           src={overlays[overlayIndex].url}
           className="w-full h-full object-cover"
-          style={{ opacity: 0.6 }} // Match the opacity used in rendering (60%)
+          style={{ opacity: isEditing ? 0.3 : 0.6 }} // Lower opacity in edit mode
           autoPlay
           loop
           muted
