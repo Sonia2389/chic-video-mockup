@@ -25,14 +25,18 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
 
   if (overlayIndex === null || !overlays[overlayIndex]) return null;
   
-  // Reduce the z-index when editing to prevent interference with fabric.js editing
-  const zIndexValue = isEditing ? 10 : 30;
+  // When editing, set z-index to a very low value so it doesn't interfere with the canvas
+  // This ensures the overlay is behind the canvas during editing but on top during preview
+  const zIndexValue = isEditing ? 5 : 30;
 
   return (
     <div 
       className="absolute inset-0"
       aria-label="Overlay"
-      style={{ zIndex: zIndexValue }} // Adjust z-index based on editing state
+      style={{ 
+        zIndex: zIndexValue, 
+        pointerEvents: isEditing ? 'none' : 'auto' // Disable pointer events when editing
+      }}
     >
       {overlays[overlayIndex].type === "image" ? (
         <div 

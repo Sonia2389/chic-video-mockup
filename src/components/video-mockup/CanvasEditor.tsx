@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 import { Canvas, Image } from 'fabric';
 
@@ -109,21 +110,30 @@ const CanvasEditor = ({
         canvas.add(img);
         canvas.setActiveObject(img);
         
-        // Make sure the image is fully visible within the canvas viewport
+        // Allow objects to extend beyond canvas boundaries
         canvas.on('object:scaling', function() {
           const activeObj = canvas.getActiveObject();
           if (activeObj) {
+            // Let the object scale freely, even beyond canvas boundaries
             const bounds = activeObj.getBoundingRect();
-            // Check if we need to pan the canvas to keep the object in view
-            if (bounds.top + bounds.height > containerDimensions.height ||
-                bounds.left + bounds.width > containerDimensions.width) {
-              // The object is partially out of view, but we allow it for editing flexibility
-              console.log("Object partially out of canvas bounds during scaling");
-            }
+            console.log("Object dimensions during scaling:", {
+              width: bounds.width,
+              height: bounds.height,
+              top: bounds.top,
+              left: bounds.left
+            });
           }
         });
         
-        // Render the canvas
+        // Enable moving objects beyond canvas boundaries
+        canvas.on('object:moving', function(e) {
+          const obj = e.target;
+          if (obj) {
+            // Allow free movement beyond canvas boundaries
+            obj.setCoords();
+          }
+        });
+        
         canvas.renderAll();
       });
     }
@@ -136,7 +146,7 @@ const CanvasEditor = ({
   if (!isEditing) return null;
 
   return (
-    <div className="absolute inset-0 z-20 overflow-visible">
+    <div className="absolute inset-0 z-20 overflow-visible" style={{ pointerEvents: 'auto' }}>
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );
