@@ -1,3 +1,4 @@
+
 /**
  * Creates a media recorder for the canvas
  * @returns The MediaRecorder and chunks array
@@ -52,7 +53,7 @@ export const setupMediaRecorder = (canvas: HTMLCanvasElement): {
 
 /**
  * Calculates the render scale factor between preview and final output
- * Enhanced to handle edge cases and prevent division by zero
+ * Enhanced for pixel-perfect accuracy
  */
 export const calculateRenderScaleFactor = (
   canvasWidth: number,
@@ -77,7 +78,7 @@ export const calculateRenderScaleFactor = (
     return { x: 1, y: 1 };
   }
 
-  // Calculate scaling factors
+  // Calculate scaling factors - this is critical for accurate positioning
   const scaleX = canvasWidth / containerWidth;
   const scaleY = canvasHeight / containerHeight;
 

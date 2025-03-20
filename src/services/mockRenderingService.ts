@@ -47,7 +47,7 @@ export const mockCheckStatus = async (jobId: string): Promise<RenderResponse> =>
   // Return the job information with a fallback to safe defaults if the information is incomplete
   return {
     id: jobInfo.id,
-    status: jobInfo.status || 'processing', // Changed from 'unknown' to 'processing' to match allowed types
+    status: jobInfo.status || 'processing', // Using 'processing' as fallback status
     progress: jobInfo.progress || 0,
     downloadUrl: jobInfo.downloadUrl || ''
   };

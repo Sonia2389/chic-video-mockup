@@ -28,7 +28,7 @@ const VideoOverlay = ({ overlayIndex, overlays }: VideoOverlayProps) => {
     <div 
       className="absolute inset-0"
       aria-label="Overlay"
-      style={{ zIndex: 30 }} // Set a high z-index to ensure it's on top
+      style={{ zIndex: 30 }} // High z-index ensures it appears on top
     >
       {overlays[overlayIndex].type === "image" ? (
         <div 
@@ -40,7 +40,7 @@ const VideoOverlay = ({ overlayIndex, overlays }: VideoOverlayProps) => {
             width: '100%',
             height: '100%',
             pointerEvents: 'none',
-            opacity: 0.6 // Increased from 0.15 to match rendered video
+            opacity: 0.6 // Match the opacity used in rendering (60%)
           }}
         />
       ) : (
@@ -48,7 +48,7 @@ const VideoOverlay = ({ overlayIndex, overlays }: VideoOverlayProps) => {
           ref={overlayVideoRef}
           src={overlays[overlayIndex].url}
           className="w-full h-full object-cover"
-          style={{ opacity: 0.6 }} // Increased from 0.15 to match rendered video
+          style={{ opacity: 0.6 }} // Match the opacity used in rendering (60%)
           autoPlay
           loop
           muted

@@ -39,6 +39,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     const { recorder, chunks, mimeType } = setupMediaRecorder(canvas);
     
     // Calculate the correct scaling factor between preview and render
+    // This ensures that positions in the preview match positions in the rendered video
     const renderScaleFactor = calculateRenderScaleFactor(
       canvas.width,
       canvas.height,
@@ -92,8 +93,8 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         ctx.save();
         
         // Scale the positioning values to match the video dimensions
-        const scaledLeft = Math.round(left * renderScaleFactor.x);
-        const scaledTop = Math.round(top * renderScaleFactor.y);
+        const scaledLeft = left * renderScaleFactor.x;
+        const scaledTop = top * renderScaleFactor.y;
         
         // Apply transformations in order: translate → rotate → scale
         ctx.translate(scaledLeft, scaledTop);
@@ -138,20 +139,18 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         ctx.restore();
       }
       
-      // LAYER 3: Overlay video (top layer with increased opacity)
+      // LAYER 3: Overlay video (top layer)
       if (overlayVideo) {
-        // Always ensure overlay is the TOP layer by drawing it last
+        // Overlay video should be drawn on top (highest z-index)
         ctx.save();
         
-        // Make the overlay more visible with higher opacity (0.6 instead of previous 0.15)
+        // Use the same opacity as in preview (0.6)
         ctx.globalAlpha = 0.6;
         
-        // Draw the overlay video on top of everything else
+        // Draw the overlay video to fill the entire frame
         ctx.drawImage(overlayVideo, 0, 0, canvas.width, canvas.height);
         
         ctx.restore();
-        
-        console.log("Drawing overlay video at full canvas size with opacity 0.6");
       }
       
       // Continue rendering until the video ends
