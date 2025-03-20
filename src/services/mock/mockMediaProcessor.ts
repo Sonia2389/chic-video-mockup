@@ -1,4 +1,3 @@
-
 /**
  * Creates a media recorder for the canvas
  * @returns The MediaRecorder and chunks array
@@ -134,4 +133,4 @@ export const loadImageElement = async (imageFile: File): Promise<HTMLImageElemen
   });
   
   return img;
-};
+}
