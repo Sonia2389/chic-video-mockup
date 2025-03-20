@@ -92,7 +92,7 @@ const VideoContainer = ({
           <video 
             ref={videoRef}
             src={videoUrl}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain" // Changed from object-cover to object-contain
             style={{ zIndex: isEditing ? -20 : -10 }} // Lower z-index during editing
             autoPlay
             loop

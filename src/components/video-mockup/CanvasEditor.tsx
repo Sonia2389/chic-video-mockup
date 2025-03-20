@@ -56,12 +56,9 @@ const CanvasEditor = ({
     setFabricCanvas(canvas);
     
     if (imageUrl) {
-      // Use the Fabric.js v6 API correctly
+      // Use the Fabric.js v6 API correctly - remove the onError property
       Image.fromURL(imageUrl, {
-        crossOrigin: 'anonymous',
-        onError: (err) => {
-          console.error('Error loading image:', err);
-        }
+        crossOrigin: 'anonymous'
       }).then((img) => {
         // Store original dimensions if not already stored
         if (!originalImageDimensions) {

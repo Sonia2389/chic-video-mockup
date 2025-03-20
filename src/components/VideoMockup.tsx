@@ -98,7 +98,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       {/* Background video */}
       {videoUrl && (
         <video
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-contain" // Changed from object-cover to object-contain
           src={videoUrl}
           autoPlay
           loop
