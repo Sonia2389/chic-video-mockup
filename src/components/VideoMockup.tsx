@@ -144,7 +144,8 @@ const VideoMockup = ({
 
           <VideoOverlay 
             overlayIndex={overlayIndex} 
-            overlays={overlays} 
+            overlays={overlays}
+            isEditing={isEditing}
           />
           
           <PositionManager

@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import { Canvas, Image } from 'fabric';
 
@@ -45,6 +44,7 @@ const CanvasEditor = ({
       width: containerDimensions.width,
       height: containerDimensions.height,
       backgroundColor: 'transparent',
+      preserveObjectStacking: true,
     });
     
     setFabricCanvas(canvas);
@@ -76,7 +76,10 @@ const CanvasEditor = ({
             cornerStyle: 'circle',
             transparentCorners: false,
             originX: 'left',
-            originY: 'top'
+            originY: 'top',
+            selectable: true,
+            hasControls: true,
+            hasBorders: true
           });
         } else {
           // Center the image initially with appropriate scaling
@@ -96,12 +99,31 @@ const CanvasEditor = ({
             cornerStyle: 'circle',
             transparentCorners: false,
             originX: 'left',
-            originY: 'top'
+            originY: 'top',
+            selectable: true,
+            hasControls: true,
+            hasBorders: true
           });
         }
         
         canvas.add(img);
         canvas.setActiveObject(img);
+        
+        // Make sure the image is fully visible within the canvas viewport
+        canvas.on('object:scaling', function() {
+          const activeObj = canvas.getActiveObject();
+          if (activeObj) {
+            const bounds = activeObj.getBoundingRect();
+            // Check if we need to pan the canvas to keep the object in view
+            if (bounds.top + bounds.height > containerDimensions.height ||
+                bounds.left + bounds.width > containerDimensions.width) {
+              // The object is partially out of view, but we allow it for editing flexibility
+              console.log("Object partially out of canvas bounds during scaling");
+            }
+          }
+        });
+        
+        // Render the canvas
         canvas.renderAll();
       });
     }
@@ -114,7 +136,7 @@ const CanvasEditor = ({
   if (!isEditing) return null;
 
   return (
-    <div className="absolute inset-0 z-20">
+    <div className="absolute inset-0 z-20 overflow-visible">
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );

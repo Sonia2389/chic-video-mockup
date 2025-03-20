@@ -9,9 +9,10 @@ interface Overlay {
 interface VideoOverlayProps {
   overlayIndex: number | null;
   overlays: Overlay[];
+  isEditing?: boolean;
 }
 
-const VideoOverlay = ({ overlayIndex, overlays }: VideoOverlayProps) => {
+const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverlayProps) => {
   const overlayVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -23,12 +24,15 @@ const VideoOverlay = ({ overlayIndex, overlays }: VideoOverlayProps) => {
   }, [overlayIndex, overlays]);
 
   if (overlayIndex === null || !overlays[overlayIndex]) return null;
+  
+  // Reduce the z-index when editing to prevent interference with fabric.js editing
+  const zIndexValue = isEditing ? 10 : 30;
 
   return (
     <div 
       className="absolute inset-0"
       aria-label="Overlay"
-      style={{ zIndex: 30 }} // High z-index ensures it appears on top
+      style={{ zIndex: zIndexValue }} // Adjust z-index based on editing state
     >
       {overlays[overlayIndex].type === "image" ? (
         <div 
