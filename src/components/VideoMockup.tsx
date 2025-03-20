@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { Canvas } from 'fabric';
