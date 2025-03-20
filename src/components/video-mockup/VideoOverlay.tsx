@@ -25,7 +25,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
 
   if (overlayIndex === null || !overlays[overlayIndex]) return null;
   
-  // For editing mode vs. preview mode
+  // For editing mode vs. preview mode - make sure z-index doesn't interfere with canvas
   const zIndexValue = isEditing ? -15 : 30;
 
   return (

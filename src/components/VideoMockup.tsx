@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { Canvas } from 'fabric';
@@ -118,6 +119,7 @@ const VideoMockup = ({
           setContainerDimensions={setContainerDimensions}
           isEditing={isEditing}
         >
+          {/* When editing, show the Canvas Editor */}
           <CanvasEditor
             isEditing={isEditing}
             imageUrl={imageUrl}
@@ -129,6 +131,7 @@ const VideoMockup = ({
             setFabricCanvas={setFabricCanvas}
           />
 
+          {/* Only show ImageDisplay when not editing */}
           {!isEditing && (
             <>
               {!imageUrl ? (
@@ -143,6 +146,7 @@ const VideoMockup = ({
             </>
           )}
 
+          {/* Always show the overlay with appropriate z-index */}
           <VideoOverlay 
             overlayIndex={overlayIndex} 
             overlays={overlays}

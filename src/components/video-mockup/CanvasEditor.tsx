@@ -41,6 +41,11 @@ const CanvasEditor = ({
   useEffect(() => {
     if (!canvasRef.current || !isEditing || !containerDimensions) return;
     
+    // Dispose of any existing canvas to prevent duplicates
+    if (fabricCanvas) {
+      fabricCanvas.dispose();
+    }
+    
     const canvas = new Canvas(canvasRef.current, {
       width: containerDimensions.width,
       height: containerDimensions.height,
@@ -52,7 +57,7 @@ const CanvasEditor = ({
     
     if (imageUrl) {
       // Load the image and apply correct dimensions
-      Image.fromURL(imageUrl).then(img => {
+      Image.fromURL(imageUrl, (img) => {
         // Store original dimensions if not already stored
         if (!originalImageDimensions) {
           setOriginalImageDimensions({
@@ -135,13 +140,14 @@ const CanvasEditor = ({
         });
         
         canvas.renderAll();
-      });
+      }, { crossOrigin: 'Anonymous' }); // Add crossOrigin for any remote images
     }
     
     return () => {
       canvas.dispose();
+      setFabricCanvas(null);
     };
-  }, [imageUrl, isEditing, savedPosition, originalImageDimensions, containerDimensions, setFabricCanvas, setOriginalImageDimensions]);
+  }, [imageUrl, isEditing, savedPosition, containerDimensions, setFabricCanvas, setOriginalImageDimensions, originalImageDimensions, fabricCanvas]);
 
   if (!isEditing) return null;
 
@@ -149,7 +155,7 @@ const CanvasEditor = ({
     <div 
       className="absolute inset-0 overflow-visible" 
       style={{ 
-        zIndex: 100, // Ensure editor is above everything else
+        zIndex: 100, 
         pointerEvents: 'auto',
         position: 'absolute',
         backgroundColor: 'transparent'
