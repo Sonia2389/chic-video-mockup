@@ -39,37 +39,33 @@ const CanvasEditor = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (!canvasRef.current || !isEditing || !containerDimensions) return;
-    
-    // Dispose of any existing canvas to prevent duplicates
-    if (fabricCanvas) {
-      fabricCanvas.dispose();
-    }
-    
-    const canvas = new Canvas(canvasRef.current, {
-      width: containerDimensions.width,
-      height: containerDimensions.height,
-      backgroundColor: 'transparent',
-      preserveObjectStacking: true,
-    });
-    
-    setFabricCanvas(canvas);
-    
-    if (imageUrl) {
-      // Use the Fabric.js v6 API correctly - remove the onError property
-      Image.fromURL(imageUrl, {
-        crossOrigin: 'anonymous'
-      }).then((img) => {
-        // Store original dimensions if not already stored
+  if (!canvasRef.current || !isEditing || !containerDimensions) return;
+
+  // If a Fabric.js canvas already exists, dispose of it
+  if (fabricCanvas) {
+    fabricCanvas.dispose();
+  }
+
+  const canvas = new Canvas(canvasRef.current, {
+    width: containerDimensions.width,
+    height: containerDimensions.height,
+    backgroundColor: "transparent",
+    preserveObjectStacking: true,
+  });
+
+  setFabricCanvas(canvas);
+
+  if (imageUrl) {
+    Image.fromURL(imageUrl, { crossOrigin: "anonymous" })
+      .then((img) => {
         if (!originalImageDimensions) {
           setOriginalImageDimensions({
             width: img.width!,
-            height: img.height!
+            height: img.height!,
           });
         }
-        
+
         if (savedPosition) {
-          // Apply exact saved position with transformations
           img.set({
             left: savedPosition.left,
             top: savedPosition.top,
@@ -79,79 +75,71 @@ const CanvasEditor = ({
             width: savedPosition.originalWidth,
             height: savedPosition.originalHeight,
             cornerSize: 12,
-            cornerColor: '#9b87f5',
-            borderColor: '#9b87f5',
-            cornerStyle: 'circle',
+            cornerColor: "#9b87f5",
+            borderColor: "#9b87f5",
+            cornerStyle: "circle",
             transparentCorners: false,
-            originX: 'left',
-            originY: 'top',
+            originX: "left",
+            originY: "top",
             selectable: true,
             hasControls: true,
-            hasBorders: true
+            hasBorders: true,
           });
         } else {
-          // Center the image initially with appropriate scaling
           const baseScale = Math.min(
             (containerDimensions.width * 0.8) / img.width!,
             (containerDimensions.height * 0.8) / img.height!
           );
-          
+
           img.set({
             left: containerDimensions.width / 2 - (img.width! * baseScale) / 2,
             top: containerDimensions.height / 2 - (img.height! * baseScale) / 2,
             scaleX: baseScale,
             scaleY: baseScale,
             cornerSize: 12,
-            cornerColor: '#9b87f5',
-            borderColor: '#9b87f5',
-            cornerStyle: 'circle',
+            cornerColor: "#9b87f5",
+            borderColor: "#9b87f5",
+            cornerStyle: "circle",
             transparentCorners: false,
-            originX: 'left',
-            originY: 'top',
+            originX: "left",
+            originY: "top",
             selectable: true,
             hasControls: true,
-            hasBorders: true
+            hasBorders: true,
           });
         }
-        
+
         canvas.add(img);
         canvas.setActiveObject(img);
-        
-        // Allow objects to extend beyond canvas boundaries
-        canvas.on('object:scaling', function() {
+
+        canvas.on("object:scaling", function () {
           const activeObj = canvas.getActiveObject();
           if (activeObj) {
-            // Let the object scale freely, even beyond canvas boundaries
             const bounds = activeObj.getBoundingRect();
-            console.log("Object dimensions during scaling:", {
-              width: bounds.width,
-              height: bounds.height,
-              top: bounds.top,
-              left: bounds.left
-            });
+            // Uncomment this only for debugging
+            // console.log("Object dimensions during scaling:", bounds);
           }
         });
-        
-        // Enable moving objects beyond canvas boundaries
-        canvas.on('object:moving', function(e) {
+
+        canvas.on("object:moving", function (e) {
           const obj = e.target;
-          if (obj) {
-            // Allow free movement beyond canvas boundaries
-            obj.setCoords();
-          }
+          if (obj) obj.setCoords();
         });
-        
+
         canvas.renderAll();
-      }).catch(error => {
+      })
+      .catch((error) => {
         console.error("Error creating image:", error);
       });
-    }
-    
-    return () => {
-      canvas.dispose();
+  }
+
+  return () => {
+    if (fabricCanvas) {
+      fabricCanvas.dispose();
       setFabricCanvas(null);
-    };
-  }, [imageUrl, isEditing, savedPosition, containerDimensions, setFabricCanvas, setOriginalImageDimensions, originalImageDimensions, fabricCanvas]);
+    }
+  };
+}, [imageUrl, isEditing, savedPosition, containerDimensions, setFabricCanvas, setOriginalImageDimensions, originalImageDimensions, fabricCanvas]);
 
   if (!isEditing) return null;
 
