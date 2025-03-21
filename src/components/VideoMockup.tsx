@@ -106,13 +106,33 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           style={{ 
             left: savedPosition.left,
             top: savedPosition.top,
-            width: savedPosition.width, // Use width from saved position
-            height: savedPosition.height, // Use height from saved position
+            width: savedPosition.originalWidth,
+            height: savedPosition.originalHeight,
             transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
             transformOrigin: 'top left',
-            zIndex: 10 
+            zIndex: 0 // Ensure video is at the bottom layer
           }}
         />
+      )}
+      
+      {/* Display uploaded image */}
+      {!isEditing && imageUrl && savedPosition && (
+        <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 10 }}>
+          <img
+            src={imageUrl}
+            alt="Uploaded image"
+            style={{
+              position: 'absolute',
+              left: savedPosition.left,
+              top: savedPosition.top,
+              width: savedPosition.originalWidth,
+              height: savedPosition.originalHeight,
+              transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
+              transformOrigin: 'top left',
+              pointerEvents: 'none'
+            }}
+          />
+        </div>
       )}
       
       {/* Video overlay */}
@@ -160,26 +180,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
               Edit Position
             </button>
           )}
-        </div>
-      )}
-      
-      {/* Display uploaded image */}
-      {!isEditing && imageUrl && savedPosition && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 20 }}>
-          <img
-            src={imageUrl}
-            alt="Uploaded image"
-            style={{
-              position: 'absolute',
-              left: savedPosition.left,
-              top: savedPosition.top,
-              width: savedPosition.originalWidth,
-              height: savedPosition.originalHeight,
-              transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
-              transformOrigin: 'top left',
-              pointerEvents: 'none'
-            }}
-          />
         </div>
       )}
     </div>
