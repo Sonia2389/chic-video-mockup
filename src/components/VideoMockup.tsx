@@ -140,21 +140,34 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [videoError, setVideoError] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 })
+  const [originalVideoDimensions, setOriginalVideoDimensions] = useState({ width: 0, height: 0 })
+  const [scaledVideoDimensions, setScaledVideoDimensions] = useState({ width: 0, height: 0 })
 
   const { containerDimensions, setContainerDimensions, originalImageDimensions, setOriginalImageDimensions } =
     useDimensions()
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null)
 
+  // Scale factor for the preview (25% of original size)
+  const SCALE_FACTOR = 0.25
+
   // Handle video metadata loaded - get video dimensions
   const handleVideoMetadata = () => {
     if (videoRef.current) {
       const { videoWidth, videoHeight } = videoRef.current
-      console.log("Video dimensions:", videoWidth, videoHeight)
-      setVideoDimensions({ width: videoWidth, height: videoHeight })
+      console.log("Original video dimensions:", videoWidth, videoHeight)
 
-      // Update container dimensions to match video
-      setContainerDimensions({ width: videoWidth, height: videoHeight })
+      // Store original dimensions
+      setOriginalVideoDimensions({ width: videoWidth, height: videoHeight })
+
+      // Calculate scaled dimensions (25% of original)
+      const scaledWidth = Math.round(videoWidth * SCALE_FACTOR)
+      const scaledHeight = Math.round(videoHeight * SCALE_FACTOR)
+      console.log("Scaled video dimensions (25%):", scaledWidth, scaledHeight)
+
+      setScaledVideoDimensions({ width: scaledWidth, height: scaledHeight })
+
+      // Update container dimensions to match scaled video
+      setContainerDimensions({ width: scaledWidth, height: scaledHeight })
     }
   }
 
@@ -163,7 +176,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     const updateDimensions = () => {
       if (containerRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect()
-        if (!videoDimensions.width && !videoDimensions.height) {
+        if (!scaledVideoDimensions.width && !scaledVideoDimensions.height) {
           setContainerDimensions({ width, height })
         }
       }
@@ -175,7 +188,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     return () => {
       window.removeEventListener("resize", updateDimensions)
     }
-  }, [setContainerDimensions, videoDimensions])
+  }, [setContainerDimensions, scaledVideoDimensions])
 
   // Save position when exiting edit mode
   const handleSavePosition = () => {
@@ -221,11 +234,11 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [videoUrl, videoRef])
 
-  // Calculate container style based on video dimensions
+  // Calculate container style based on scaled video dimensions
   const containerStyle = {
-    width: videoDimensions.width > 0 ? `${videoDimensions.width}px` : "100%",
-    height: videoDimensions.height > 0 ? `${videoDimensions.height}px` : "0",
-    paddingBottom: videoDimensions.height > 0 ? "0" : "56.25%", // Default 16:9 ratio if no video
+    width: scaledVideoDimensions.width > 0 ? `${scaledVideoDimensions.width}px` : "100%",
+    height: scaledVideoDimensions.height > 0 ? `${scaledVideoDimensions.height}px` : "0",
+    paddingBottom: scaledVideoDimensions.height > 0 ? "0" : "56.25%", // Default 16:9 ratio if no video
     position: "relative" as const,
     backgroundColor: "#111827",
     borderRadius: "0.5rem",
@@ -328,7 +341,9 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
       {/* Debug info */}
       <div className="absolute top-2 left-2 text-xs text-white bg-black bg-opacity-50 p-1 rounded z-50">
-        {videoDimensions.width > 0 && `Video: ${videoDimensions.width}x${videoDimensions.height}`}
+        {originalVideoDimensions.width > 0 &&
+          `Original: ${originalVideoDimensions.width}x${originalVideoDimensions.height} | 
+           Preview (25%): ${scaledVideoDimensions.width}x${scaledVideoDimensions.height}`}
       </div>
     </div>
   )
