@@ -1,161 +1,109 @@
+"use client"
 
-import { useEffect, useRef } from "react";
-import { Canvas, Image } from 'fabric';
-
-interface ImagePosition {
-  left: number;
-  top: number;
-  scale: number;
-  width: number;
-  height: number;
-  scaleX: number;
-  scaleY: number;
-  originalWidth: number;
-  originalHeight: number;
-  angle?: number;
-}
+import type React from "react"
+import { useState, useEffect, useRef } from "react"
+import { Canvas, Image as FabricImage } from "fabric"
 
 interface CanvasEditorProps {
-  isEditing: boolean;
-  imageUrl: string | null;
-  savedPosition: ImagePosition | null;
-  containerDimensions: { width: number, height: number } | null;
-  setOriginalImageDimensions: (dimensions: { width: number, height: number } | null) => void;
-  originalImageDimensions: { width: number, height: number } | null;
-  fabricCanvas: Canvas | null;
-  setFabricCanvas: (canvas: Canvas | null) => void;
+  isEditing: boolean
+  imageUrl: string | null
+  savedPosition: ImagePosition | null
+  containerDimensions: { width: number; height: number }
+  setOriginalImageDimensions: (dimensions: { width: number; height: number }) => void
+  originalImageDimensions: { width: number; height: number }
+  fabricCanvas: Canvas | null
+  setFabricCanvas: (canvas: Canvas | null) => void
+  onSavePosition: (position: ImagePosition) => void
 }
 
-const CanvasEditor = ({ 
-  isEditing, 
-  imageUrl, 
-  savedPosition, 
+interface ImagePosition {
+  left: number
+  top: number
+  scale: number
+  width: number
+  height: number
+  scaleX: number
+  scaleY: number
+  originalWidth: number
+  originalHeight: number
+  angle?: number
+}
+
+const CanvasEditor: React.FC<CanvasEditorProps> = ({
+  isEditing,
+  imageUrl,
+  savedPosition,
   containerDimensions,
   setOriginalImageDimensions,
   originalImageDimensions,
   fabricCanvas,
-  setFabricCanvas
-}: CanvasEditorProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  setFabricCanvas,
+  onSavePosition,
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [imageLoaded, setImageLoaded] = useState(false)
 
   useEffect(() => {
-  if (!canvasRef.current || !isEditing || !containerDimensions) return;
+    if (!isEditing || !canvasRef.current || !imageUrl) return
 
-  // If a Fabric.js canvas already exists, dispose of it
-  if (fabricCanvas) {
-    fabricCanvas.dispose();
-  }
+    const canvas = new Canvas(canvasRef.current, {
+      width: containerDimensions.width,
+      height: containerDimensions.height,
+      backgroundColor: "rgba(0,0,0,0.1)",
+    })
 
-  const canvas = new Canvas(canvasRef.current, {
-    width: containerDimensions.width,
-    height: containerDimensions.height,
-    backgroundColor: "transparent",
-    preserveObjectStacking: true,
-  });
+    setFabricCanvas(canvas)
 
-  setFabricCanvas(canvas);
+    const img = new window.Image()
+    img.crossOrigin = "anonymous"
+    img.src = imageUrl
 
-  if (imageUrl) {
-    Image.fromURL(imageUrl, { crossOrigin: "anonymous" })
-      .then((img) => {
-        if (!originalImageDimensions) {
-          setOriginalImageDimensions({
-            width: img.width!,
-            height: img.height!,
-          });
-        }
+    img.onload = () => {
+      const fabricImage = new FabricImage(img)
 
-        if (savedPosition) {
-          img.set({
-            left: savedPosition.left,
-            top: savedPosition.top,
-            scaleX: savedPosition.scaleX,
-            scaleY: savedPosition.scaleY,
-            angle: savedPosition.angle || 0,
-            width: savedPosition.originalWidth,
-            height: savedPosition.originalHeight,
-            cornerSize: 12,
-            cornerColor: "#9b87f5",
-            borderColor: "#9b87f5",
-            cornerStyle: "circle",
-            transparentCorners: false,
-            originX: "left",
-            originY: "top",
-            selectable: true,
-            hasControls: true,
-            hasBorders: true,
-          });
-        } else {
-          const baseScale = Math.min(
-            (containerDimensions.width * 0.8) / img.width!,
-            (containerDimensions.height * 0.8) / img.height!
-          );
+      if (savedPosition) {
+        fabricImage.set({
+          left: savedPosition.left,
+          top: savedPosition.top,
+          scaleX: savedPosition.scaleX,
+          scaleY: savedPosition.scaleY,
+          angle: savedPosition.angle || 0,
+        })
+      } else {
+        fabricImage.scaleToWidth(containerDimensions.width * 0.8)
+        fabricImage.set({
+          left: containerDimensions.width / 2 - (fabricImage.width * fabricImage.scaleX) / 2,
+          top: containerDimensions.height / 2 - (fabricImage.height * fabricImage.scaleY) / 2,
+        })
+      }
 
-          img.set({
-            left: containerDimensions.width / 2 - (img.width! * baseScale) / 2,
-            top: containerDimensions.height / 2 - (img.height! * baseScale) / 2,
-            scaleX: baseScale,
-            scaleY: baseScale,
-            cornerSize: 12,
-            cornerColor: "#9b87f5",
-            borderColor: "#9b87f5",
-            cornerStyle: "circle",
-            transparentCorners: false,
-            originX: "left",
-            originY: "top",
-            selectable: true,
-            hasControls: true,
-            hasBorders: true,
-          });
-        }
+      canvas.add(fabricImage)
+      canvas.setActiveObject(fabricImage)
+      canvas.renderAll()
 
-        canvas.add(img);
-        canvas.setActiveObject(img);
-
-        canvas.on("object:scaling", function () {
-          const activeObj = canvas.getActiveObject();
-          if (activeObj) {
-            const bounds = activeObj.getBoundingRect();
-            // Uncomment this only for debugging
-            // console.log("Object dimensions during scaling:", bounds);
-          }
-        });
-
-        canvas.on("object:moving", function (e) {
-          const obj = e.target;
-          if (obj) obj.setCoords();
-        });
-
-        canvas.renderAll();
+      setOriginalImageDimensions({
+        width: img.width,
+        height: img.height,
       })
-      .catch((error) => {
-        console.error("Error creating image:", error);
-      });
-  }
-
-  return () => {
-    if (fabricCanvas) {
-      fabricCanvas.dispose();
-      setFabricCanvas(null);
+      setImageLoaded(true)
     }
-  };
-}, [imageUrl, isEditing, savedPosition, containerDimensions, setFabricCanvas, setOriginalImageDimensions, originalImageDimensions, fabricCanvas]);
 
-  if (!isEditing) return null;
+    return () => {
+      canvas.dispose()
+    }
+  }, [isEditing, imageUrl, containerDimensions, savedPosition, setFabricCanvas, setOriginalImageDimensions])
 
   return (
-    <div 
-      className="absolute inset-0 overflow-visible" 
-      style={{ 
-        zIndex: 50, // Higher z-index to ensure canvas is above other elements
-        pointerEvents: 'auto',
-        position: 'absolute',
-        backgroundColor: 'transparent'
-      }}
-    >
+    <div className="absolute inset-0 z-100">
       <canvas ref={canvasRef} className="w-full h-full" />
+      {!imageLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 text-white">
+          Loading image...
+        </div>
+      )}
     </div>
-  );
-};
+  )
+}
 
-export default CanvasEditor;
+export default CanvasEditor
+
