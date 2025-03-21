@@ -1,71 +1,56 @@
+"use client"
 
-import { Canvas } from 'fabric';
-import { toast } from "sonner";
+import type React from "react"
+import { useState } from "react"
 
 interface ImageTransformerProps {
-  fabricCanvas: Canvas | null;
+  imageSrc: string
 }
 
-const ImageTransformer = ({ fabricCanvas }: ImageTransformerProps) => {
-  const moveImage = (direction: 'up' | 'down' | 'left' | 'right') => {
-    if (!fabricCanvas) return;
-    
-    const activeObject = fabricCanvas.getActiveObject();
-    if (!activeObject) {
-      if (fabricCanvas.getObjects().length > 0) {
-        fabricCanvas.setActiveObject(fabricCanvas.getObjects()[0]);
-        fabricCanvas.renderAll();
-        return;
-      }
-      toast.error("No image selected");
-      return;
-    }
+const ImageTransformer: React.FC<ImageTransformerProps> = ({ imageSrc }) => {
+  const [scale, setScale] = useState(1)
+  const [xOffset, setXOffset] = useState(0)
+  const [yOffset, setYOffset] = useState(0)
 
-    const MOVE_AMOUNT = 10; // pixels to move
-    
-    switch (direction) {
-      case 'up':
-        activeObject.set('top', activeObject.top! - MOVE_AMOUNT);
-        break;
-      case 'down':
-        activeObject.set('top', activeObject.top! + MOVE_AMOUNT);
-        break;
-      case 'left':
-        activeObject.set('left', activeObject.left! - MOVE_AMOUNT);
-        break;
-      case 'right':
-        activeObject.set('left', activeObject.left! + MOVE_AMOUNT);
-        break;
-    }
-    
-    fabricCanvas.renderAll();
-  };
+  const handleScaleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setScale(Number.parseFloat(event.target.value))
+  }
 
-  const resizeImage = (scaleChange: number) => {
-    if (!fabricCanvas) return;
-    
-    const activeObject = fabricCanvas.getActiveObject();
-    if (!activeObject) {
-      if (fabricCanvas.getObjects().length > 0) {
-        fabricCanvas.setActiveObject(fabricCanvas.getObjects()[0]);
-        fabricCanvas.renderAll();
-        return;
-      }
-      toast.error("No image selected");
-      return;
-    }
-    
-    const currentScale = activeObject.scaleX!;
-    const newScale = Math.max(0.1, currentScale + scaleChange); // Prevent scaling to zero or negative
-    
-    activeObject.scale(newScale);
-    fabricCanvas.renderAll();
-  };
+  const handleXOffsetChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setXOffset(Number.parseFloat(event.target.value))
+  }
 
-  return {
-    moveImage,
-    resizeImage
-  };
-};
+  const handleYOffsetChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setYOffset(Number.parseFloat(event.target.value))
+  }
 
-export default ImageTransformer;
+  return (
+    <div>
+      <img
+        src={imageSrc || "/placeholder.svg"}
+        alt="Uploaded"
+        style={{
+          transform: `scale(${scale}) translate(${xOffset}px, ${yOffset}px)`,
+          transformOrigin: "center",
+          maxWidth: "100%",
+          maxHeight: "100%",
+        }}
+      />
+      <div>
+        <label>Scale:</label>
+        <input type="range" min="0.1" max="2" step="0.01" value={scale} onChange={handleScaleChange} />
+      </div>
+      <div>
+        <label>X Offset:</label>
+        <input type="number" step="1" value={xOffset} onChange={handleXOffsetChange} />
+      </div>
+      <div>
+        <label>Y Offset:</label>
+        <input type="number" step="1" value={yOffset} onChange={handleYOffsetChange} />
+      </div>
+    </div>
+  )
+}
+
+export default ImageTransformer
+
