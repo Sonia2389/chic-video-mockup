@@ -140,22 +140,32 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [videoError, setVideoError] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 })
 
   const { containerDimensions, setContainerDimensions, originalImageDimensions, setOriginalImageDimensions } =
     useDimensions()
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null)
 
-  // Log videoUrl for debugging
-  useEffect(() => {
-    console.log("VideoUrl:", videoUrl)
-  }, [videoUrl])
+  // Handle video metadata loaded - get video dimensions
+  const handleVideoMetadata = () => {
+    if (videoRef.current) {
+      const { videoWidth, videoHeight } = videoRef.current
+      console.log("Video dimensions:", videoWidth, videoHeight)
+      setVideoDimensions({ width: videoWidth, height: videoHeight })
+
+      // Update container dimensions to match video
+      setContainerDimensions({ width: videoWidth, height: videoHeight })
+    }
+  }
 
   // Handle container size detection
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect()
-        setContainerDimensions({ width, height })
+        if (!videoDimensions.width && !videoDimensions.height) {
+          setContainerDimensions({ width, height })
+        }
       }
     }
 
@@ -165,7 +175,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     return () => {
       window.removeEventListener("resize", updateDimensions)
     }
-  }, [setContainerDimensions])
+  }, [setContainerDimensions, videoDimensions])
 
   // Save position when exiting edit mode
   const handleSavePosition = () => {
@@ -211,11 +221,20 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [videoUrl, videoRef])
 
+  // Calculate container style based on video dimensions
+  const containerStyle = {
+    width: videoDimensions.width > 0 ? `${videoDimensions.width}px` : "100%",
+    height: videoDimensions.height > 0 ? `${videoDimensions.height}px` : "0",
+    paddingBottom: videoDimensions.height > 0 ? "0" : "56.25%", // Default 16:9 ratio if no video
+    position: "relative" as const,
+    backgroundColor: "#111827",
+    borderRadius: "0.5rem",
+    overflow: "hidden",
+    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+  }
+
   return (
-    <div
-      className="relative w-full h-0 pb-[56.25%] bg-gray-900 rounded-lg overflow-hidden shadow-xl"
-      ref={containerRef}
-    >
+    <div style={containerStyle} ref={containerRef}>
       {/* Background video */}
       {videoUrl && (
         <>
@@ -225,15 +244,16 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           </div>
           <video
             ref={videoRef}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full"
             src={videoUrl}
             autoPlay
             loop
             muted
             playsInline
+            onLoadedMetadata={handleVideoMetadata}
             onLoadedData={() => setVideoLoaded(true)}
             onError={() => setVideoError(true)}
-            style={{ zIndex: 1 }}
+            style={{ zIndex: 1, objectFit: "contain" }}
           />
         </>
       )}
@@ -308,7 +328,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
       {/* Debug info */}
       <div className="absolute top-2 left-2 text-xs text-white bg-black bg-opacity-50 p-1 rounded z-50">
-        {videoUrl ? `Video URL: ${videoUrl.substring(0, 30)}...` : "No video URL provided"}
+        {videoDimensions.width > 0 && `Video: ${videoDimensions.width}x${videoDimensions.height}`}
       </div>
     </div>
   )
