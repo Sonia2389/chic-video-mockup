@@ -106,8 +106,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           style={{ 
             left: savedPosition.left,
             top: savedPosition.top,
-            width: savedPosition.originalWidth,
-            height: savedPosition.originalHeight,
+            width: savedPosition.width, // Use width from saved position
+            height: savedPosition.height, // Use height from saved position
             transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
             transformOrigin: 'top left',
             zIndex: 10 
