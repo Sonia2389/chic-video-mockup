@@ -37,8 +37,10 @@ const CanvasEditor = ({
   originalImageDimensions,
   fabricCanvas,
   setFabricCanvas,
+  onImageLoaded,
 }) => {
   const canvasRef = useRef(null)
+  const [imageLoaded, setImageLoaded] = useState(false)
 
   useEffect(() => {
     if (!isEditing || !canvasRef.current || !imageUrl) return
@@ -59,6 +61,13 @@ const CanvasEditor = ({
     img.onload = () => {
       const fabricImage = new FabricImage(img)
 
+      // Store original dimensions
+      const imgDimensions = {
+        width: img.width,
+        height: img.height,
+      }
+      setOriginalImageDimensions(imgDimensions)
+
       // Set initial position if saved position exists
       if (savedPosition) {
         fabricImage.set({
@@ -69,11 +78,16 @@ const CanvasEditor = ({
           angle: savedPosition.angle || 0,
         })
       } else {
-        // Center the image
-        fabricImage.scaleToWidth(containerDimensions.width * 0.8)
+        // Center the image and scale it to fit nicely in the container
+        const scale = Math.min(
+          (containerDimensions.width * 0.8) / img.width,
+          (containerDimensions.height * 0.8) / img.height,
+        )
+
+        fabricImage.scale(scale)
         fabricImage.set({
-          left: containerDimensions.width / 2 - (fabricImage.width * fabricImage.scaleX) / 2,
-          top: containerDimensions.height / 2 - (fabricImage.height * fabricImage.scaleY) / 2,
+          left: containerDimensions.width / 2 - (img.width * scale) / 2,
+          top: containerDimensions.height / 2 - (img.height * scale) / 2,
         })
       }
 
@@ -81,21 +95,33 @@ const CanvasEditor = ({
       canvas.setActiveObject(fabricImage)
       canvas.renderAll()
 
-      // Store original dimensions
-      setOriginalImageDimensions({
-        width: img.width,
-        height: img.height,
-      })
+      setImageLoaded(true)
+      if (onImageLoaded) {
+        onImageLoaded(fabricImage)
+      }
     }
 
     return () => {
       canvas.dispose()
     }
-  }, [isEditing, imageUrl, containerDimensions, savedPosition, setFabricCanvas, setOriginalImageDimensions])
+  }, [
+    isEditing,
+    imageUrl,
+    containerDimensions,
+    savedPosition,
+    setFabricCanvas,
+    setOriginalImageDimensions,
+    onImageLoaded,
+  ])
 
   return (
     <div className="absolute inset-0 z-100">
       <canvas ref={canvasRef} className="w-full h-full" />
+      {!imageLoaded && imageUrl && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 text-white">
+          Loading image...
+        </div>
+      )}
     </div>
   )
 }
@@ -142,6 +168,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null)
   const [originalVideoDimensions, setOriginalVideoDimensions] = useState({ width: 0, height: 0 })
   const [scaledVideoDimensions, setScaledVideoDimensions] = useState({ width: 0, height: 0 })
+  const [currentImagePosition, setCurrentImagePosition] = useState<ImagePosition | null>(savedPosition)
+  const [activeImage, setActiveImage] = useState(null)
 
   const { containerDimensions, setContainerDimensions, originalImageDimensions, setOriginalImageDimensions } =
     useDimensions()
@@ -190,6 +218,33 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [setContainerDimensions, scaledVideoDimensions])
 
+  // Update current image position when savedPosition changes
+  useEffect(() => {
+    setCurrentImagePosition(savedPosition)
+  }, [savedPosition])
+
+  // Handle image loaded in canvas editor
+  const handleImageLoaded = (fabricImage) => {
+    setActiveImage(fabricImage)
+
+    // Update current position based on the loaded image
+    if (fabricImage) {
+      const coords = fabricImage.getBoundingRect()
+      setCurrentImagePosition({
+        left: fabricImage.left || 0,
+        top: fabricImage.top || 0,
+        scale: 1,
+        width: coords.width,
+        height: coords.height,
+        scaleX: fabricImage.scaleX || 1,
+        scaleY: fabricImage.scaleY || 1,
+        originalWidth: fabricImage.width || 0,
+        originalHeight: fabricImage.height || 0,
+        angle: fabricImage.angle || 0,
+      })
+    }
+  }
+
   // Save position when exiting edit mode
   const handleSavePosition = () => {
     if (fabricCanvas && fabricCanvas.getObjects().length > 0) {
@@ -197,8 +252,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
       if (activeObject) {
         const coords = activeObject.getBoundingRect()
-
-        onPositionSave({
+        const newPosition = {
           left: activeObject.left || 0,
           top: activeObject.top || 0,
           scale: 1,
@@ -209,7 +263,13 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           originalWidth: activeObject.width || 0,
           originalHeight: activeObject.height || 0,
           angle: activeObject.angle || 0,
-        })
+        }
+
+        // Update current position
+        setCurrentImagePosition(newPosition)
+
+        // Save position to parent component
+        onPositionSave(newPosition)
       }
     }
 
@@ -246,6 +306,34 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
   }
 
+  // Update image position in real-time during editing
+  useEffect(() => {
+    if (isEditing && fabricCanvas) {
+      fabricCanvas.on("object:modified", () => {
+        const activeObject = fabricCanvas.getActiveObject()
+        if (activeObject) {
+          const coords = activeObject.getBoundingRect()
+          setCurrentImagePosition({
+            left: activeObject.left || 0,
+            top: activeObject.top || 0,
+            scale: 1,
+            width: coords.width,
+            height: coords.height,
+            scaleX: activeObject.scaleX || 1,
+            scaleY: activeObject.scaleY || 1,
+            originalWidth: activeObject.width || 0,
+            originalHeight: activeObject.height || 0,
+            angle: activeObject.angle || 0,
+          })
+        }
+      })
+
+      return () => {
+        fabricCanvas.off("object:modified")
+      }
+    }
+  }, [isEditing, fabricCanvas])
+
   return (
     <div style={containerStyle} ref={containerRef}>
       {/* Background video */}
@@ -258,7 +346,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           <video
             ref={videoRef}
             className="absolute inset-0 w-full h-full"
-            src={videoUrl}
+            src={videoUrl || "/placeholder.svg"}
             autoPlay
             loop
             muted
@@ -271,24 +359,20 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </>
       )}
 
-      {/* Display uploaded image */}
-      {!isEditing && imageUrl && (
+      {/* Display uploaded image - show during both editing and non-editing states */}
+      {imageUrl && !isEditing && currentImagePosition && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 10 }}>
           <img
             src={imageUrl || "/placeholder.svg"}
             alt="Uploaded image"
             style={{
               position: "absolute",
-              left: savedPosition ? savedPosition.left : "50%",
-              top: savedPosition ? savedPosition.top : "50%",
-              width: savedPosition ? savedPosition.originalWidth : "auto",
-              height: savedPosition ? savedPosition.originalHeight : "auto",
-              maxWidth: "90%",
-              maxHeight: "90%",
-              transform: savedPosition
-                ? `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`
-                : "translate(-50%, -50%)",
-              transformOrigin: savedPosition ? "top left" : "center",
+              left: currentImagePosition.left,
+              top: currentImagePosition.top,
+              width: currentImagePosition.originalWidth,
+              height: currentImagePosition.originalHeight,
+              transform: `scale(${currentImagePosition.scaleX}, ${currentImagePosition.scaleY}) rotate(${currentImagePosition.angle || 0}deg)`,
+              transformOrigin: "top left",
               pointerEvents: "none",
             }}
           />
@@ -304,12 +388,13 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           <CanvasEditor
             isEditing={isEditing}
             imageUrl={imageUrl}
-            savedPosition={savedPosition}
+            savedPosition={currentImagePosition}
             containerDimensions={containerDimensions}
             setOriginalImageDimensions={setOriginalImageDimensions}
             originalImageDimensions={originalImageDimensions}
             fabricCanvas={fabricCanvas}
             setFabricCanvas={setFabricCanvas}
+            onImageLoaded={handleImageLoaded}
           />
           <div className="absolute bottom-4 right-4 z-[200] flex gap-2">
             <button
@@ -344,6 +429,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         {originalVideoDimensions.width > 0 &&
           `Original: ${originalVideoDimensions.width}x${originalVideoDimensions.height} | 
            Preview (25%): ${scaledVideoDimensions.width}x${scaledVideoDimensions.height}`}
+        {currentImagePosition &&
+          ` | Image: ${Math.round(currentImagePosition.width)}x${Math.round(currentImagePosition.height)}`}
       </div>
     </div>
   )
