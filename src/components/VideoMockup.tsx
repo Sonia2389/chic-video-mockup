@@ -68,6 +68,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   const [videoError, setVideoError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [canvasReady, setCanvasReady] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
   const [originalVideoDimensions, setOriginalVideoDimensions] = useState({ width: 0, height: 0 })
@@ -148,87 +149,99 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   // Initialize fabric canvas for editing
   useEffect(() => {
     if (isEditing && canvasRef.current && imageUrl && imageLoaded) {
-      const containerWidth = scaledVideoDimensions.width || 300
-      const containerHeight = scaledVideoDimensions.height || 200
+      try {
+        setCanvasReady(false)
 
-      console.log("Initializing fabric canvas with dimensions:", containerWidth, containerHeight)
+        const containerWidth = scaledVideoDimensions.width || 300
+        const containerHeight = scaledVideoDimensions.height || 200
 
-      // Initialize fabric canvas
-      const canvas = new Canvas(canvasRef.current, {
-        width: containerWidth,
-        height: containerHeight,
-        backgroundColor: "rgba(0,0,0,0.1)",
-      })
+        console.log("Initializing fabric canvas with dimensions:", containerWidth, containerHeight)
 
-      setFabricCanvas(canvas)
+        // Initialize fabric canvas
+        const canvas = new Canvas(canvasRef.current)
 
-      // Load image into fabric
-      const img = new Image()
-      img.crossOrigin = "anonymous"
-      img.onload = () => {
-        console.log("Image loaded into fabric:", img.width, img.height)
+        // Set canvas dimensions
+        canvas.setWidth(containerWidth)
+        canvas.setHeight(containerHeight)
+        canvas.setBackgroundColor("rgba(0,0,0,0.1)", canvas.renderAll.bind(canvas))
 
-        try {
-          const fabricImage = new FabricImage(img)
+        setFabricCanvas(canvas)
 
-          // Set position from current position
-          if (currentImagePosition) {
-            console.log("Setting fabric image position:", currentImagePosition)
-            fabricImage.set({
-              left: currentImagePosition.left,
-              top: currentImagePosition.top,
-              scaleX: currentImagePosition.scaleX,
-              scaleY: currentImagePosition.scaleY,
-              angle: currentImagePosition.angle || 0,
-            })
-          } else {
-            // Center the image
-            const scale = Math.min((containerWidth * 0.8) / img.width, (containerHeight * 0.8) / img.height)
+        // Load image into fabric
+        const img = new Image()
+        img.crossOrigin = "anonymous"
+        img.onload = () => {
+          console.log("Image loaded into fabric:", img.width, img.height)
 
-            fabricImage.scale(scale)
-            fabricImage.set({
-              left: containerWidth / 2 - (img.width * scale) / 2,
-              top: containerHeight / 2 - (img.height * scale) / 2,
-            })
-          }
+          try {
+            const fabricImage = new FabricImage(img)
 
-          canvas.add(fabricImage)
-          canvas.setActiveObject(fabricImage)
-          canvas.renderAll()
+            // Set position from current position
+            if (currentImagePosition) {
+              console.log("Setting fabric image position:", currentImagePosition)
+              fabricImage.set({
+                left: currentImagePosition.left,
+                top: currentImagePosition.top,
+                scaleX: currentImagePosition.scaleX,
+                scaleY: currentImagePosition.scaleY,
+                angle: currentImagePosition.angle || 0,
+              })
+            } else {
+              // Center the image
+              const scale = Math.min((containerWidth * 0.8) / img.width, (containerHeight * 0.8) / img.height)
 
-          // Set up object modified event
-          canvas.on("object:modified", () => {
-            const activeObject = canvas.getActiveObject()
-            if (activeObject) {
-              const coords = activeObject.getBoundingRect()
-              const updatedPosition = {
-                left: activeObject.left || 0,
-                top: activeObject.top || 0,
-                scale: 1,
-                width: coords.width,
-                height: coords.height,
-                scaleX: activeObject.scaleX || 1,
-                scaleY: activeObject.scaleY || 1,
-                originalWidth: activeObject.width || 0,
-                originalHeight: activeObject.height || 0,
-                angle: activeObject.angle || 0,
-              }
-              setCurrentImagePosition(updatedPosition)
+              fabricImage.scale(scale)
+              fabricImage.set({
+                left: containerWidth / 2 - (img.width * scale) / 2,
+                top: containerHeight / 2 - (img.height * scale) / 2,
+              })
             }
-          })
-        } catch (error) {
-          console.error("Error creating fabric image:", error)
+
+            canvas.add(fabricImage)
+            canvas.setActiveObject(fabricImage)
+            canvas.renderAll()
+
+            // Set up object modified event
+            canvas.on("object:modified", () => {
+              const activeObject = canvas.getActiveObject()
+              if (activeObject) {
+                const coords = activeObject.getBoundingRect()
+                const updatedPosition = {
+                  left: activeObject.left || 0,
+                  top: activeObject.top || 0,
+                  scale: 1,
+                  width: coords.width,
+                  height: coords.height,
+                  scaleX: activeObject.scaleX || 1,
+                  scaleY: activeObject.scaleY || 1,
+                  originalWidth: activeObject.width || 0,
+                  originalHeight: activeObject.height || 0,
+                  angle: activeObject.angle || 0,
+                }
+                setCurrentImagePosition(updatedPosition)
+              }
+            })
+
+            setCanvasReady(true)
+          } catch (error) {
+            console.error("Error creating fabric image:", error)
+            setCanvasReady(false)
+          }
         }
-      }
 
-      img.onerror = (error) => {
-        console.error("Error loading image into fabric:", error)
-      }
+        img.onerror = (error) => {
+          console.error("Error loading image into fabric:", error)
+          setCanvasReady(false)
+        }
 
-      img.src = imageUrl
+        img.src = imageUrl
 
-      return () => {
-        canvas.dispose()
+        return () => {
+          canvas.dispose()
+        }
+      } catch (error) {
+        console.error("Error initializing fabric canvas:", error)
+        setCanvasReady(false)
       }
     }
   }, [isEditing, imageUrl, imageLoaded, scaledVideoDimensions, currentImagePosition])
@@ -259,6 +272,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
 
     setIsEditing(false)
+    setCanvasReady(false)
   }
 
   // Calculate container style based on scaled video dimensions
@@ -297,8 +311,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </>
       )}
 
-      {/* Display uploaded image in preview mode */}
-      {!isEditing && imageUrl && currentImagePosition && (
+      {/* Display uploaded image in preview mode or when canvas is not ready */}
+      {imageUrl && (!isEditing || !canvasReady) && currentImagePosition && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 10 }}>
           {imageError ? (
             <div className="bg-red-500 text-white p-2 rounded">Failed to load image. Please check the URL.</div>
@@ -332,11 +346,18 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       {/* Editing interface */}
       {isEditing && (
         <div className="absolute inset-0 z-100">
-          <canvas ref={canvasRef} className="w-full h-full" style={{ backgroundColor: "rgba(0,0,0,0.05)" }} />
+          <canvas
+            ref={canvasRef}
+            className="w-full h-full"
+            style={{
+              backgroundColor: "rgba(0,0,0,0.05)",
+              display: canvasReady ? "block" : "none",
+            }}
+          />
 
-          {!imageLoaded && (
+          {!canvasReady && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white">
-              Loading image for editing...
+              Initializing editor...
             </div>
           )}
 
@@ -348,7 +369,10 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
               Save Position
             </button>
             <button
-              onClick={() => setIsEditing(false)}
+              onClick={() => {
+                setIsEditing(false)
+                setCanvasReady(false)
+              }}
               className="bg-gray-700 text-white px-4 py-2 rounded-full shadow-lg hover:bg-gray-600 transition-colors"
             >
               Cancel
@@ -374,9 +398,9 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         {originalVideoDimensions.width > 0 &&
           `Video: ${originalVideoDimensions.width}x${originalVideoDimensions.height} (${scaledVideoDimensions.width}x${scaledVideoDimensions.height})`}
         {imageUrl && ` | Image: ${imageLoaded ? "Loaded" : "Loading"}`}
+        {isEditing && ` | Canvas: ${canvasReady ? "Ready" : "Initializing"}`}
         {currentImagePosition &&
           ` | Pos: ${Math.round(currentImagePosition.left)},${Math.round(currentImagePosition.top)} Scale: ${currentImagePosition.scaleX.toFixed(2)}`}
-        {isEditing && " | Editing"}
       </div>
     </div>
   )
