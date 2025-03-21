@@ -137,9 +137,18 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [videoLoaded, setVideoLoaded] = useState(false)
+  const [videoError, setVideoError] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
   const { containerDimensions, setContainerDimensions, originalImageDimensions, setOriginalImageDimensions } =
     useDimensions()
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null)
+
+  // Log videoUrl for debugging
+  useEffect(() => {
+    console.log("VideoUrl:", videoUrl)
+  }, [videoUrl])
 
   // Handle container size detection
   useEffect(() => {
@@ -184,6 +193,24 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     setIsEditing(false)
   }
 
+  // Force video play
+  useEffect(() => {
+    if (videoRef.current && videoUrl) {
+      const playVideo = async () => {
+        try {
+          await videoRef.current?.play()
+          setVideoLoaded(true)
+          setVideoError(false)
+        } catch (error) {
+          console.error("Error playing video:", error)
+          setVideoError(true)
+        }
+      }
+
+      playVideo()
+    }
+  }, [videoUrl, videoRef])
+
   return (
     <div
       className="relative w-full h-0 pb-[56.25%] bg-gray-900 rounded-lg overflow-hidden shadow-xl"
@@ -191,15 +218,24 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     >
       {/* Background video */}
       {videoUrl && (
-        <video
-          className="absolute inset-0 w-full h-full object-cover"
-          src={videoUrl}
-          autoPlay
-          loop
-          muted
-          playsInline
-          style={{ zIndex: 0 }}
-        />
+        <>
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-white">
+            {!videoLoaded && !videoError && <p>Loading video...</p>}
+            {videoError && <p>Error loading video. Please check the URL.</p>}
+          </div>
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full object-cover"
+            src={videoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            onLoadedData={() => setVideoLoaded(true)}
+            onError={() => setVideoError(true)}
+            style={{ zIndex: 1 }}
+          />
+        </>
       )}
 
       {/* Display uploaded image */}
@@ -269,6 +305,11 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           )}
         </div>
       )}
+
+      {/* Debug info */}
+      <div className="absolute top-2 left-2 text-xs text-white bg-black bg-opacity-50 p-1 rounded z-50">
+        {videoUrl ? `Video URL: ${videoUrl.substring(0, 30)}...` : "No video URL provided"}
+      </div>
     </div>
   )
 }
