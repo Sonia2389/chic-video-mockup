@@ -1,56 +1,69 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState, useRef, useEffect } from 'react';
 
 interface ImageTransformerProps {
-  imageSrc: string
+  imageSrc: string;
 }
 
 const ImageTransformer: React.FC<ImageTransformerProps> = ({ imageSrc }) => {
-  const [scale, setScale] = useState(1)
-  const [xOffset, setXOffset] = useState(0)
-  const [yOffset, setYOffset] = useState(0)
+  const [width, setWidth] = useState(200);
+  const [height, setHeight] = useState(150);
+  const [isResizing, setIsResizing] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  const handleScaleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setScale(Number.parseFloat(event.target.value))
-  }
+  const handleMouseDown = (e: React.MouseEvent<HTMLImageElement>) => {
+    setIsResizing(true);
+  };
 
-  const handleXOffsetChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setXOffset(Number.parseFloat(event.target.value))
-  }
+  const handleMouseUp = () => {
+    setIsResizing(false);
+  };
 
-  const handleYOffsetChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setYOffset(Number.parseFloat(event.target.value))
-  }
+  const handleMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (!isResizing) return;
+
+    const newWidth = e.clientX - imgRef.current!.offsetLeft;
+    const newHeight = e.clientY - imgRef.current!.offsetTop;
+
+    setWidth(newWidth > 0 ? newWidth : 0);
+    setHeight(newHeight > 0 ? newHeight : 0);
+  };
+
+  useEffect(() => {
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
 
   return (
-    <div>
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <img
-        src={imageSrc || "/placeholder.svg"}
+        src={imageSrc || "/placeholder.svg?height=150&width=200"}
         alt="Uploaded"
+        ref={imgRef}
         style={{
-          transform: `scale(${scale}) translate(${xOffset}px, ${yOffset}px)`,
-          transformOrigin: "center",
-          maxWidth: "100%",
-          maxHeight: "100%",
+          width: width,
+          height: height,
+          maxWidth: 'none',
+          maxHeight: 'none',
+          objectFit: 'fill',
         }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
       />
-      <div>
-        <label>Scale:</label>
-        <input type="range" min="0.1" max="2" step="0.01" value={scale} onChange={handleScaleChange} />
-      </div>
-      <div>
-        <label>X Offset:</label>
-        <input type="number" step="1" value={xOffset} onChange={handleXOffsetChange} />
-      </div>
-      <div>
-        <label>Y Offset:</label>
-        <input type="number" step="1" value={yOffset} onChange={handleYOffsetChange} />
-      </div>
     </div>
-  )
-}
+  );
+};
 
-export default ImageTransformer
-
+export default ImageTransformer;
