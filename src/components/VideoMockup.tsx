@@ -95,15 +95,23 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   return (
     <div className="relative w-full h-0 pb-[56.25%] bg-gray-900 rounded-lg overflow-hidden shadow-xl" ref={containerRef}>
       {/* Background video */}
-      {videoUrl && (
+      {videoUrl && savedPosition && (
         <video
-          className="absolute inset-0 w-full h-full object-cover" // Changed back to object-cover
+          className="absolute" 
           src={videoUrl}
           autoPlay
           loop
           muted
           playsInline
-          style={{ zIndex: 10 }}
+          style={{ 
+            left: savedPosition.left,
+            top: savedPosition.top,
+            width: savedPosition.originalWidth,
+            height: savedPosition.originalHeight,
+            transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
+            transformOrigin: 'top left',
+            zIndex: 10 
+          }}
         />
       )}
       
