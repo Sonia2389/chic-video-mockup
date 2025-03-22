@@ -379,7 +379,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       )}
 
       {imageUrl && (!isEditing || !canvasReady) && currentImagePosition && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 15 }}>
+        <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 20 }}>
           {imageError ? (
             <div className="bg-red-500 text-white p-2 rounded">Failed to load image. Please check the URL.</div>
           ) : !imageLoaded ? (
@@ -398,7 +398,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
                 transform: `scale(${currentImagePosition.scaleX}, ${currentImagePosition.scaleY}) rotate(${currentImagePosition.angle || 0}deg)`,
                 transformOrigin: "top left",
                 pointerEvents: "none",
-                zIndex: 15,
+                zIndex: 20,
               }}
               onLoad={() => console.log("Preview image loaded")}
               onError={() => console.error("Preview image failed to load")}
@@ -410,14 +410,14 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       <VideoOverlay overlayIndex={overlayIndex} overlays={overlays} isEditing={isEditing} />
 
       {isEditing && (
-        <div className="absolute inset-0 z-100">
+        <div className="absolute inset-0 z-30">
           <canvas
             ref={canvasRef}
             className="w-full h-full"
             style={{
               backgroundColor: "rgba(0,0,0,0.05)",
               display: canvasReady ? "block" : "none",
-              zIndex: 25,
+              zIndex: 30,
             }}
           />
 

@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -94,7 +95,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   }, [isEditing, imageUrl, containerDimensions, savedPosition, setFabricCanvas, setOriginalImageDimensions])
 
   return (
-    <div className="absolute inset-0 z-100">
+    <div className="absolute inset-0 z-50">
       <canvas ref={canvasRef} className="w-full h-full" />
       {!imageLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 text-white">
@@ -106,4 +107,3 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
 }
 
 export default CanvasEditor
-
