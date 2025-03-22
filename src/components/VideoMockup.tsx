@@ -184,7 +184,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
             onLoadedMetadata={handleVideoMetadata}
             onLoadedData={() => setVideoLoaded(true)}
             onError={() => setVideoError(true)}
-            style={{ zIndex: 10, objectFit: "contain" }}
+            style={{ zIndex: 10, objectFit: "cover" }}
           />
         </>
       )}
@@ -247,7 +247,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         imageUrl={imageUrl}
       />
     </div>
-  )
+  );
 }
 
 export default VideoMockup

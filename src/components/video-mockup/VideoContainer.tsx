@@ -93,7 +93,10 @@ const VideoContainer = ({
             ref={videoRef}
             src={videoUrl}
             className="w-full h-full object-contain"
-            style={{ zIndex: isEditing ? -20 : -10 }}
+            style={{ 
+              zIndex: isEditing ? -20 : -10,
+              objectFit: "cover" // Changed from object-contain to object-cover to fill the container
+            }}
             autoPlay
             loop
             muted
