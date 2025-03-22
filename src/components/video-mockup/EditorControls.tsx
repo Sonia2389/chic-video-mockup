@@ -20,7 +20,7 @@ const EditorControls = ({
         size="sm" 
         variant={isEditing ? "default" : "outline"} 
         onClick={onEditToggle}
-        className="h-8 text-xs"
+        className="h-8 text-xs font-bold"
       >
         {isEditing ? "Save Position" : "Edit Position"}
       </Button>

@@ -62,7 +62,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
     img.onload = () => {
       const fabricImage = new FabricImage(img)
 
-      // Enable corner controls for resizing
+      // Enhanced corner controls for better resizing experience
       fabricImage.set({
         borderColor: '#3b82f6',
         cornerColor: 'white',
@@ -72,7 +72,25 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
         cornerStyle: 'circle',
         hasControls: true,
         hasBorders: true,
+        selectable: true,
+        lockUniScaling: false,
+        centeredScaling: false,
+        objectCaching: false,
+        padding: 5,
+        borderOpacityWhenMoving: 0.4,
       })
+
+      // Enable all controls for complete editing
+      fabricImage.setControlsVisibility({
+        mt: true, // middle top
+        mb: true, // middle bottom
+        ml: true, // middle left
+        mr: true, // middle right
+        tl: true, // top left
+        tr: true, // top right
+        bl: true, // bottom left
+        br: true, // bottom right
+      });
 
       if (savedPosition) {
         fabricImage.set({
@@ -94,6 +112,11 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
       canvas.add(fabricImage)
       canvas.setActiveObject(fabricImage)
       canvas.renderAll()
+
+      // Add object:scaling event to ensure smooth scaling
+      canvas.on('object:scaling', function(e) {
+        canvas.renderAll();
+      });
 
       setOriginalImageDimensions({
         width: img.width,
