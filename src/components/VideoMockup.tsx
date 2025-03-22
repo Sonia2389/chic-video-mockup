@@ -256,16 +256,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         onEditToggle={toggleEditMode}
         imageUrl={imageUrl}
       />
-
-      {/* Debug info */}
-      <div className="absolute top-2 left-2 text-xs text-white bg-black bg-opacity-50 p-1 rounded z-50">
-        {originalVideoDimensions.width > 0 &&
-          `Video: ${originalVideoDimensions.width}x${originalVideoDimensions.height} (${scaledVideoDimensions.width}x${scaledVideoDimensions.height})`}
-        {imageUrl && ` | Image: ${imageLoaded ? "Loaded" : "Loading"}`}
-        {isEditing && ` | Editing Mode: Active`}
-        {currentImagePosition &&
-          ` | Pos: ${Math.round(currentImagePosition.left)},${Math.round(currentImagePosition.top)} Scale: ${currentImagePosition.scaleX.toFixed(2)}`}
-      </div>
     </div>
   )
 }
