@@ -31,7 +31,6 @@ interface VideoMockupProps {
   imageUrl: string | null
   backgroundImageUrl: string | null
   overlayIndex: number | null
-  videoUrl?: string
   overlays?: Overlay[]
   onPositionSave: (position: ImagePosition) => void
   savedPosition: ImagePosition | null
@@ -41,47 +40,27 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   imageUrl,
   backgroundImageUrl,
   overlayIndex,
-  videoUrl,
   overlays = [],
   onPositionSave,
   savedPosition,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [videoLoaded, setVideoLoaded] = useState(false)
-  const [videoError, setVideoError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false)
   const [backgroundImageError, setBackgroundImageError] = useState(false)
-  const [originalVideoDimensions, setOriginalVideoDimensions] = useState({ width: 0, height: 0 })
-  const [scaledVideoDimensions, setScaledVideoDimensions] = useState({ width: 0, height: 0 })
+  const [scaledDimensions, setScaledDimensions] = useState({ width: 0, height: 0 })
   const [currentImagePosition, setCurrentImagePosition] = useState<ImagePosition | null>(savedPosition)
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null)
   const [originalImageDimensions, setOriginalImageDimensions] = useState({ width: 0, height: 0 })
-  const videoRef = useRef<HTMLVideoElement>(null)
   const backgroundImageRef = useRef<HTMLImageElement>(null)
 
   const SCALE_FACTOR = 0.5
 
   useEffect(() => {
-    console.log("VideoMockup props:", { imageUrl, videoUrl, backgroundImageUrl, savedPosition })
-  }, [imageUrl, videoUrl, backgroundImageUrl, savedPosition])
-
-  const handleVideoMetadata = () => {
-    if (videoRef.current) {
-      const { videoWidth, videoHeight } = videoRef.current
-      console.log("Original video dimensions:", videoWidth, videoHeight)
-
-      setOriginalVideoDimensions({ width: videoWidth, height: videoHeight })
-
-      const scaledWidth = Math.round(videoWidth * SCALE_FACTOR)
-      const scaledHeight = Math.round(videoHeight * SCALE_FACTOR)
-      console.log("Scaled video dimensions (50%):", scaledWidth, scaledHeight)
-
-      setScaledVideoDimensions({ width: scaledWidth, height: scaledHeight })
-    }
-  }
+    console.log("VideoMockup props:", { imageUrl, backgroundImageUrl, savedPosition })
+  }, [imageUrl, backgroundImageUrl, savedPosition])
 
   useEffect(() => {
     if (backgroundImageUrl) {
@@ -97,7 +76,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         const scaledHeight = Math.round(img.height * SCALE_FACTOR)
         console.log("Scaled background dimensions (50%):", scaledWidth, scaledHeight)
         
-        setScaledVideoDimensions({ width: scaledWidth, height: scaledHeight })
+        setScaledDimensions({ width: scaledWidth, height: scaledHeight })
       }
       img.onerror = () => {
         console.error("Failed to load background image:", backgroundImageUrl)
@@ -118,8 +97,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         setImageError(false)
 
         if (!currentImagePosition) {
-          const containerWidth = scaledVideoDimensions.width || 300
-          const containerHeight = scaledVideoDimensions.height || 200
+          const containerWidth = scaledDimensions.width || 300
+          const containerHeight = scaledDimensions.height || 200
 
           const scale = Math.min((containerWidth * 0.8) / img.width, (containerHeight * 0.8) / img.height)
 
@@ -147,7 +126,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       }
       img.src = imageUrl
     }
-  }, [imageUrl, scaledVideoDimensions, currentImagePosition])
+  }, [imageUrl, scaledDimensions, currentImagePosition])
 
   const handleSavePosition = () => {
     if (fabricCanvas) {
@@ -185,10 +164,10 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   };
 
   const containerStyle = {
-    width: scaledVideoDimensions.width > 0 ? `${scaledVideoDimensions.width}px` : "100%",
+    width: scaledDimensions.width > 0 ? `${scaledDimensions.width}px` : "100%",
     maxWidth: "100%", // Ensure it never exceeds its container
-    height: scaledVideoDimensions.height > 0 ? `${scaledVideoDimensions.height}px` : "auto",
-    maxHeight: "80vh", // Increased from 60vh to 80vh to show more of the video
+    height: scaledDimensions.height > 0 ? `${scaledDimensions.height}px` : "auto",
+    maxHeight: "80vh", // Increased from 60vh to 80vh to show more of the image
     position: "relative" as const,
     backgroundColor: "transparent", // Changed from dark gray to transparent
     borderRadius: "0.5rem",
@@ -213,29 +192,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
             onLoad={() => setBackgroundImageLoaded(true)}
             onError={() => setBackgroundImageError(true)}
             style={{ zIndex: 5, objectFit: "cover", backgroundColor: "transparent" }}
-          />
-        </>
-      )}
-
-      {/* Background Video - z-index 10 */}
-      {videoUrl && (
-        <>
-          <div className="absolute inset-0 flex items-center justify-center bg-transparent text-white" style={{ zIndex: 10 }}>
-            {!videoLoaded && !videoError && <p>Loading video...</p>}
-            {videoError && <p>Error loading video. Please check the URL.</p>}
-          </div>
-          <video
-            ref={videoRef}
-            className="absolute inset-0 w-full h-full"
-            src={videoUrl || "/placeholder.svg"}
-            autoPlay
-            loop
-            muted
-            playsInline
-            onLoadedMetadata={handleVideoMetadata}
-            onLoadedData={() => setVideoLoaded(true)}
-            onError={() => setVideoError(true)}
-            style={{ zIndex: 10, objectFit: "cover", backgroundColor: "transparent" }}
           />
         </>
       )}
@@ -273,7 +229,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           isEditing={isEditing}
           imageUrl={imageUrl}
           savedPosition={currentImagePosition}
-          containerDimensions={scaledVideoDimensions.width > 0 ? scaledVideoDimensions : { width: 600, height: 400 }}
+          containerDimensions={scaledDimensions.width > 0 ? scaledDimensions : { width: 600, height: 400 }}
           setOriginalImageDimensions={setOriginalImageDimensions}
           originalImageDimensions={originalImageDimensions}
           fabricCanvas={fabricCanvas}

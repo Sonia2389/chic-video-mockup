@@ -18,14 +18,8 @@ export const apiStartVideoRender = async (params: RenderVideoParams): Promise<st
   // Create form data to send files
   const formData = new FormData();
   
-  // Add required background media (either video or image)
-  if (params.backgroundVideo) {
-    formData.append('backgroundVideo', params.backgroundVideo);
-  } else if (params.backgroundImage) {
-    formData.append('backgroundImage', params.backgroundImage);
-  } else {
-    throw new Error('Either backgroundVideo or backgroundImage must be provided');
-  }
+  // Add required background image
+  formData.append('backgroundImage', params.backgroundImage);
   
   formData.append('overlayImage', params.overlayImage);
   formData.append('overlayPosition', JSON.stringify(params.overlayPosition));
@@ -48,13 +42,7 @@ export const apiStartVideoRender = async (params: RenderVideoParams): Promise<st
   }
 
   console.log("Sending render request to API:", API_URL);
-  console.log("Background type:", params.backgroundVideo ? "video" : "image");
-  if (params.backgroundVideo) {
-    console.log("Background video size:", params.backgroundVideo.size);
-  }
-  if (params.backgroundImage) {
-    console.log("Background image size:", params.backgroundImage.size);
-  }
+  console.log("Background image size:", params.backgroundImage.size);
   console.log("Overlay image size:", params.overlayImage.size);
   console.log("Overlay position:", JSON.stringify(params.overlayPosition));
   console.log("Quality setting:", params.quality || 'standard');

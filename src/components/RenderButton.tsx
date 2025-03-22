@@ -8,7 +8,6 @@ import { toast } from "sonner";
 
 interface RenderButtonProps {
   disabled: boolean;
-  backgroundVideo?: File;
   backgroundImage?: File;
   overlayImage?: File;
   overlayVideo?: File;
@@ -19,7 +18,6 @@ interface RenderButtonProps {
 
 const RenderButton = ({ 
   disabled, 
-  backgroundVideo,
   backgroundImage,
   overlayImage,
   overlayVideo,
@@ -34,9 +32,9 @@ const RenderButton = ({
   const [jobId, setJobId] = useState<string | null>(null);
 
   const handleRender = async () => {
-    // Check if we have either a background video or background image
-    if ((!backgroundVideo && !backgroundImage) || !overlayImage || !savedPosition) {
-      toast.error("Please upload a background (image or video), an overlay image, and position your overlay before rendering");
+    // Check if we have a background image
+    if (!backgroundImage || !overlayImage || !savedPosition) {
+      toast.error("Please upload a background image, an overlay image, and position your overlay before rendering");
       return;
     }
 
@@ -50,8 +48,7 @@ const RenderButton = ({
 
       // Start the rendering process with exact parameters matching the preview
       const newJobId = await startVideoRender({
-        backgroundVideo: backgroundVideo || undefined,
-        backgroundImage: backgroundImage || undefined,
+        backgroundImage,
         overlayImage,
         overlayPosition: savedPosition,
         overlayVideo: overlayVideo || undefined,

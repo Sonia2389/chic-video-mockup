@@ -1,7 +1,6 @@
 
 export interface RenderVideoParams {
-  backgroundVideo?: File;
-  backgroundImage?: File;
+  backgroundImage: File;
   overlayImage: File;
   overlayVideo?: File;
   overlayPosition: {
