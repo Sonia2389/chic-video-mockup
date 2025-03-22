@@ -1,10 +1,12 @@
+
 "use client"
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { Canvas, Image as FabricImage } from "fabric"
 import EditorControls from "./video-mockup/EditorControls"
-import PositionManager from "./video-mockup/PositionManager"
+import CanvasEditor from "./video-mockup/CanvasEditor"
+import ImageDisplay from "./video-mockup/ImageDisplay"
 
 const VideoOverlay = ({ overlayIndex, overlays = [], isEditing }) => {
   if (!overlays || !Array.isArray(overlays) || overlayIndex === null || isEditing) {
@@ -61,21 +63,17 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   savedPosition,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [videoError, setVideoError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
-  const [canvasReady, setCanvasReady] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const imageRef = useRef<HTMLImageElement>(null)
   const [originalVideoDimensions, setOriginalVideoDimensions] = useState({ width: 0, height: 0 })
   const [scaledVideoDimensions, setScaledVideoDimensions] = useState({ width: 0, height: 0 })
   const [currentImagePosition, setCurrentImagePosition] = useState<ImagePosition | null>(savedPosition)
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null)
-  const [lastEditDimensions, setLastEditDimensions] = useState<{ width: number, height: number } | null>(null)
-  const [editorMode, setEditorMode] = useState<'select' | 'move'>('select')
+  const [originalImageDimensions, setOriginalImageDimensions] = useState({ width: 0, height: 0 })
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const SCALE_FACTOR = 0.5
 
@@ -139,100 +137,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [imageUrl, scaledVideoDimensions, currentImagePosition])
 
-  useEffect(() => {
-    if (isEditing && canvasRef.current && imageUrl && imageLoaded) {
-      try {
-        setCanvasReady(false)
-
-        const containerWidth = scaledVideoDimensions.width || 600
-        const containerHeight = scaledVideoDimensions.height || 400
-
-        console.log("Initializing fabric canvas with dimensions:", containerWidth, containerHeight)
-
-        const canvas = new Canvas(canvasRef.current)
-
-        canvas.setWidth(containerWidth)
-        canvas.setHeight(containerHeight)
-        canvas.backgroundColor = "rgba(0,0,0,0.1)"
-        canvas.renderAll()
-
-        setFabricCanvas(canvas)
-
-        const img = new Image()
-        img.crossOrigin = "anonymous"
-        img.onload = () => {
-          console.log("Image loaded into fabric:", img.width, img.height)
-
-          try {
-            const fabricImage = new FabricImage(img)
-
-            if (currentImagePosition) {
-              console.log("Setting fabric image position:", currentImagePosition)
-              fabricImage.set({
-                left: currentImagePosition.left,
-                top: currentImagePosition.top,
-                scaleX: currentImagePosition.scaleX,
-                scaleY: currentImagePosition.scaleY,
-                angle: currentImagePosition.angle || 0,
-              })
-            } else {
-              const scale = Math.min((containerWidth * 0.8) / img.width, (containerHeight * 0.8) / img.height)
-
-              fabricImage.scale(scale)
-              fabricImage.set({
-                left: containerWidth / 2 - (img.width * scale) / 2,
-                top: containerHeight / 2 - (img.height * scale) / 2,
-              })
-            }
-
-            canvas.add(fabricImage)
-            canvas.setActiveObject(fabricImage)
-            canvas.renderAll()
-
-            canvas.on("object:modified", () => {
-              const activeObject = canvas.getActiveObject()
-              if (activeObject) {
-                const coords = activeObject.getBoundingRect()
-                const updatedPosition = {
-                  left: activeObject.left || 0,
-                  top: activeObject.top || 0,
-                  scale: 1,
-                  width: coords.width,
-                  height: coords.height,
-                  scaleX: activeObject.scaleX || 1,
-                  scaleY: activeObject.scaleY || 1,
-                  originalWidth: activeObject.width || 0,
-                  originalHeight: activeObject.height || 0,
-                  angle: activeObject.angle || 0,
-                }
-                setCurrentImagePosition(updatedPosition)
-              }
-            })
-
-            setCanvasReady(true)
-          } catch (error) {
-            console.error("Error creating fabric image:", error)
-            setCanvasReady(false)
-          }
-        }
-
-        img.onerror = (error) => {
-          console.error("Error loading image into fabric:", error)
-          setCanvasReady(false)
-        }
-
-        img.src = imageUrl
-
-        return () => {
-          canvas.dispose()
-        }
-      } catch (error) {
-        console.error("Error initializing fabric canvas:", error)
-        setCanvasReady(false)
-      }
-    }
-  }, [isEditing, imageUrl, imageLoaded, scaledVideoDimensions, currentImagePosition])
-
   const handleSavePosition = () => {
     if (fabricCanvas) {
       const activeObject = fabricCanvas.getActiveObject()
@@ -258,7 +162,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
 
     setIsEditing(false)
-    setCanvasReady(false)
   }
 
   const toggleEditMode = () => {
@@ -284,7 +187,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     <div style={containerStyle} ref={containerRef}>
       {videoUrl && (
         <>
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-white">
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-white z-10">
             {!videoLoaded && !videoError && <p>Loading video...</p>}
             {videoError && <p>Error loading video. Please check the URL.</p>}
           </div>
@@ -299,12 +202,13 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
             onLoadedMetadata={handleVideoMetadata}
             onLoadedData={() => setVideoLoaded(true)}
             onError={() => setVideoError(true)}
-            style={{ zIndex: 1, objectFit: "contain" }}
+            style={{ zIndex: 10, objectFit: "contain" }}
           />
         </>
       )}
 
-      {imageUrl && (!isEditing || !canvasReady) && currentImagePosition && (
+      {/* Static image display when not editing */}
+      {imageUrl && !isEditing && currentImagePosition && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 20 }}>
           {imageError ? (
             <div className="bg-red-500 text-white p-2 rounded">Failed to load image. Please check the URL.</div>
@@ -312,7 +216,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
             <div className="bg-gray-800 text-white p-2 rounded">Loading image...</div>
           ) : (
             <img
-              ref={imageRef}
               src={imageUrl || "/placeholder.svg"}
               alt="Uploaded image"
               style={{
@@ -326,46 +229,42 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
                 pointerEvents: "none",
                 zIndex: 20,
               }}
-              onLoad={() => console.log("Preview image loaded")}
-              onError={() => console.error("Preview image failed to load")}
             />
           )}
         </div>
       )}
 
+      {/* Video overlay element */}
       <VideoOverlay overlayIndex={overlayIndex} overlays={overlays} isEditing={isEditing} />
 
+      {/* Canvas editor component */}
       {isEditing && (
-        <div className="absolute inset-0 z-30">
-          <canvas
-            ref={canvasRef}
-            className="w-full h-full"
-            style={{
-              backgroundColor: "rgba(0,0,0,0.05)",
-              display: canvasReady ? "block" : "none",
-              zIndex: 30,
-            }}
-          />
-
-          {!canvasReady && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white">
-              Initializing editor...
-            </div>
-          )}
-        </div>
+        <CanvasEditor
+          isEditing={isEditing}
+          imageUrl={imageUrl}
+          savedPosition={currentImagePosition}
+          containerDimensions={scaledVideoDimensions.width > 0 ? scaledVideoDimensions : { width: 600, height: 400 }}
+          setOriginalImageDimensions={setOriginalImageDimensions}
+          originalImageDimensions={originalImageDimensions}
+          fabricCanvas={fabricCanvas}
+          setFabricCanvas={setFabricCanvas}
+          onSavePosition={handleSavePosition}
+        />
       )}
 
+      {/* Editor controls */}
       <EditorControls 
         isEditing={isEditing}
         onEditToggle={toggleEditMode}
         imageUrl={imageUrl}
       />
 
+      {/* Debug info */}
       <div className="absolute top-2 left-2 text-xs text-white bg-black bg-opacity-50 p-1 rounded z-50">
         {originalVideoDimensions.width > 0 &&
           `Video: ${originalVideoDimensions.width}x${originalVideoDimensions.height} (${scaledVideoDimensions.width}x${scaledVideoDimensions.height})`}
         {imageUrl && ` | Image: ${imageLoaded ? "Loaded" : "Loading"}`}
-        {isEditing && ` | Canvas: ${canvasReady ? "Ready" : "Initializing"}`}
+        {isEditing && ` | Editing Mode: Active`}
         {currentImagePosition &&
           ` | Pos: ${Math.round(currentImagePosition.left)},${Math.round(currentImagePosition.top)} Scale: ${currentImagePosition.scaleX.toFixed(2)}`}
       </div>

@@ -47,22 +47,33 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   useEffect(() => {
     if (!isEditing || !canvasRef.current || !imageUrl) return
 
+    // Cleanup any existing canvas
+    if (fabricCanvas) {
+      fabricCanvas.dispose()
+      setFabricCanvas(null)
+    }
+
+    // Create a new fabric canvas
     const canvas = new Canvas(canvasRef.current, {
       width: containerDimensions.width,
       height: containerDimensions.height,
       backgroundColor: "rgba(0,0,0,0.1)",
+      selection: false, // Disable group selection
     })
 
+    console.log("Canvas created with dimensions:", containerDimensions.width, containerDimensions.height)
     setFabricCanvas(canvas)
 
+    // Load the image
     const img = new window.Image()
     img.crossOrigin = "anonymous"
     img.src = imageUrl
 
     img.onload = () => {
+      console.log("Image loaded:", img.width, img.height)
       const fabricImage = new FabricImage(img)
 
-      // Enhanced corner controls for better resizing experience
+      // Configure controls for better resizing and moving experience
       fabricImage.set({
         borderColor: '#3b82f6',
         cornerColor: 'white',
@@ -80,7 +91,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
         borderOpacityWhenMoving: 0.4,
       })
 
-      // Enable all controls for complete editing
+      // Enable all corner and edge controls
       fabricImage.setControlsVisibility({
         mt: true, // middle top
         mb: true, // middle bottom
@@ -92,6 +103,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
         br: true, // bottom right
       });
 
+      // Position the image based on saved position or center it
       if (savedPosition) {
         fabricImage.set({
           left: savedPosition.left,
@@ -108,25 +120,36 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
         })
       }
 
-      // Add the image to the canvas
+      // Add image to canvas and select it automatically
       canvas.add(fabricImage)
       canvas.setActiveObject(fabricImage)
       canvas.renderAll()
 
-      // Add object:scaling event to ensure smooth scaling
-      canvas.on('object:scaling', function(e) {
+      // Add event listeners for interactive feedback
+      canvas.on('object:moving', function() {
+        canvas.renderAll();
+      });
+      
+      canvas.on('object:scaling', function() {
+        canvas.renderAll();
+      });
+      
+      canvas.on('object:rotating', function() {
         canvas.renderAll();
       });
 
+      // Track original image dimensions for future reference
       setOriginalImageDimensions({
         width: img.width,
         height: img.height,
       })
+      
       setImageLoaded(true)
     }
 
     return () => {
       canvas.dispose()
+      setFabricCanvas(null)
     }
   }, [isEditing, imageUrl, containerDimensions, savedPosition, setFabricCanvas, setOriginalImageDimensions])
 
