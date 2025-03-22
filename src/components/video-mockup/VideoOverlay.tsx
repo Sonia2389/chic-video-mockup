@@ -33,22 +33,18 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
 
   const currentOverlay = overlays[overlayIndex];
 
-  // Overlay container style to match background video exactly
-  const overlayStyles = {
-    position: "absolute" as const,
-    inset: 0,
-    zIndex: 100,
-    pointerEvents: "none" as const,
-    opacity: 0.4,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    height: "100%",
-  };
-
   return (
-    <div className="absolute inset-0" aria-label="Overlay" style={overlayStyles}>
+    <div 
+      className="absolute inset-0 flex justify-center items-center" 
+      aria-label="Overlay" 
+      style={{ 
+        zIndex: 100, 
+        pointerEvents: "none",
+        width: "100%",
+        height: "100%",
+        opacity: 0.4,
+      }}
+    >
       {currentOverlay.type === "image" ? (
         <div
           style={{
@@ -58,7 +54,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
             backgroundRepeat: "no-repeat",
             width: "100%",
             height: "100%",
-            pointerEvents: "none" as const,
+            pointerEvents: "none",
           }}
         />
       ) : (
@@ -67,9 +63,10 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
           src={currentOverlay.url}
           className="w-full h-full"
           style={{
-            objectFit: "contain", // Match the background video's objectFit
+            objectFit: "contain",
             width: "100%",
             height: "100%",
+            pointerEvents: "none",
           }}
           autoPlay={!isEditing}
           loop

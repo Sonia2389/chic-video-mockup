@@ -160,18 +160,18 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     height: scaledVideoDimensions.height > 0 ? `${scaledVideoDimensions.height}px` : "auto",
     maxHeight: "80vh", // Increased from 60vh to 80vh to show more of the video
     position: "relative" as const,
-    backgroundColor: "#111827",
+    backgroundColor: "transparent", // Changed from dark gray to transparent
     borderRadius: "0.5rem",
     overflow: "hidden",
     boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
   }
 
   return (
-    <div style={containerStyle} ref={containerRef}>
+    <div style={containerStyle} ref={containerRef} className="bg-transparent">
       {/* Background Video - z-index 10 */}
       {videoUrl && (
         <>
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-white" style={{ zIndex: 10 }}>
+          <div className="absolute inset-0 flex items-center justify-center bg-transparent text-white" style={{ zIndex: 10 }}>
             {!videoLoaded && !videoError && <p>Loading video...</p>}
             {videoError && <p>Error loading video. Please check the URL.</p>}
           </div>
@@ -186,14 +186,14 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
             onLoadedMetadata={handleVideoMetadata}
             onLoadedData={() => setVideoLoaded(true)}
             onError={() => setVideoError(true)}
-            style={{ zIndex: 10, objectFit: "contain" }} // Changed to "contain" to show the entire video
+            style={{ zIndex: 10, objectFit: "contain", backgroundColor: "transparent" }}
           />
         </>
       )}
 
       {/* Static image display when not editing - z-index 20 */}
       {imageUrl && !isEditing && currentImagePosition && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 20 }}>
+        <div className="absolute inset-0 flex items-center justify-center bg-transparent" style={{ zIndex: 20 }}>
           {imageError ? (
             <div className="bg-red-500 text-white p-2 rounded">Failed to load image. Please check the URL.</div>
           ) : !imageLoaded ? (
