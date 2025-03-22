@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -7,7 +6,7 @@ import RenderButton from "@/components/RenderButton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { X, Image } from "lucide-react";
+import { X, ImageIcon } from "lucide-react";
 import { API_URL } from "@/services/videoRenderingApi";
 
 interface Overlay {
@@ -89,13 +88,14 @@ const Index = () => {
       setBackgroundImageFile(file);
       
       // Set aspect ratio based on image dimensions
-      const img = new Image();
-      img.onload = () => {
-        if (img.width && img.height) {
-          setVideoAspectRatio(img.width / img.height);
+      const img = new ImageIcon();
+      const imgElement = new Image();
+      imgElement.onload = () => {
+        if (imgElement.width && imgElement.height) {
+          setVideoAspectRatio(imgElement.width / imgElement.height);
         }
       };
-      img.src = url;
+      imgElement.src = url;
       
       toast.success("Background image uploaded successfully");
     }
@@ -189,7 +189,7 @@ const Index = () => {
                     <label htmlFor="background-image-upload" className="cursor-pointer">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Image size={16} className="text-primary" />
+                          <ImageIcon size={16} className="text-primary" />
                         </div>
                         <p className="text-xs font-medium">Background Image</p>
                         <p className="text-xs text-muted-foreground">JPG, PNG</p>

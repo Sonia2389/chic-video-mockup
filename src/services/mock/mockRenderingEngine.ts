@@ -8,7 +8,7 @@ import { RenderVideoParams } from "../types/renderingTypes";
  */
 export const renderVideo = async (params: RenderVideoParams, jobId: string): Promise<void> => {
   try {
-    // Create a canvas to composite the video/image and overlay
+    // Create a canvas to composite the image and overlay
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
@@ -16,28 +16,19 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       throw new Error("Canvas context creation failed");
     }
     
-    // Determine if we're using a background video or image
-    const useVideoBackground = !!params.backgroundVideo;
-    
     let canvasWidth = 1920; // Default width
     let canvasHeight = 1080; // Default height
     
-    // Load background media (either video or image)
-    let video: HTMLVideoElement | null = null;
+    // Load background image
     let backgroundImg: HTMLImageElement | null = null;
     
-    if (useVideoBackground && params.backgroundVideo) {
-      // Load the background video
-      video = await loadVideoElement(params.backgroundVideo);
-      canvasWidth = video.videoWidth;
-      canvasHeight = video.videoHeight;
-    } else if (params.backgroundImage) {
+    if (params.backgroundImage) {
       // Load the background image
       backgroundImg = await loadImageElement(params.backgroundImage);
       canvasWidth = backgroundImg.naturalWidth;
       canvasHeight = backgroundImg.naturalHeight;
     } else {
-      throw new Error("No background media provided");
+      throw new Error("No background image provided");
     }
     
     // Set canvas dimensions based on background media
@@ -90,10 +81,6 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       completeJob(jobId, URL.createObjectURL(blob));
       
       // Clean up resources
-      if (video) {
-        video.pause();
-        URL.revokeObjectURL(video.src);
-      }
       if (overlayVideo) {
         overlayVideo.pause();
         URL.revokeObjectURL(overlayVideo.src);
@@ -109,28 +96,25 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     // Start recording
     recorder.start();
     
-    // If using video, play it
-    if (video) {
-      video.play();
-    }
-    
     console.log("Drawing with overlay position:", JSON.stringify(params.overlayPosition));
     
-    // For static backgrounds, we need a render loop to handle the overlay video
-    // if it exists, or just to create a short video clip otherwise
-    const renderDuration = 5000; // 5 seconds for static background
+    // Create a 10-second looping video
+    const renderDuration = 10000; // 10 seconds for the loop
     const startTime = Date.now();
+    
+    // For overlay video, determine loop duration
+    let overlayDuration = 0;
+    if (overlayVideo) {
+      overlayDuration = overlayVideo.duration * 1000 || 5000;
+    }
     
     // Render function to draw each frame
     const render = () => {
       // Clear the canvas with transparent background
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // LAYER 1: Background (bottom layer)
-      if (video) {
-        // Draw background video
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      } else if (backgroundImg) {
+      // LAYER 1: Background image (bottom layer)
+      if (backgroundImg) {
         // Draw background image
         ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
       }
@@ -143,8 +127,8 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         ctx.save();
         
         // Scale the positioning values to match the dimensions
-        const scaledLeft = left * renderScaleFactor.x;
-        const scaledTop = top * renderScaleFactor.y;
+        const scaledLeft = left * (params.exactPositioning ? 1 : renderScaleFactor.x);
+        const scaledTop = top * (params.exactPositioning ? 1 : renderScaleFactor.y);
         
         // Apply transformations in order: translate → rotate → scale
         ctx.translate(scaledLeft, scaledTop);
@@ -154,8 +138,8 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         }
         
         // Scale properly based on original dimensions
-        const scaledScaleX = scaleX * renderScaleFactor.x;
-        const scaledScaleY = scaleY * renderScaleFactor.y;
+        const scaledScaleX = scaleX * (params.exactPositioning ? 1 : renderScaleFactor.x);
+        const scaledScaleY = scaleY * (params.exactPositioning ? 1 : renderScaleFactor.y);
         
         // Log actual position for each frame
         console.log("Frame rendering:", {
@@ -195,6 +179,16 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         ctx.save();
         ctx.globalAlpha = 0.2;
         
+        // Calculate position in the loop for overlay video
+        const elapsed = Date.now() - startTime;
+        if (overlayDuration > 0) {
+          // If video needs to loop, reset its playback
+          const loopPosition = elapsed % overlayDuration;
+          if (overlayVideo.currentTime > loopPosition / 1000) {
+            overlayVideo.currentTime = 0;
+          }
+        }
+        
         // Cover the entire canvas with the overlay video while maintaining aspect ratio
         const aspectRatio = overlayVideo.videoWidth / overlayVideo.videoHeight;
         let drawWidth = canvas.width;
@@ -218,38 +212,18 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         ctx.restore();
       }
       
-      // Continue rendering based on what background we have
-      if (video) {
-        // For video backgrounds, continue until video ends
-        if (video.currentTime < video.duration) {
-          requestAnimationFrame(render);
-        } else {
-          // Stop recording when done
-          recorder.stop();
-        }
+      // Create a perfect 10-second looping video
+      const elapsed = Date.now() - startTime;
+      if (elapsed < renderDuration) {
+        requestAnimationFrame(render);
       } else {
-        // For static backgrounds, render for a fixed duration
-        const elapsed = Date.now() - startTime;
-        if (elapsed < renderDuration) {
-          requestAnimationFrame(render);
-        } else {
-          // Stop recording when done
-          recorder.stop();
-        }
+        // Stop recording when done
+        recorder.stop();
       }
     };
     
     // Start the rendering process
     requestAnimationFrame(render);
-    
-    // Set a safety timeout in case the video is too long
-    setTimeout(() => {
-      if (recorder.state === "recording") {
-        recorder.stop();
-        if (video) video.pause();
-        if (overlayVideo) overlayVideo.pause();
-      }
-    }, 20000); // Limit to 20 seconds max
     
   } catch (error) {
     console.error("Error in mock rendering:", error);
@@ -261,8 +235,10 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
  * Simulates progress updates for a rendering job
  */
 export const simulateProgress = (jobId: string): void => {
-  // Simulate progress at different stages
-  setTimeout(() => updateJobProgress(jobId, 25), 1000);
-  setTimeout(() => updateJobProgress(jobId, 50), 2000);
-  setTimeout(() => updateJobProgress(jobId, 75), 3000);
+  // Simulate progress at different stages to match 10 second rendering
+  setTimeout(() => updateJobProgress(jobId, 10), 1000);
+  setTimeout(() => updateJobProgress(jobId, 25), 2500);
+  setTimeout(() => updateJobProgress(jobId, 50), 5000);
+  setTimeout(() => updateJobProgress(jobId, 75), 7500);
+  setTimeout(() => updateJobProgress(jobId, 90), 9000);
 }

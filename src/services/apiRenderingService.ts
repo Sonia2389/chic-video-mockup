@@ -41,6 +41,14 @@ export const apiStartVideoRender = async (params: RenderVideoParams): Promise<st
     formData.append('exactPositioning', params.exactPositioning.toString());
   }
 
+  if (params.containerWidth !== undefined) {
+    formData.append('containerWidth', params.containerWidth.toString());
+  }
+
+  if (params.containerHeight !== undefined) {
+    formData.append('containerHeight', params.containerHeight.toString());
+  }
+
   console.log("Sending render request to API:", API_URL);
   console.log("Background image size:", params.backgroundImage.size);
   console.log("Overlay image size:", params.overlayImage.size);
@@ -48,6 +56,7 @@ export const apiStartVideoRender = async (params: RenderVideoParams): Promise<st
   console.log("Quality setting:", params.quality || 'standard');
   console.log("Preserve original speed:", params.preserveOriginalSpeed);
   console.log("Exact positioning:", params.exactPositioning);
+  console.log("Container dimensions:", params.containerWidth, "x", params.containerHeight);
 
   const { controller, timeoutId } = createTimeoutController(10000); // 10 second timeout
 
