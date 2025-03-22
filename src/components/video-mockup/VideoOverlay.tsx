@@ -33,11 +33,11 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
 
   const currentOverlay = overlays[overlayIndex];
 
-  // Fix for pointerEvents type - use proper TypeScript type
+  // Ensure overlay is always on top (z-index 40)
   const overlayStyles = {
-    zIndex: isEditing ? 25 : 30,
+    zIndex: 40,
     pointerEvents: isEditing ? "none" as const : "auto" as const,
-    opacity: isEditing ? 0.2 : 0.6, // Lower opacity in edit mode
+    opacity: 0.8, // Set opacity to 80%
   };
 
   return (
@@ -52,7 +52,6 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
             width: "100%",
             height: "100%",
             pointerEvents: "none" as const,
-            opacity: overlayStyles.opacity, // Lower opacity in edit mode
           }}
         />
       ) : (
@@ -60,7 +59,6 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
           ref={overlayVideoRef}
           src={currentOverlay.url}
           className="w-full h-full object-cover"
-          style={{ opacity: overlayStyles.opacity }} // Lower opacity in edit mode
           autoPlay={!isEditing}
           loop
           muted

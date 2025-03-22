@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -6,25 +7,7 @@ import { Canvas, Image as FabricImage } from "fabric"
 import EditorControls from "./video-mockup/EditorControls"
 import CanvasEditor from "./video-mockup/CanvasEditor"
 import ImageDisplay from "./video-mockup/ImageDisplay"
-
-const VideoOverlay = ({ overlayIndex, overlays = [], isEditing }) => {
-  if (!overlays || !Array.isArray(overlays) || overlayIndex === null || isEditing) {
-    return null
-  }
-
-  const overlay = overlays[overlayIndex]
-  if (!overlay) return null
-
-  return (
-    <div className="absolute inset-0 z-30 pointer-events-none" style={{ opacity: 0.8 }}>
-      {overlay.type === "video" ? (
-        <video className="w-full h-full object-cover" src={overlay.url} autoPlay loop muted playsInline />
-      ) : (
-        <img src={overlay.url || "/placeholder.svg"} alt="Overlay" className="w-full h-full object-cover" />
-      )}
-    </div>
-  )
-}
+import VideoOverlay from "./video-mockup/VideoOverlay"
 
 interface ImagePosition {
   left: number
@@ -205,6 +188,15 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </>
       )}
 
+      {/* Video overlay element - now with z-index 40 (highest) to always be in front */}
+      {overlayIndex !== null && overlays && overlays[overlayIndex] && (
+        <VideoOverlay 
+          overlayIndex={overlayIndex} 
+          overlays={overlays} 
+          isEditing={isEditing} 
+        />
+      )}
+
       {/* Static image display when not editing */}
       {imageUrl && !isEditing && currentImagePosition && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 20 }}>
@@ -231,9 +223,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           )}
         </div>
       )}
-
-      {/* Video overlay element - now with z-index 30 (highest) and 80% opacity */}
-      <VideoOverlay overlayIndex={overlayIndex} overlays={overlays} isEditing={isEditing} />
 
       {/* Canvas editor component */}
       {isEditing && (

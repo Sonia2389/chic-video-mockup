@@ -85,16 +85,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       // LAYER 1: Background video (bottom layer)
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       
-      // LAYER 2: Overlay video (2nd layer, on top of background but below image)
-      if (overlayVideo) {
-        // Updated: Draw overlay video with 80% opacity
-        ctx.save();
-        ctx.globalAlpha = 0.8;
-        ctx.drawImage(overlayVideo, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
-      }
-      
-      // LAYER 3: Overlay image (top layer)
+      // LAYER 2: Overlay image (middle layer)
       if (img && params.overlayPosition) {
         const { left, top, scaleX, scaleY, angle, originalWidth, originalHeight } = params.overlayPosition;
         
@@ -145,6 +136,15 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         }
         
         // Restore context state
+        ctx.restore();
+      }
+      
+      // LAYER 3: Overlay video (top layer with 80% opacity)
+      if (overlayVideo) {
+        // Apply overlay video with 80% opacity
+        ctx.save();
+        ctx.globalAlpha = 0.8;
+        ctx.drawImage(overlayVideo, 0, 0, canvas.width, canvas.height);
         ctx.restore();
       }
       
