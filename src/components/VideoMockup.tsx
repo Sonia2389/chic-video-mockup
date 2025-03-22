@@ -1,9 +1,8 @@
-
 "use client"
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { Canvas, Image as FabricImage } from "fabric"
+import { Canvas } from "fabric"
 import EditorControls from "./video-mockup/EditorControls"
 import CanvasEditor from "./video-mockup/CanvasEditor"
 import VideoOverlay from "./video-mockup/VideoOverlay"
@@ -60,19 +59,16 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
   const SCALE_FACTOR = 0.5
 
-  // Log key props for debugging
   useEffect(() => {
     console.log("VideoMockup props:", { imageUrl, backgroundImageUrl, savedPosition })
   }, [imageUrl, backgroundImageUrl, savedPosition])
 
-  // Update current image position when savedPosition changes
   useEffect(() => {
     if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(currentImagePosition)) {
       setCurrentImagePosition(savedPosition);
     }
   }, [savedPosition]);
 
-  // Handle background image loading and set dimensions
   useEffect(() => {
     if (backgroundImageUrl) {
       console.log("Verifying background image URL:", backgroundImageUrl)
@@ -82,14 +78,12 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         setBackgroundImageLoaded(true)
         setBackgroundImageError(false)
         
-        // Set dimensions based on background image
         const scaledWidth = Math.round(img.width * SCALE_FACTOR)
         const scaledHeight = Math.round(img.height * SCALE_FACTOR)
         console.log("Scaled background dimensions (50%):", scaledWidth, scaledHeight)
         
         setScaledDimensions({ width: scaledWidth, height: scaledHeight })
         
-        // Also notify parent component about container dimensions
         if (onContainerDimensionsChange) {
           onContainerDimensionsChange({ width: scaledWidth, height: scaledHeight })
         }
@@ -103,7 +97,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [backgroundImageUrl, onContainerDimensionsChange])
 
-  // Handle uploaded image verification and default position setup
   useEffect(() => {
     if (imageUrl) {
       console.log("Verifying image URL:", imageUrl)
@@ -146,7 +139,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [imageUrl, scaledDimensions, currentImagePosition, onPositionSave])
 
-  // Update container dimensions when they change
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current && onContainerDimensionsChange) {
@@ -172,63 +164,64 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [scaledDimensions, onContainerDimensionsChange])
 
-  // Handle saving position from fabric canvas
   const handleSavePosition = () => {
     if (fabricCanvas) {
-      const activeObject = fabricCanvas.getActiveObject()
-      if (activeObject) {
-        const coords = activeObject.getBoundingRect()
-        const newPosition = {
-          left: activeObject.left || 0,
-          top: activeObject.top || 0,
-          scale: 1,
-          width: coords.width,
-          height: coords.height,
-          scaleX: activeObject.scaleX || 1,
-          scaleY: activeObject.scaleY || 1,
-          originalWidth: activeObject.width || 0,
-          originalHeight: activeObject.height || 0,
-          angle: activeObject.angle || 0,
-        }
+      try {
+        const activeObject = fabricCanvas.getActiveObject()
+        if (activeObject) {
+          const coords = activeObject.getBoundingRect()
+          const newPosition = {
+            left: activeObject.left || 0,
+            top: activeObject.top || 0,
+            scale: 1,
+            width: coords.width,
+            height: coords.height,
+            scaleX: activeObject.scaleX || 1,
+            scaleY: activeObject.scaleY || 1,
+            originalWidth: activeObject.width || 0,
+            originalHeight: activeObject.height || 0,
+            angle: activeObject.angle || 0,
+          }
 
-        console.log("Saving position:", newPosition)
-        setCurrentImagePosition(newPosition)
-        onPositionSave(newPosition)
+          console.log("Saving position:", newPosition)
+          setCurrentImagePosition(newPosition)
+          onPositionSave(newPosition)
+        }
+      } catch (error) {
+        console.error("Error saving position:", error)
       }
     }
 
-    // Use transitioning state to prevent flashing
-    setIsTransitioning(true);
+    setIsTransitioning(true)
     setTimeout(() => {
-      setIsEditing(false);
+      setIsEditing(false)
       setTimeout(() => {
-        setIsTransitioning(false);
-      }, 100);
-    }, 100);
+        setIsTransitioning(false)
+      }, 300)
+    }, 300)
   }
 
-  // Toggle edit mode with transition to prevent flickering
   const toggleEditMode = () => {
     if (isEditing) {
-      handleSavePosition();
+      handleSavePosition()
     } else {
-      setIsTransitioning(true);
+      setIsTransitioning(true)
       setTimeout(() => {
-        setIsEditing(true);
+        setIsEditing(true)
         setTimeout(() => {
-          setIsTransitioning(false);
-        }, 100);
-      }, 100);
+          setIsTransitioning(false)
+        }, 300)
+      }, 300)
     }
   };
 
   const containerStyle = {
     width: scaledDimensions.width > 0 ? `${scaledDimensions.width}px` : "100%",
-    maxWidth: "100%", // Ensure it never exceeds its container
+    maxWidth: "100%",
     height: scaledDimensions.height > 0 ? `${scaledDimensions.height}px` : "auto",
-    maxHeight: "80vh", // Increased from 60vh to 80vh to show more of the image
+    maxHeight: "80vh",
     position: "relative" as const,
-    backgroundColor: "transparent", // Changed from dark gray to transparent
+    backgroundColor: "transparent",
     borderRadius: "0.5rem",
     overflow: "hidden",
     boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
@@ -236,7 +229,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
   return (
     <div style={containerStyle} ref={containerRef} className="bg-transparent">
-      {/* Background Image - z-index 5 */}
       {backgroundImageUrl && (
         <>
           <div className="absolute inset-0 flex items-center justify-center bg-transparent text-white" style={{ zIndex: 5 }}>
@@ -255,7 +247,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </>
       )}
 
-      {/* Static image display when not editing - z-index 20 */}
       {imageUrl && !isEditing && currentImagePosition && !isTransitioning && (
         <div className="absolute inset-0 flex items-center justify-center bg-transparent" style={{ zIndex: 20 }}>
           {imageError ? (
@@ -282,7 +273,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </div>
       )}
 
-      {/* Canvas editor component with higher z-index */}
       {(isEditing || isTransitioning) && (
         <CanvasEditor
           isEditing={isEditing}
@@ -297,7 +287,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         />
       )}
 
-      {/* Video overlay element - now with z-index 100 to always be on top */}
       {overlayIndex !== null && overlays && overlays[overlayIndex] && (
         <VideoOverlay 
           overlayIndex={overlayIndex} 
@@ -306,7 +295,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         />
       )}
 
-      {/* Editor controls with highest z-index */}
       <EditorControls 
         isEditing={isEditing}
         onEditToggle={toggleEditMode}
