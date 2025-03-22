@@ -40,8 +40,6 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
       style={{ 
         zIndex: 100, 
         pointerEvents: "none",
-        width: "100%",
-        height: "100%",
         opacity: 0.4,
       }}
     >
@@ -64,8 +62,6 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
           className="w-full h-full"
           style={{
             objectFit: "contain",
-            width: "100%",
-            height: "100%",
             pointerEvents: "none",
           }}
           autoPlay={!isEditing}
