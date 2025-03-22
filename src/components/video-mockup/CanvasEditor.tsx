@@ -43,18 +43,24 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [imageLoaded, setImageLoaded] = useState(false)
-  const [isInitializing, setIsInitializing] = useState(false)
+  const [canvasInitialized, setCanvasInitialized] = useState(false)
+  const imageLoadingRef = useRef(false)
   
   // Initialize canvas when editing starts
   useEffect(() => {
-    if (!isEditing || !canvasRef.current || !imageUrl || isInitializing) return
+    if (!isEditing || !canvasRef.current || !imageUrl) return
     
-    // Set initializing flag to prevent multiple initialization attempts
-    setIsInitializing(true)
+    // If we're already loading the image or canvas is initialized, don't try again
+    if (imageLoadingRef.current || canvasInitialized) return
     
-    // Clean up any existing canvas
+    // Set loading flag to prevent multiple initialization attempts
+    imageLoadingRef.current = true
+    
+    // Clean up any existing canvas before creating a new one
     if (fabricCanvas) {
       try {
+        // Remove all objects before disposal to prevent memory leaks
+        fabricCanvas.clear()
         fabricCanvas.dispose()
       } catch (error) {
         console.error("Error disposing canvas:", error)
@@ -62,11 +68,13 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
       setFabricCanvas(null)
     }
     
+    let canvas: Canvas | null = null
+    
     try {
       console.log("Creating new canvas with dimensions:", containerDimensions.width, containerDimensions.height)
       
       // Create a new fabric canvas
-      const canvas = new Canvas(canvasRef.current, {
+      canvas = new Canvas(canvasRef.current, {
         width: containerDimensions.width,
         height: containerDimensions.height,
         backgroundColor: "rgba(0,0,0,0.1)",
@@ -76,110 +84,121 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
       
       // Store the canvas reference
       setFabricCanvas(canvas)
+      setCanvasInitialized(true)
       
-      // Load image onto canvas
-      const img = new Image()
-      img.crossOrigin = "anonymous"
-      img.src = imageUrl
-      
-      img.onload = () => {
-        try {
-          console.log("Image loaded:", img.width, img.height)
-          
-          // Update original dimensions
-          setOriginalImageDimensions({
-            width: img.width,
-            height: img.height,
-          })
-          
-          // Create fabric image
-          const fabricImage = new FabricImage(img)
-          
-          // Configure controls
-          fabricImage.set({
-            borderColor: '#3b82f6',
-            cornerColor: 'white',
-            cornerStrokeColor: '#3b82f6',
-            cornerSize: 12,
-            transparentCorners: false,
-            cornerStyle: 'circle',
-            hasControls: true,
-            hasBorders: true,
-            selectable: true,
-            lockUniScaling: false,
-            centeredScaling: false,
-            objectCaching: false,
-            padding: 5,
-            borderOpacityWhenMoving: 0.4,
-          })
-          
-          // Enable all corner controls
-          fabricImage.setControlsVisibility({
-            mt: true,
-            mb: true,
-            ml: true,
-            mr: true,
-            tl: true,
-            tr: true,
-            bl: true,
-            br: true,
-          })
-          
-          // Position the image
-          if (savedPosition) {
-            fabricImage.set({
-              left: savedPosition.left,
-              top: savedPosition.top,
-              scaleX: savedPosition.scaleX,
-              scaleY: savedPosition.scaleY,
-              angle: savedPosition.angle || 0,
-              width: savedPosition.originalWidth,
-              height: savedPosition.originalHeight,
+      // Load image onto canvas with delay to ensure DOM is ready
+      setTimeout(() => {
+        if (!canvas) return
+        
+        const img = new Image()
+        img.crossOrigin = "anonymous"
+        img.src = imageUrl
+        
+        img.onload = () => {
+          try {
+            if (!canvas) return
+            
+            console.log("Image loaded:", img.width, img.height)
+            
+            // Update original dimensions
+            setOriginalImageDimensions({
+              width: img.width,
+              height: img.height,
             })
-          } else {
-            // Center the image if no saved position
-            fabricImage.scaleToWidth(containerDimensions.width * 0.8)
+            
+            // Clear any existing objects
+            canvas.clear()
+            
+            // Create fabric image
+            const fabricImage = new FabricImage(img)
+            
+            // Configure controls
             fabricImage.set({
-              left: containerDimensions.width / 2 - (fabricImage.width! * fabricImage.scaleX!) / 2,
-              top: containerDimensions.height / 2 - (fabricImage.height! * fabricImage.scaleY!) / 2,
+              borderColor: '#3b82f6',
+              cornerColor: 'white',
+              cornerStrokeColor: '#3b82f6',
+              cornerSize: 12,
+              transparentCorners: false,
+              cornerStyle: 'circle',
+              hasControls: true,
+              hasBorders: true,
+              selectable: true,
+              lockUniScaling: false,
+              centeredScaling: false,
+              objectCaching: false,
+              padding: 5,
+              borderOpacityWhenMoving: 0.4,
             })
+            
+            // Enable all corner controls
+            fabricImage.setControlsVisibility({
+              mt: true,
+              mb: true,
+              ml: true,
+              mr: true,
+              tl: true,
+              tr: true,
+              bl: true,
+              br: true,
+            })
+            
+            // Position the image
+            if (savedPosition) {
+              fabricImage.set({
+                left: savedPosition.left,
+                top: savedPosition.top,
+                scaleX: savedPosition.scaleX,
+                scaleY: savedPosition.scaleY,
+                angle: savedPosition.angle || 0,
+                width: savedPosition.originalWidth,
+                height: savedPosition.originalHeight,
+              })
+            } else {
+              // Center the image if no saved position
+              fabricImage.scaleToWidth(containerDimensions.width * 0.8)
+              fabricImage.set({
+                left: containerDimensions.width / 2 - (fabricImage.width! * fabricImage.scaleX!) / 2,
+                top: containerDimensions.height / 2 - (fabricImage.height! * fabricImage.scaleY!) / 2,
+              })
+            }
+            
+            // Add image to canvas
+            canvas.add(fabricImage)
+            canvas.setActiveObject(fabricImage)
+            canvas.renderAll()
+            
+            // Add event listeners
+            canvas.on('object:moving', () => {
+              canvas.renderAll()
+            })
+            
+            canvas.on('object:scaling', () => {
+              canvas.renderAll()
+            })
+            
+            canvas.on('object:rotating', () => {
+              canvas.renderAll()
+            })
+            
+            setImageLoaded(true)
+            imageLoadingRef.current = false
+          } catch (error) {
+            console.error("Error setting up image on canvas:", error)
+            setImageLoaded(false)
+            imageLoadingRef.current = false
           }
-          
-          // Add image to canvas
-          canvas.add(fabricImage)
-          canvas.setActiveObject(fabricImage)
-          canvas.renderAll()
-          
-          // Add event listeners
-          canvas.on('object:moving', () => {
-            canvas.renderAll()
-          })
-          
-          canvas.on('object:scaling', () => {
-            canvas.renderAll()
-          })
-          
-          canvas.on('object:rotating', () => {
-            canvas.renderAll()
-          })
-          
-          setImageLoaded(true)
-          setIsInitializing(false)
-        } catch (error) {
-          console.error("Error setting up image on canvas:", error)
-          setImageLoaded(false)
-          setIsInitializing(false)
         }
-      }
-      
-      img.onerror = (error) => {
-        console.error("Error loading image:", error)
-        setImageLoaded(false)
-        setIsInitializing(false)
-      }
+        
+        img.onerror = (error) => {
+          console.error("Error loading image:", error)
+          setImageLoaded(false)
+          imageLoadingRef.current = false
+        }
+      }, 300) // Add a delay to ensure the canvas is properly mounted
     } catch (error) {
       console.error("Error initializing canvas:", error)
-      setIsInitializing(false)
+      imageLoadingRef.current = false
+      setCanvasInitialized(false)
     }
     
     // Cleanup function
@@ -187,6 +206,14 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
       // No need to dispose here as it will be handled on the next initialization
     }
   }, [isEditing, containerDimensions, imageUrl, savedPosition])
+  
+  // Reset state when editing mode changes
+  useEffect(() => {
+    if (!isEditing) {
+      setImageLoaded(false)
+      setCanvasInitialized(false)
+    }
+  }, [isEditing])
   
   // Cleanup when component unmounts
   useEffect(() => {
@@ -203,7 +230,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   }, [])
 
   return (
-    <div className="absolute inset-0 z-50">
+    <div className={`absolute inset-0 z-50 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-0'}`}>
       <canvas ref={canvasRef} className="w-full h-full" />
       
       {isEditing && !imageLoaded && (

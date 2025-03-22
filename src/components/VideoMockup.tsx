@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -56,19 +57,23 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   const [originalImageDimensions, setOriginalImageDimensions] = useState({ width: 0, height: 0 })
   const backgroundImageRef = useRef<HTMLImageElement>(null)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const editorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const SCALE_FACTOR = 0.5
 
+  // Log key props for debugging
   useEffect(() => {
     console.log("VideoMockup props:", { imageUrl, backgroundImageUrl, savedPosition })
   }, [imageUrl, backgroundImageUrl, savedPosition])
 
+  // Update current position when savedPosition changes
   useEffect(() => {
     if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(currentImagePosition)) {
       setCurrentImagePosition(savedPosition);
     }
   }, [savedPosition]);
 
+  // Handle background image loading
   useEffect(() => {
     if (backgroundImageUrl) {
       console.log("Verifying background image URL:", backgroundImageUrl)
@@ -97,6 +102,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [backgroundImageUrl, onContainerDimensionsChange])
 
+  // Handle image loading
   useEffect(() => {
     if (imageUrl) {
       console.log("Verifying image URL:", imageUrl)
@@ -139,6 +145,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [imageUrl, scaledDimensions, currentImagePosition, onPositionSave])
 
+  // Update container dimensions
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current && onContainerDimensionsChange) {
@@ -164,6 +171,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [scaledDimensions, onContainerDimensionsChange])
 
+  // Save position function
   const handleSavePosition = () => {
     if (fabricCanvas) {
       try {
@@ -192,28 +200,52 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       }
     }
 
+    // Clean up any existing timeouts
+    if (editorTimeoutRef.current) {
+      clearTimeout(editorTimeoutRef.current)
+    }
+
     setIsTransitioning(true)
-    setTimeout(() => {
+    // First wait to fade out the editor
+    editorTimeoutRef.current = setTimeout(() => {
       setIsEditing(false)
-      setTimeout(() => {
+      // Then wait for the transition to complete before showing the static image
+      editorTimeoutRef.current = setTimeout(() => {
         setIsTransitioning(false)
-      }, 300)
-    }, 300)
+      }, 500)
+    }, 500)
   }
 
+  // Toggle edit mode
   const toggleEditMode = () => {
     if (isEditing) {
       handleSavePosition()
     } else {
+      // Clean up any existing timeouts
+      if (editorTimeoutRef.current) {
+        clearTimeout(editorTimeoutRef.current)
+      }
+      
       setIsTransitioning(true)
-      setTimeout(() => {
+      // First fade out the current view
+      editorTimeoutRef.current = setTimeout(() => {
         setIsEditing(true)
-        setTimeout(() => {
+        // Then wait for the editor to initialize before fading it in
+        editorTimeoutRef.current = setTimeout(() => {
           setIsTransitioning(false)
-        }, 300)
-      }, 300)
+        }, 500)
+      }, 500)
     }
   };
+
+  // Clean up timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (editorTimeoutRef.current) {
+        clearTimeout(editorTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const containerStyle = {
     width: scaledDimensions.width > 0 ? `${scaledDimensions.width}px` : "100%",
@@ -248,7 +280,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       )}
 
       {imageUrl && !isEditing && currentImagePosition && !isTransitioning && (
-        <div className="absolute inset-0 flex items-center justify-center bg-transparent" style={{ zIndex: 20 }}>
+        <div className="absolute inset-0 flex items-center justify-center bg-transparent transition-opacity duration-500 opacity-100" style={{ zIndex: 20 }}>
           {imageError ? (
             <div className="bg-red-500 text-white p-2 rounded">Failed to load image. Please check the URL.</div>
           ) : !imageLoaded ? (
