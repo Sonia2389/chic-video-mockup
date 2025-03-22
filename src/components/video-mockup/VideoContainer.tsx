@@ -95,7 +95,7 @@ const VideoContainer = ({
             className="w-full h-full object-contain"
             style={{ 
               zIndex: 1,
-              objectFit: "contain" // Changed to "contain" to ensure video fits within container
+              objectFit: "cover" // Changed back to "cover" to fill the container
             }}
             autoPlay
             loop

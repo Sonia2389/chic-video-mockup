@@ -1,4 +1,3 @@
-
 "use client"
 
 import type React from "react"
@@ -186,7 +185,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
             onLoadedMetadata={handleVideoMetadata}
             onLoadedData={() => setVideoLoaded(true)}
             onError={() => setVideoError(true)}
-            style={{ zIndex: 10, objectFit: "contain" }} // Changed to contain to maintain aspect ratio
+            style={{ zIndex: 10, objectFit: "cover" }} // Changed back to "cover" to fill the entire container
           />
         </>
       )}
