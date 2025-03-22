@@ -88,7 +88,6 @@ const Index = () => {
       setBackgroundImageFile(file);
       
       // Set aspect ratio based on image dimensions
-      const img = new ImageIcon();
       const imgElement = new Image();
       imgElement.onload = () => {
         if (imgElement.width && imgElement.height) {
