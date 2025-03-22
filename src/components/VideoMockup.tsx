@@ -74,7 +74,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   const [currentImagePosition, setCurrentImagePosition] = useState<ImagePosition | null>(savedPosition)
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null)
 
-  const SCALE_FACTOR = 0.25
+  // Increased scale factor for larger preview
+  const SCALE_FACTOR = 0.5
 
   useEffect(() => {
     console.log("VideoMockup props:", { imageUrl, videoUrl, savedPosition })
@@ -89,7 +90,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
       const scaledWidth = Math.round(videoWidth * SCALE_FACTOR)
       const scaledHeight = Math.round(videoHeight * SCALE_FACTOR)
-      console.log("Scaled video dimensions (25%):", scaledWidth, scaledHeight)
+      console.log("Scaled video dimensions (50%):", scaledWidth, scaledHeight)
 
       setScaledVideoDimensions({ width: scaledWidth, height: scaledHeight })
     }
@@ -141,8 +142,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       try {
         setCanvasReady(false)
 
-        const containerWidth = scaledVideoDimensions.width || 300
-        const containerHeight = scaledVideoDimensions.height || 200
+        const containerWidth = scaledVideoDimensions.width || 600
+        const containerHeight = scaledVideoDimensions.height || 400
 
         console.log("Initializing fabric canvas with dimensions:", containerWidth, containerHeight)
 
@@ -259,8 +260,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   }
 
   const containerStyle = {
-    width: scaledVideoDimensions.width > 0 ? `${scaledVideoDimensions.width}px` : "300px",
-    height: scaledVideoDimensions.height > 0 ? `${scaledVideoDimensions.height}px` : "200px",
+    width: scaledVideoDimensions.width > 0 ? `${scaledVideoDimensions.width}px` : "600px",
+    height: scaledVideoDimensions.height > 0 ? `${scaledVideoDimensions.height}px` : "400px",
     position: "relative" as const,
     backgroundColor: "#111827",
     borderRadius: "0.5rem",
