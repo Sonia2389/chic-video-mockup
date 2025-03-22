@@ -166,6 +166,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
   return (
     <div style={containerStyle} ref={containerRef}>
+      {/* Background Video - z-index 10 */}
       {videoUrl && (
         <>
           <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-white z-10">
@@ -188,16 +189,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </>
       )}
 
-      {/* Video overlay element - now with z-index 40 (highest) to always be in front */}
-      {overlayIndex !== null && overlays && overlays[overlayIndex] && (
-        <VideoOverlay 
-          overlayIndex={overlayIndex} 
-          overlays={overlays} 
-          isEditing={isEditing} 
-        />
-      )}
-
-      {/* Static image display when not editing */}
+      {/* Static image display when not editing - z-index 20 */}
       {imageUrl && !isEditing && currentImagePosition && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 20 }}>
           {imageError ? (
@@ -236,6 +228,15 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           fabricCanvas={fabricCanvas}
           setFabricCanvas={setFabricCanvas}
           onSavePosition={handleSavePosition}
+        />
+      )}
+
+      {/* Video overlay element - now with z-index 100 to always be on top */}
+      {overlayIndex !== null && overlays && overlays[overlayIndex] && (
+        <VideoOverlay 
+          overlayIndex={overlayIndex} 
+          overlays={overlays} 
+          isEditing={isEditing} 
         />
       )}
 
