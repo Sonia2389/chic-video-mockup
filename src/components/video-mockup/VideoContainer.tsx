@@ -82,17 +82,17 @@ const VideoContainer = ({
   return (
     <div 
       ref={containerRef}
-      className="relative w-full overflow-hidden bg-black"
+      className={`relative w-full overflow-hidden bg-black ${videoUrl ? 'h-[50vh]' : ''}`}
       style={{ 
-        paddingBottom: `${(1 / videoAspectRatio) * 100}%`,
+        paddingBottom: videoUrl ? 'unset' : `${(1 / videoAspectRatio) * 100}%`,
       }}
     >
-      <div className="absolute inset-0">
+      <div className={`${videoUrl ? 'absolute inset-0' : ''}`}>
         {videoUrl ? (
           <video 
             ref={videoRef}
             src={videoUrl}
-            className="w-full h-full object-contain" // Changed from object-cover to object-contain
+            className="w-full h-full object-cover" // Changed back to object-cover
             style={{ zIndex: isEditing ? -20 : -10 }} // Lower z-index during editing
             autoPlay
             loop
