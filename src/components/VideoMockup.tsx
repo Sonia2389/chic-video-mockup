@@ -60,16 +60,19 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
   const SCALE_FACTOR = 0.5
 
+  // Log key props for debugging
   useEffect(() => {
     console.log("VideoMockup props:", { imageUrl, backgroundImageUrl, savedPosition })
   }, [imageUrl, backgroundImageUrl, savedPosition])
 
+  // Update current image position when savedPosition changes
   useEffect(() => {
     if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(currentImagePosition)) {
       setCurrentImagePosition(savedPosition);
     }
   }, [savedPosition]);
 
+  // Handle background image loading and set dimensions
   useEffect(() => {
     if (backgroundImageUrl) {
       console.log("Verifying background image URL:", backgroundImageUrl)
@@ -100,6 +103,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [backgroundImageUrl, onContainerDimensionsChange])
 
+  // Handle uploaded image verification and default position setup
   useEffect(() => {
     if (imageUrl) {
       console.log("Verifying image URL:", imageUrl)
@@ -142,6 +146,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [imageUrl, scaledDimensions, currentImagePosition, onPositionSave])
 
+  // Update container dimensions when they change
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current && onContainerDimensionsChange) {
@@ -167,6 +172,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [scaledDimensions, onContainerDimensionsChange])
 
+  // Handle saving position from fabric canvas
   const handleSavePosition = () => {
     if (fabricCanvas) {
       const activeObject = fabricCanvas.getActiveObject()
@@ -191,16 +197,17 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       }
     }
 
+    // Use transitioning state to prevent flashing
     setIsTransitioning(true);
-    // Small delay before turning off editing mode to prevent flashing
     setTimeout(() => {
       setIsEditing(false);
       setTimeout(() => {
         setIsTransitioning(false);
-      }, 50);
-    }, 50);
+      }, 100);
+    }, 100);
   }
 
+  // Toggle edit mode with transition to prevent flickering
   const toggleEditMode = () => {
     if (isEditing) {
       handleSavePosition();
@@ -210,8 +217,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         setIsEditing(true);
         setTimeout(() => {
           setIsTransitioning(false);
-        }, 50);
-      }, 50);
+        }, 100);
+      }, 100);
     }
   };
 
