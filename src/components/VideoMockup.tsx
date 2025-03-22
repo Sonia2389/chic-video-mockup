@@ -149,7 +149,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
         canvas.setWidth(containerWidth)
         canvas.setHeight(containerHeight)
-        canvas.setBackgroundColor("rgba(0,0,0,0.1)", canvas.renderAll.bind(canvas))
+        canvas.backgroundColor = "rgba(0,0,0,0.1)"
+        canvas.renderAll()
 
         setFabricCanvas(canvas)
 
