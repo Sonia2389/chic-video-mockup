@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Canvas } from 'fabric';
 import { toast } from "sonner";
@@ -84,6 +85,53 @@ const PositionManager = ({
       toast.success("Image position saved");
     }
   };
+  
+  // Methods for adjusting position and size
+  const moveObject = (direction: 'up' | 'down' | 'left' | 'right', amount = 10) => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (!activeObject) return;
+    
+    switch(direction) {
+      case 'up':
+        activeObject.set('top', (activeObject.top || 0) - amount);
+        break;
+      case 'down':
+        activeObject.set('top', (activeObject.top || 0) + amount);
+        break;
+      case 'left':
+        activeObject.set('left', (activeObject.left || 0) - amount);
+        break;
+      case 'right':
+        activeObject.set('left', (activeObject.left || 0) + amount);
+        break;
+    }
+    
+    fabricCanvas.renderAll();
+    // Save position after moving
+    handleSavePosition();
+  };
+  
+  const changeSize = (scaleChange: number) => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (!activeObject) return;
+    
+    const currentScaleX = activeObject.scaleX || 1;
+    const currentScaleY = activeObject.scaleY || 1;
+    
+    // Apply the scale change
+    activeObject.set({
+      scaleX: Math.max(0.1, currentScaleX + scaleChange),
+      scaleY: Math.max(0.1, currentScaleY + scaleChange)
+    });
+    
+    fabricCanvas.renderAll();
+    // Save position after resizing
+    handleSavePosition();
+  };
 
   // Automatically save position when editing mode is active and canvas changes
   useEffect(() => {
@@ -100,10 +148,12 @@ const PositionManager = ({
     };
   }, [isEditing, fabricCanvas, containerDimensions]);
 
-  // Return null as this is a logic component with no UI
-  if (!isEditing) return null;
-  
-  return null;
+  // Expose functions for external components to use
+  return {
+    save: handleSavePosition,
+    move: moveObject,
+    resize: changeSize
+  };
 };
 
 export default PositionManager;

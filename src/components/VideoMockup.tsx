@@ -1,9 +1,10 @@
-
 "use client"
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { Canvas, Image as FabricImage } from "fabric"
+import EditorControls from "./video-mockup/EditorControls"
+import PositionManager from "./video-mockup/PositionManager"
 
 const VideoOverlay = ({ overlayIndex, overlays = [], isEditing }) => {
   if (!overlays || !Array.isArray(overlays) || overlayIndex === null || isEditing) {
@@ -73,8 +74,9 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   const [scaledVideoDimensions, setScaledVideoDimensions] = useState({ width: 0, height: 0 })
   const [currentImagePosition, setCurrentImagePosition] = useState<ImagePosition | null>(savedPosition)
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null)
+  const [lastEditDimensions, setLastEditDimensions] = useState<{ width: number, height: number } | null>(null)
+  const [editorMode, setEditorMode] = useState<'select' | 'move'>('select')
 
-  // Increased scale factor for larger preview
   const SCALE_FACTOR = 0.5
 
   useEffect(() => {
@@ -259,6 +261,89 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     setCanvasReady(false)
   }
 
+  const handleMove = (direction: 'up' | 'down' | 'left' | 'right') => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (!activeObject) return;
+    
+    const moveAmount = 10; // pixels to move
+    
+    switch(direction) {
+      case 'up':
+        activeObject.set('top', (activeObject.top || 0) - moveAmount);
+        break;
+      case 'down':
+        activeObject.set('top', (activeObject.top || 0) + moveAmount);
+        break;
+      case 'left':
+        activeObject.set('left', (activeObject.left || 0) - moveAmount);
+        break;
+      case 'right':
+        activeObject.set('left', (activeObject.left || 0) + moveAmount);
+        break;
+    }
+    
+    fabricCanvas.renderAll();
+    
+    // Update current position
+    const coords = activeObject.getBoundingRect();
+    setCurrentImagePosition({
+      left: activeObject.left || 0,
+      top: activeObject.top || 0,
+      scale: 1,
+      width: coords.width,
+      height: coords.height,
+      scaleX: activeObject.scaleX || 1,
+      scaleY: activeObject.scaleY || 1,
+      originalWidth: activeObject.width || 0,
+      originalHeight: activeObject.height || 0,
+      angle: activeObject.angle || 0,
+    });
+  };
+  
+  const handleResize = (scaleChange: number) => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (!activeObject) return;
+    
+    const currentScaleX = activeObject.scaleX || 1;
+    const currentScaleY = activeObject.scaleY || 1;
+    
+    // Apply the scale change
+    activeObject.set({
+      scaleX: Math.max(0.1, currentScaleX + scaleChange),
+      scaleY: Math.max(0.1, currentScaleY + scaleChange)
+    });
+    
+    fabricCanvas.renderAll();
+    
+    // Update current position
+    const coords = activeObject.getBoundingRect();
+    setCurrentImagePosition({
+      left: activeObject.left || 0,
+      top: activeObject.top || 0,
+      scale: 1,
+      width: coords.width,
+      height: coords.height,
+      scaleX: activeObject.scaleX || 1,
+      scaleY: activeObject.scaleY || 1,
+      originalWidth: activeObject.width || 0,
+      originalHeight: activeObject.height || 0,
+      angle: activeObject.angle || 0,
+    });
+  };
+
+  const toggleEditMode = () => {
+    if (isEditing) {
+      // Save before exiting edit mode
+      handleSavePosition();
+    } else {
+      setIsEditing(true);
+    }
+  };
+
   const containerStyle = {
     width: scaledVideoDimensions.width > 0 ? `${scaledVideoDimensions.width}px` : "600px",
     height: scaledVideoDimensions.height > 0 ? `${scaledVideoDimensions.height}px` : "400px",
@@ -341,37 +426,18 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
               Initializing editor...
             </div>
           )}
-
-          <div className="absolute bottom-4 right-4 z-[200] flex gap-2">
-            <button
-              onClick={handleSavePosition}
-              className="bg-primary text-white px-4 py-2 rounded-full shadow-lg hover:bg-primary/90 transition-colors"
-            >
-              Save Position
-            </button>
-            <button
-              onClick={() => {
-                setIsEditing(false)
-                setCanvasReady(false)
-              }}
-              className="bg-gray-700 text-white px-4 py-2 rounded-full shadow-lg hover:bg-gray-600 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
         </div>
       )}
 
-      {!isEditing && imageUrl && (
-        <div className="absolute bottom-4 right-4 z-30">
-          <button
-            onClick={() => setIsEditing(true)}
-            className="bg-primary text-white px-4 py-2 rounded-full shadow-lg hover:bg-primary/90 transition-colors"
-          >
-            Edit Position
-          </button>
-        </div>
-      )}
+      <EditorControls 
+        isEditing={isEditing}
+        onEditToggle={toggleEditMode}
+        activeMode={editorMode}
+        onModeChange={setEditorMode}
+        onMove={handleMove}
+        onResize={handleResize}
+        imageUrl={imageUrl}
+      />
 
       <div className="absolute top-2 left-2 text-xs text-white bg-black bg-opacity-50 p-1 rounded z-50">
         {originalVideoDimensions.width > 0 &&
