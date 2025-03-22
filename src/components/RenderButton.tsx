@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Server, Loader2, Download } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -32,13 +31,11 @@ const RenderButton = ({
   const [jobId, setJobId] = useState<string | null>(null);
 
   const handleRender = async () => {
-    // Check if we have all required assets
     if (!backgroundImage || !overlayImage || !savedPosition) {
       toast.error("Please upload a background image, an overlay image, and position your overlay before rendering");
       return;
     }
 
-    // Additional validation for container dimensions
     if (!containerDimensions || !containerDimensions.width || !containerDimensions.height) {
       toast.error("Container dimensions not available. Please try repositioning your image first.");
       return;
@@ -52,26 +49,24 @@ const RenderButton = ({
       console.log("Rendering with saved position:", JSON.stringify(savedPosition));
       console.log("Container dimensions:", containerDimensions);
 
-      // Start the rendering process with exact parameters matching the preview
       const newJobId = await startVideoRender({
         backgroundImage,
         overlayImage,
         overlayPosition: savedPosition,
         overlayVideo: overlayVideo || undefined,
         aspectRatio: videoAspectRatio,
-        quality: 'high', // Use high quality by default for best match to preview
-        preserveOriginalSpeed: true, // Ensure video speed matches the preview
-        exactPositioning: true, // Always use exact positioning from the preview
-        containerWidth: containerDimensions.width,
-        containerHeight: containerDimensions.height
+        quality: 'high',
+        preserveOriginalSpeed: true,
+        exactPositioning: true,
+        containerWidth: containerDimensions?.width,
+        containerHeight: containerDimensions?.height
       });
       
       setJobId(newJobId);
       toast.success("Mockup processing started! Creating high-quality output...");
       
-      // Start polling for status
       let pollCount = 0;
-      const maxPolls = 120; // Allow up to 4 minutes for rendering (120 * 2sec)
+      const maxPolls = 120;
       
       const checkInterval = setInterval(async () => {
         try {
@@ -85,17 +80,14 @@ const RenderButton = ({
           
           const status = await checkRenderStatus(newJobId);
           
-          // Update progress if available from API
           if (status.progress) {
             setRenderProgress(status.progress);
           } else {
-            // Simulate progress if API doesn't provide it
             setRenderProgress(prev => Math.min(prev + 2, 95));
           }
           
           switch (status.status) {
             case 'processing':
-              // Continue polling
               break;
             
             case 'completed':
@@ -120,7 +112,6 @@ const RenderButton = ({
           }
           console.error(error);
           
-          // Don't clear interval on first few errors, API might still be starting up
           if (pollCount > 5) {
             clearInterval(checkInterval);
             setIsRendering(false);

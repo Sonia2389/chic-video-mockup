@@ -1,4 +1,3 @@
-
 "use client"
 
 import type React from "react"
@@ -62,6 +61,12 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   useEffect(() => {
     console.log("VideoMockup props:", { imageUrl, backgroundImageUrl, savedPosition })
   }, [imageUrl, backgroundImageUrl, savedPosition])
+
+  useEffect(() => {
+    if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(currentImagePosition)) {
+      setCurrentImagePosition(savedPosition);
+    }
+  }, [savedPosition]);
 
   useEffect(() => {
     if (backgroundImageUrl) {
@@ -135,9 +140,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [imageUrl, scaledDimensions, currentImagePosition, onPositionSave])
 
-  // Track container dimensions for accurate rendering
   useEffect(() => {
-    // Measure container dimensions anytime they might change
     const updateDimensions = () => {
       if (containerRef.current && onContainerDimensionsChange) {
         const rect = containerRef.current.getBoundingClientRect()
@@ -148,15 +151,12 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       }
     }
     
-    // Call initially
     updateDimensions()
     
-    // Set up a ResizeObserver to track container size changes
     if (containerRef.current) {
       const resizeObserver = new ResizeObserver(updateDimensions)
       resizeObserver.observe(containerRef.current)
       
-      // Cleanup
       return () => {
         if (containerRef.current) {
           resizeObserver.unobserve(containerRef.current)

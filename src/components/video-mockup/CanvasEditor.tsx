@@ -53,7 +53,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
       setFabricCanvas(null)
     }
 
-    // Create a new fabric canvas
+    // Create a new fabric canvas with exact dimensions matching the container
     const canvas = new Canvas(canvasRef.current, {
       width: containerDimensions.width,
       height: containerDimensions.height,
@@ -105,14 +105,19 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
 
       // Position the image based on saved position or center it
       if (savedPosition) {
+        // Set position exactly as saved, with original dimensions
         fabricImage.set({
           left: savedPosition.left,
           top: savedPosition.top,
           scaleX: savedPosition.scaleX,
           scaleY: savedPosition.scaleY,
           angle: savedPosition.angle || 0,
+          // Set the width and height to match original saved dimensions
+          width: savedPosition.originalWidth,
+          height: savedPosition.originalHeight,
         })
       } else {
+        // Center the image if there's no saved position
         fabricImage.scaleToWidth(containerDimensions.width * 0.8)
         fabricImage.set({
           left: containerDimensions.width / 2 - (fabricImage.width * fabricImage.scaleX) / 2,
