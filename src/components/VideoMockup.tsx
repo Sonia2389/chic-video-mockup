@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -154,8 +155,10 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   };
 
   const containerStyle = {
-    width: scaledVideoDimensions.width > 0 ? `${scaledVideoDimensions.width}px` : "600px",
-    height: scaledVideoDimensions.height > 0 ? `${scaledVideoDimensions.height}px` : "400px",
+    width: scaledVideoDimensions.width > 0 ? `${scaledVideoDimensions.width}px` : "100%",
+    maxWidth: "100%", // Ensure it never exceeds its container
+    height: scaledVideoDimensions.height > 0 ? `${scaledVideoDimensions.height}px` : "auto",
+    maxHeight: "60vh", // Limit the height to ensure UI elements remain visible
     position: "relative" as const,
     backgroundColor: "#111827",
     borderRadius: "0.5rem",
@@ -183,7 +186,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
             onLoadedMetadata={handleVideoMetadata}
             onLoadedData={() => setVideoLoaded(true)}
             onError={() => setVideoError(true)}
-            style={{ zIndex: 10, objectFit: "cover" }}
+            style={{ zIndex: 10, objectFit: "contain" }} // Changed to contain to maintain aspect ratio
           />
         </>
       )}

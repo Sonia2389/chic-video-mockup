@@ -1,3 +1,4 @@
+
 import { useRef, useEffect, useState } from "react";
 
 interface VideoContainerProps {
@@ -81,7 +82,7 @@ const VideoContainer = ({
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full overflow-hidden bg-black ${videoUrl ? 'h-[70vh]' : ''}`}
+      className={`relative w-full overflow-hidden bg-black ${videoUrl ? 'max-h-[60vh]' : ''}`}
       style={{ 
         paddingBottom: videoUrl ? 'unset' : `${(1 / videoAspectRatio) * 100}%`,
       }}
@@ -94,7 +95,7 @@ const VideoContainer = ({
             className="w-full h-full object-contain"
             style={{ 
               zIndex: 1,
-              objectFit: "cover"
+              objectFit: "contain" // Changed to "contain" to ensure video fits within container
             }}
             autoPlay
             loop

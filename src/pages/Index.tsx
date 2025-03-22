@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -170,7 +169,7 @@ const Index = () => {
             )}
           </div>
           
-          <div className="space-y-6">
+          <div className="space-y-6 lg:sticky lg:top-8 self-start">
             <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
               <h2 className="text-lg font-semibold mb-4">Step 1: Add background video</h2>
               <div className="space-y-4">
