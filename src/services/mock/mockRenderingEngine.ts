@@ -126,9 +126,19 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         // Save current context state
         ctx.save();
         
-        // Scale the positioning values to match the dimensions
-        const scaledLeft = left * (params.exactPositioning ? 1 : renderScaleFactor.x);
-        const scaledTop = top * (params.exactPositioning ? 1 : renderScaleFactor.y);
+        // Calculate the exact position based on the scaling factors
+        let scaledLeft = left;
+        let scaledTop = top;
+        let scaledScaleX = scaleX;
+        let scaledScaleY = scaleY;
+        
+        // Only apply render scale factor if not using exact positioning
+        if (!params.exactPositioning) {
+          scaledLeft *= renderScaleFactor.x;
+          scaledTop *= renderScaleFactor.y;
+          scaledScaleX *= renderScaleFactor.x;
+          scaledScaleY *= renderScaleFactor.y;
+        }
         
         // Apply transformations in order: translate → rotate → scale
         ctx.translate(scaledLeft, scaledTop);
@@ -136,10 +146,6 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         if (angle) {
           ctx.rotate((angle * Math.PI) / 180);
         }
-        
-        // Scale properly based on original dimensions
-        const scaledScaleX = scaleX * (params.exactPositioning ? 1 : renderScaleFactor.x);
-        const scaledScaleY = scaleY * (params.exactPositioning ? 1 : renderScaleFactor.y);
         
         // Log actual position for each frame
         console.log("Frame rendering:", {

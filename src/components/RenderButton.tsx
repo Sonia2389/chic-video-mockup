@@ -32,9 +32,15 @@ const RenderButton = ({
   const [jobId, setJobId] = useState<string | null>(null);
 
   const handleRender = async () => {
-    // Check if we have a background image
+    // Check if we have all required assets
     if (!backgroundImage || !overlayImage || !savedPosition) {
       toast.error("Please upload a background image, an overlay image, and position your overlay before rendering");
+      return;
+    }
+
+    // Additional validation for container dimensions
+    if (!containerDimensions || !containerDimensions.width || !containerDimensions.height) {
+      toast.error("Container dimensions not available. Please try repositioning your image first.");
       return;
     }
 
@@ -55,9 +61,9 @@ const RenderButton = ({
         aspectRatio: videoAspectRatio,
         quality: 'high', // Use high quality by default for best match to preview
         preserveOriginalSpeed: true, // Ensure video speed matches the preview
-        exactPositioning: true, // Use exact pixel positioning from the preview
-        containerWidth: containerDimensions?.width,
-        containerHeight: containerDimensions?.height
+        exactPositioning: true, // Always use exact positioning from the preview
+        containerWidth: containerDimensions.width,
+        containerHeight: containerDimensions.height
       });
       
       setJobId(newJobId);

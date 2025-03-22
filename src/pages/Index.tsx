@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -111,6 +112,7 @@ const Index = () => {
 
   const handlePositionSave = (position: ImagePosition) => {
     setSavedPosition(position);
+    console.log("Position saved:", position);
   };
 
   const handleContainerDimensions = (dimensions: {width: number, height: number} | null) => {
@@ -148,6 +150,7 @@ const Index = () => {
                 overlays={overlays}
                 onPositionSave={handlePositionSave}
                 savedPosition={savedPosition}
+                onContainerDimensionsChange={handleContainerDimensions}
               />
             </div>
             

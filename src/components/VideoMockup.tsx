@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from "react"
 import { Canvas, Image as FabricImage } from "fabric"
 import EditorControls from "./video-mockup/EditorControls"
 import CanvasEditor from "./video-mockup/CanvasEditor"
-import ImageDisplay from "./video-mockup/ImageDisplay"
 import VideoOverlay from "./video-mockup/VideoOverlay"
 
 interface ImagePosition {
@@ -34,6 +33,7 @@ interface VideoMockupProps {
   overlays?: Overlay[]
   onPositionSave: (position: ImagePosition) => void
   savedPosition: ImagePosition | null
+  onContainerDimensionsChange?: (dimensions: {width: number, height: number} | null) => void
 }
 
 const VideoMockup: React.FC<VideoMockupProps> = ({
@@ -43,6 +43,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   overlays = [],
   onPositionSave,
   savedPosition,
+  onContainerDimensionsChange
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -77,6 +78,11 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         console.log("Scaled background dimensions (50%):", scaledWidth, scaledHeight)
         
         setScaledDimensions({ width: scaledWidth, height: scaledHeight })
+        
+        // Also notify parent component about container dimensions
+        if (onContainerDimensionsChange) {
+          onContainerDimensionsChange({ width: scaledWidth, height: scaledHeight })
+        }
       }
       img.onerror = () => {
         console.error("Failed to load background image:", backgroundImageUrl)
@@ -85,7 +91,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       }
       img.src = backgroundImageUrl
     }
-  }, [backgroundImageUrl])
+  }, [backgroundImageUrl, onContainerDimensionsChange])
 
   useEffect(() => {
     if (imageUrl) {
@@ -117,6 +123,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
           console.log("Created default position:", newPosition)
           setCurrentImagePosition(newPosition)
+          onPositionSave(newPosition)
         }
       }
       img.onerror = () => {
@@ -126,7 +133,37 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       }
       img.src = imageUrl
     }
-  }, [imageUrl, scaledDimensions, currentImagePosition])
+  }, [imageUrl, scaledDimensions, currentImagePosition, onPositionSave])
+
+  // Track container dimensions for accurate rendering
+  useEffect(() => {
+    // Measure container dimensions anytime they might change
+    const updateDimensions = () => {
+      if (containerRef.current && onContainerDimensionsChange) {
+        const rect = containerRef.current.getBoundingClientRect()
+        onContainerDimensionsChange({ 
+          width: rect.width, 
+          height: rect.height 
+        })
+      }
+    }
+    
+    // Call initially
+    updateDimensions()
+    
+    // Set up a ResizeObserver to track container size changes
+    if (containerRef.current) {
+      const resizeObserver = new ResizeObserver(updateDimensions)
+      resizeObserver.observe(containerRef.current)
+      
+      // Cleanup
+      return () => {
+        if (containerRef.current) {
+          resizeObserver.unobserve(containerRef.current)
+        }
+      }
+    }
+  }, [scaledDimensions, onContainerDimensionsChange])
 
   const handleSavePosition = () => {
     if (fabricCanvas) {
@@ -257,4 +294,4 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   );
 };
 
-export default VideoMockup
+export default VideoMockup;
