@@ -3,7 +3,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { Canvas, Image as FabricImage } from "fabric"
+import { Canvas, Image as FabricImage, Rect } from "fabric"
 
 interface CanvasEditorProps {
   isEditing: boolean
@@ -62,6 +62,18 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
     img.onload = () => {
       const fabricImage = new FabricImage(img)
 
+      // Enable corner controls for resizing
+      fabricImage.set({
+        borderColor: '#3b82f6',
+        cornerColor: 'white',
+        cornerStrokeColor: '#3b82f6',
+        cornerSize: 12,
+        transparentCorners: false,
+        cornerStyle: 'circle',
+        hasControls: true,
+        hasBorders: true,
+      })
+
       if (savedPosition) {
         fabricImage.set({
           left: savedPosition.left,
@@ -78,6 +90,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
         })
       }
 
+      // Add the image to the canvas
       canvas.add(fabricImage)
       canvas.setActiveObject(fabricImage)
       canvas.renderAll()
@@ -100,6 +113,12 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
       {!imageLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 text-white">
           Loading image...
+        </div>
+      )}
+      
+      {isEditing && imageLoaded && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded text-sm">
+          Drag image to move • Drag corners to resize
         </div>
       )}
     </div>

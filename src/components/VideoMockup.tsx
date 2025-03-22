@@ -261,80 +261,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     setCanvasReady(false)
   }
 
-  const handleMove = (direction: 'up' | 'down' | 'left' | 'right') => {
-    if (!fabricCanvas) return;
-    
-    const activeObject = fabricCanvas.getActiveObject();
-    if (!activeObject) return;
-    
-    const moveAmount = 10; // pixels to move
-    
-    switch(direction) {
-      case 'up':
-        activeObject.set('top', (activeObject.top || 0) - moveAmount);
-        break;
-      case 'down':
-        activeObject.set('top', (activeObject.top || 0) + moveAmount);
-        break;
-      case 'left':
-        activeObject.set('left', (activeObject.left || 0) - moveAmount);
-        break;
-      case 'right':
-        activeObject.set('left', (activeObject.left || 0) + moveAmount);
-        break;
-    }
-    
-    fabricCanvas.renderAll();
-    
-    // Update current position
-    const coords = activeObject.getBoundingRect();
-    setCurrentImagePosition({
-      left: activeObject.left || 0,
-      top: activeObject.top || 0,
-      scale: 1,
-      width: coords.width,
-      height: coords.height,
-      scaleX: activeObject.scaleX || 1,
-      scaleY: activeObject.scaleY || 1,
-      originalWidth: activeObject.width || 0,
-      originalHeight: activeObject.height || 0,
-      angle: activeObject.angle || 0,
-    });
-  };
-  
-  const handleResize = (scaleChange: number) => {
-    if (!fabricCanvas) return;
-    
-    const activeObject = fabricCanvas.getActiveObject();
-    if (!activeObject) return;
-    
-    const currentScaleX = activeObject.scaleX || 1;
-    const currentScaleY = activeObject.scaleY || 1;
-    
-    // Apply the scale change
-    activeObject.set({
-      scaleX: Math.max(0.1, currentScaleX + scaleChange),
-      scaleY: Math.max(0.1, currentScaleY + scaleChange)
-    });
-    
-    fabricCanvas.renderAll();
-    
-    // Update current position
-    const coords = activeObject.getBoundingRect();
-    setCurrentImagePosition({
-      left: activeObject.left || 0,
-      top: activeObject.top || 0,
-      scale: 1,
-      width: coords.width,
-      height: coords.height,
-      scaleX: activeObject.scaleX || 1,
-      scaleY: activeObject.scaleY || 1,
-      originalWidth: activeObject.width || 0,
-      originalHeight: activeObject.height || 0,
-      angle: activeObject.angle || 0,
-    });
-  };
-
   const toggleEditMode = () => {
     if (isEditing) {
       // Save before exiting edit mode
@@ -432,10 +358,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       <EditorControls 
         isEditing={isEditing}
         onEditToggle={toggleEditMode}
-        activeMode={editorMode}
-        onModeChange={setEditorMode}
-        onMove={handleMove}
-        onResize={handleResize}
         imageUrl={imageUrl}
       />
 
