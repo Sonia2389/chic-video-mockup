@@ -1,3 +1,4 @@
+
 import { RenderVideoParams, RenderResponse } from "./types/renderingTypes";
 import { API_URL } from "./config/apiConfig";
 
@@ -16,7 +17,16 @@ const createTimeoutController = (timeout: number) => {
 export const apiStartVideoRender = async (params: RenderVideoParams): Promise<string> => {
   // Create form data to send files
   const formData = new FormData();
-  formData.append('backgroundVideo', params.backgroundVideo);
+  
+  // Add required background media (either video or image)
+  if (params.backgroundVideo) {
+    formData.append('backgroundVideo', params.backgroundVideo);
+  } else if (params.backgroundImage) {
+    formData.append('backgroundImage', params.backgroundImage);
+  } else {
+    throw new Error('Either backgroundVideo or backgroundImage must be provided');
+  }
+  
   formData.append('overlayImage', params.overlayImage);
   formData.append('overlayPosition', JSON.stringify(params.overlayPosition));
   formData.append('aspectRatio', params.aspectRatio.toString());
@@ -38,7 +48,13 @@ export const apiStartVideoRender = async (params: RenderVideoParams): Promise<st
   }
 
   console.log("Sending render request to API:", API_URL);
-  console.log("Background video size:", params.backgroundVideo.size);
+  console.log("Background type:", params.backgroundVideo ? "video" : "image");
+  if (params.backgroundVideo) {
+    console.log("Background video size:", params.backgroundVideo.size);
+  }
+  if (params.backgroundImage) {
+    console.log("Background image size:", params.backgroundImage.size);
+  }
   console.log("Overlay image size:", params.overlayImage.size);
   console.log("Overlay position:", JSON.stringify(params.overlayPosition));
   console.log("Quality setting:", params.quality || 'standard');
@@ -65,7 +81,7 @@ export const apiStartVideoRender = async (params: RenderVideoParams): Promise<st
     console.log("Render job started, ID:", data.id);
     return data.id; // Return the job ID for status checking
   } catch (error) {
-    console.error('Error in API start video render:', error);
+    console.error('Error in API start render:', error);
     throw error;
   }
 };

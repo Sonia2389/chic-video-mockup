@@ -9,6 +9,7 @@ import { toast } from "sonner";
 interface RenderButtonProps {
   disabled: boolean;
   backgroundVideo?: File;
+  backgroundImage?: File;
   overlayImage?: File;
   overlayVideo?: File;
   savedPosition?: any;
@@ -19,6 +20,7 @@ interface RenderButtonProps {
 const RenderButton = ({ 
   disabled, 
   backgroundVideo,
+  backgroundImage,
   overlayImage,
   overlayVideo,
   savedPosition,
@@ -32,8 +34,9 @@ const RenderButton = ({
   const [jobId, setJobId] = useState<string | null>(null);
 
   const handleRender = async () => {
-    if (!backgroundVideo || !overlayImage || !savedPosition) {
-      toast.error("Please upload a background video, an image, and position your overlay before rendering");
+    // Check if we have either a background video or background image
+    if ((!backgroundVideo && !backgroundImage) || !overlayImage || !savedPosition) {
+      toast.error("Please upload a background (image or video), an overlay image, and position your overlay before rendering");
       return;
     }
 
@@ -47,7 +50,8 @@ const RenderButton = ({
 
       // Start the rendering process with exact parameters matching the preview
       const newJobId = await startVideoRender({
-        backgroundVideo,
+        backgroundVideo: backgroundVideo || undefined,
+        backgroundImage: backgroundImage || undefined,
         overlayImage,
         overlayPosition: savedPosition,
         overlayVideo: overlayVideo || undefined,
@@ -60,7 +64,7 @@ const RenderButton = ({
       });
       
       setJobId(newJobId);
-      toast.success("Mockup processing started! Creating high-quality video...");
+      toast.success("Mockup processing started! Creating high-quality output...");
       
       // Start polling for status
       let pollCount = 0;
@@ -96,7 +100,7 @@ const RenderButton = ({
               setRenderProgress(100);
               setDownloadReady(true);
               setDownloadUrl(status.downloadUrl || null);
-              toast.success("Video mockup processed successfully!");
+              toast.success("Mockup processed successfully!");
               break;
             
             case 'failed':
@@ -124,9 +128,9 @@ const RenderButton = ({
     } catch (error) {
       setIsRendering(false);
       if (error instanceof Error) {
-        toast.error(`Error starting video processing: ${error.message}`);
+        toast.error(`Error starting processing: ${error.message}`);
       } else {
-        toast.error("Error starting video processing");
+        toast.error("Error starting processing");
       }
       console.error(error);
     }
@@ -134,7 +138,7 @@ const RenderButton = ({
 
   const handleDownload = () => {
     if (downloadUrl) {
-      downloadRenderedVideo(downloadUrl, "video-mockup.mp4");
+      downloadRenderedVideo(downloadUrl, "mockup.mp4");
     } else {
       toast.error("Download URL not available");
     }
@@ -148,7 +152,7 @@ const RenderButton = ({
           <p className="text-xs text-center text-muted-foreground">
             {downloadReady 
               ? "Mockup processing complete!" 
-              : `Processing video mockup... ${renderProgress}%`}
+              : `Processing mockup... ${renderProgress}%`}
           </p>
         </div>
       )}
@@ -162,17 +166,17 @@ const RenderButton = ({
         {isRendering && !downloadReady ? (
           <>
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            Processing Video... {renderProgress}%
+            Processing Mockup... {renderProgress}%
           </>
         ) : downloadReady ? (
           <>
             <Download className="mr-2 h-5 w-5" />
-            Download Video Mockup
+            Download Mockup
           </>
         ) : (
           <>
             <Server className="mr-2 h-5 w-5" />
-            Process Video Mockup
+            Process Mockup
           </>
         )}
       </Button>

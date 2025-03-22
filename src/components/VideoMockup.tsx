@@ -29,6 +29,7 @@ interface Overlay {
 
 interface VideoMockupProps {
   imageUrl: string | null
+  backgroundImageUrl: string | null
   overlayIndex: number | null
   videoUrl?: string
   overlays?: Overlay[]
@@ -38,6 +39,7 @@ interface VideoMockupProps {
 
 const VideoMockup: React.FC<VideoMockupProps> = ({
   imageUrl,
+  backgroundImageUrl,
   overlayIndex,
   videoUrl,
   overlays = [],
@@ -50,18 +52,21 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   const [videoError, setVideoError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false)
+  const [backgroundImageError, setBackgroundImageError] = useState(false)
   const [originalVideoDimensions, setOriginalVideoDimensions] = useState({ width: 0, height: 0 })
   const [scaledVideoDimensions, setScaledVideoDimensions] = useState({ width: 0, height: 0 })
   const [currentImagePosition, setCurrentImagePosition] = useState<ImagePosition | null>(savedPosition)
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null)
   const [originalImageDimensions, setOriginalImageDimensions] = useState({ width: 0, height: 0 })
   const videoRef = useRef<HTMLVideoElement>(null)
+  const backgroundImageRef = useRef<HTMLImageElement>(null)
 
   const SCALE_FACTOR = 0.5
 
   useEffect(() => {
-    console.log("VideoMockup props:", { imageUrl, videoUrl, savedPosition })
-  }, [imageUrl, videoUrl, savedPosition])
+    console.log("VideoMockup props:", { imageUrl, videoUrl, backgroundImageUrl, savedPosition })
+  }, [imageUrl, videoUrl, backgroundImageUrl, savedPosition])
 
   const handleVideoMetadata = () => {
     if (videoRef.current) {
@@ -77,6 +82,31 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       setScaledVideoDimensions({ width: scaledWidth, height: scaledHeight })
     }
   }
+
+  useEffect(() => {
+    if (backgroundImageUrl) {
+      console.log("Verifying background image URL:", backgroundImageUrl)
+      const img = new Image()
+      img.onload = () => {
+        console.log("Background image verified successfully:", backgroundImageUrl)
+        setBackgroundImageLoaded(true)
+        setBackgroundImageError(false)
+        
+        // Set dimensions based on background image
+        const scaledWidth = Math.round(img.width * SCALE_FACTOR)
+        const scaledHeight = Math.round(img.height * SCALE_FACTOR)
+        console.log("Scaled background dimensions (50%):", scaledWidth, scaledHeight)
+        
+        setScaledVideoDimensions({ width: scaledWidth, height: scaledHeight })
+      }
+      img.onerror = () => {
+        console.error("Failed to load background image:", backgroundImageUrl)
+        setBackgroundImageLoaded(false)
+        setBackgroundImageError(true)
+      }
+      img.src = backgroundImageUrl
+    }
+  }, [backgroundImageUrl])
 
   useEffect(() => {
     if (imageUrl) {
@@ -168,6 +198,25 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
   return (
     <div style={containerStyle} ref={containerRef} className="bg-transparent">
+      {/* Background Image - z-index 5 */}
+      {backgroundImageUrl && (
+        <>
+          <div className="absolute inset-0 flex items-center justify-center bg-transparent text-white" style={{ zIndex: 5 }}>
+            {!backgroundImageLoaded && !backgroundImageError && <p>Loading background image...</p>}
+            {backgroundImageError && <p>Error loading background image. Please check the URL.</p>}
+          </div>
+          <img
+            ref={backgroundImageRef}
+            className="absolute inset-0 w-full h-full"
+            src={backgroundImageUrl || "/placeholder.svg"}
+            alt="Background"
+            onLoad={() => setBackgroundImageLoaded(true)}
+            onError={() => setBackgroundImageError(true)}
+            style={{ zIndex: 5, objectFit: "cover", backgroundColor: "transparent" }}
+          />
+        </>
+      )}
+
       {/* Background Video - z-index 10 */}
       {videoUrl && (
         <>

@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import VideoMockup from "@/components/VideoMockup";
 import VideoOverlays from "@/components/VideoOverlays";
@@ -6,7 +7,7 @@ import RenderButton from "@/components/RenderButton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Video, X } from "lucide-react";
+import { Video, X, Image } from "lucide-react";
 import { API_URL } from "@/services/videoRenderingApi";
 
 interface Overlay {
@@ -31,10 +32,12 @@ const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedOverlay, setSelectedOverlay] = useState<number | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const [savedPosition, setSavedPosition] = useState<ImagePosition | null>(null);
   const [videoAspectRatio, setVideoAspectRatio] = useState<number>(16/9);
   const [backgroundVideoFile, setBackgroundVideoFile] = useState<File | null>(null);
+  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
   const [overlayImageFile, setOverlayImageFile] = useState<File | null>(null);
   const [overlayVideoFile, setOverlayVideoFile] = useState<File | null>(null);
   const [containerDimensions, setContainerDimensions] = useState<{width: number, height: number} | null>(null);
@@ -87,6 +90,10 @@ const Index = () => {
       setVideoUrl(url);
       setBackgroundVideoFile(file);
       
+      // Clear any background image if video is uploaded
+      setBackgroundImageUrl(null);
+      setBackgroundImageFile(null);
+      
       const video = document.createElement('video');
       video.src = url;
       video.onloadedmetadata = () => {
@@ -100,11 +107,52 @@ const Index = () => {
     }
   };
 
+  const handleBackgroundImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please upload an image file");
+        return;
+      }
+      
+      const url = URL.createObjectURL(file);
+      setBackgroundImageUrl(url);
+      setBackgroundImageFile(file);
+      
+      // Clear any video if background image is uploaded
+      setVideoUrl(null);
+      setBackgroundVideoFile(null);
+      
+      // Set aspect ratio based on image dimensions
+      const img = new Image();
+      img.onload = () => {
+        if (img.width && img.height) {
+          setVideoAspectRatio(img.width / img.height);
+        }
+      };
+      img.src = url;
+      
+      toast.success("Background image uploaded successfully");
+    }
+  };
+
   const removeVideo = () => {
     if (videoUrl) {
       URL.revokeObjectURL(videoUrl);
       setVideoUrl(null);
+      setBackgroundVideoFile(null);
       toast.success("Background video removed");
+    }
+  };
+
+  const removeBackgroundImage = () => {
+    if (backgroundImageUrl) {
+      URL.revokeObjectURL(backgroundImageUrl);
+      setBackgroundImageUrl(null);
+      setBackgroundImageFile(null);
+      toast.success("Background image removed");
     }
   };
 
@@ -122,8 +170,11 @@ const Index = () => {
       if (videoUrl) {
         URL.revokeObjectURL(videoUrl);
       }
+      if (backgroundImageUrl) {
+        URL.revokeObjectURL(backgroundImageUrl);
+      }
     };
-  }, [videoUrl]);
+  }, [videoUrl, backgroundImageUrl]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-secondary/50 to-background">
@@ -133,7 +184,7 @@ const Index = () => {
             tothefknmoon
           </h1>
           <p className="text-muted-foreground">
-            3 Steps to Create Stunning Video Mockups
+            3 Steps to Create Stunning Mockups
           </p>
         </header>
 
@@ -142,6 +193,7 @@ const Index = () => {
             <div className="video-mockup-container">
               <VideoMockup 
                 imageUrl={uploadedImage} 
+                backgroundImageUrl={backgroundImageUrl}
                 overlayIndex={selectedOverlay}
                 videoUrl={videoUrl || undefined}
                 overlays={overlays}
@@ -153,6 +205,7 @@ const Index = () => {
             <RenderButton
               disabled={!uploadedImage || selectedOverlay === null}
               backgroundVideo={backgroundVideoFile || undefined}
+              backgroundImage={backgroundImageFile || undefined}
               overlayImage={overlayImageFile || undefined}
               overlayVideo={overlayVideoFile || undefined}
               savedPosition={savedPosition}
@@ -171,8 +224,9 @@ const Index = () => {
           
           <div className="space-y-6 lg:sticky lg:top-8 self-start">
             <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
-              <h2 className="text-lg font-semibold mb-4">Step 1: Add background video</h2>
+              <h2 className="text-lg font-semibold mb-4">Step 1: Add background</h2>
               <div className="space-y-4">
+                {/* Background Video Option */}
                 {videoUrl ? (
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Video added</span>
@@ -181,24 +235,55 @@ const Index = () => {
                       Remove
                     </Button>
                   </div>
+                ) : backgroundImageUrl ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Image added</span>
+                    <Button variant="outline" size="sm" onClick={removeBackgroundImage}>
+                      <X size={16} className="mr-2" />
+                      Remove
+                    </Button>
+                  </div>
                 ) : (
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                    <label htmlFor="video-upload" className="cursor-pointer">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Video size={16} className="text-primary" />
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Video Upload Option */}
+                    <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                      <label htmlFor="video-upload" className="cursor-pointer">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Video size={16} className="text-primary" />
+                          </div>
+                          <p className="text-xs font-medium">Video</p>
+                          <p className="text-xs text-muted-foreground">MP4, WebM</p>
                         </div>
-                        <p className="text-sm font-medium">Upload background video</p>
-                        <p className="text-xs text-muted-foreground">MP4, WebM up to 50MB</p>
-                      </div>
-                      <input
-                        id="video-upload"
-                        type="file"
-                        onChange={handleVideoUpload}
-                        accept="video/*"
-                        className="hidden"
-                      />
-                    </label>
+                        <input
+                          id="video-upload"
+                          type="file"
+                          onChange={handleVideoUpload}
+                          accept="video/*"
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                    
+                    {/* Image Upload Option */}
+                    <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                      <label htmlFor="background-image-upload" className="cursor-pointer">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Image size={16} className="text-primary" />
+                          </div>
+                          <p className="text-xs font-medium">Image</p>
+                          <p className="text-xs text-muted-foreground">JPG, PNG</p>
+                        </div>
+                        <input
+                          id="background-image-upload"
+                          type="file"
+                          onChange={handleBackgroundImageUpload}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
                 )}
               </div>
