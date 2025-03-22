@@ -144,25 +144,27 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         // Apply overlay video with 40% opacity
         ctx.save();
         ctx.globalAlpha = 0.4;
-        // Use the proper sizing to fit the canvas dimensions while maintaining aspect ratio
+        
+        // Cover the entire canvas with the overlay video while maintaining aspect ratio
         const aspectRatio = overlayVideo.videoWidth / overlayVideo.videoHeight;
         let drawWidth = canvas.width;
         let drawHeight = canvas.height;
         
-        // Adjust dimensions to fit while preserving aspect ratio (same as "contain")
+        // Calculate dimensions to fill the entire canvas (same as "cover")
         if (aspectRatio > canvas.width / canvas.height) {
-          // Width constrained
-          drawHeight = canvas.width / aspectRatio;
-        } else {
           // Height constrained
           drawWidth = canvas.height * aspectRatio;
+          // Center horizontally
+          const offsetX = (canvas.width - drawWidth) / 2;
+          ctx.drawImage(overlayVideo, offsetX, 0, drawWidth, canvas.height);
+        } else {
+          // Width constrained
+          drawHeight = canvas.width / aspectRatio;
+          // Center vertically
+          const offsetY = (canvas.height - drawHeight) / 2;
+          ctx.drawImage(overlayVideo, 0, offsetY, canvas.width, drawHeight);
         }
         
-        // Center the overlay video
-        const offsetX = (canvas.width - drawWidth) / 2;
-        const offsetY = (canvas.height - drawHeight) / 2;
-        
-        ctx.drawImage(overlayVideo, offsetX, offsetY, drawWidth, drawHeight);
         ctx.restore();
       }
       

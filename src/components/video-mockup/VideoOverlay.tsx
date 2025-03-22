@@ -35,7 +35,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
 
   return (
     <div 
-      className="absolute inset-0 flex justify-center items-center" 
+      className="absolute inset-0" 
       aria-label="Overlay" 
       style={{ 
         zIndex: 100, 
@@ -48,7 +48,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
           style={{
             backgroundImage: `url(${currentOverlay.url})`,
             backgroundPosition: "center",
-            backgroundSize: "contain",
+            backgroundSize: "cover", // Changed from "contain" to "cover"
             backgroundRepeat: "no-repeat",
             width: "100%",
             height: "100%",
@@ -61,7 +61,9 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
           src={currentOverlay.url}
           className="w-full h-full"
           style={{
-            objectFit: "contain",
+            objectFit: "cover", // Changed from "contain" to "cover"
+            width: "100%",
+            height: "100%",
             pointerEvents: "none",
           }}
           autoPlay={!isEditing}
