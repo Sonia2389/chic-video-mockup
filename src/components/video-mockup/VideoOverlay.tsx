@@ -40,7 +40,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
       style={{ 
         zIndex: 100, 
         pointerEvents: "none",
-        opacity: 0.4,
+        opacity: 0.2, // Reduced opacity from 0.4 to 0.2 for more transparency
       }}
     >
       {currentOverlay.type === "image" ? (
@@ -48,7 +48,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
           style={{
             backgroundImage: `url(${currentOverlay.url})`,
             backgroundPosition: "center",
-            backgroundSize: "cover", // Changed from "contain" to "cover"
+            backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             width: "100%",
             height: "100%",
@@ -61,7 +61,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
           src={currentOverlay.url}
           className="w-full h-full"
           style={{
-            objectFit: "cover", // Changed from "contain" to "cover"
+            objectFit: "cover",
             width: "100%",
             height: "100%",
             pointerEvents: "none",
@@ -77,3 +77,4 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
 };
 
 export default VideoOverlay;
+

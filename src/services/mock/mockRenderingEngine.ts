@@ -139,11 +139,11 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         ctx.restore();
       }
       
-      // LAYER 3: Overlay video (top layer with 40% opacity)
+      // LAYER 3: Overlay video (top layer with 20% opacity)
       if (overlayVideo) {
-        // Apply overlay video with 40% opacity
+        // Apply overlay video with 20% opacity (reduced from 40%)
         ctx.save();
-        ctx.globalAlpha = 0.4;
+        ctx.globalAlpha = 0.2;
         
         // Cover the entire canvas with the overlay video while maintaining aspect ratio
         const aspectRatio = overlayVideo.videoWidth / overlayVideo.videoHeight;
@@ -210,3 +210,4 @@ export const simulateProgress = (jobId: string): void => {
   setTimeout(() => updateJobProgress(jobId, 50), 6000);
   setTimeout(() => updateJobProgress(jobId, 75), 9000);
 }
+
