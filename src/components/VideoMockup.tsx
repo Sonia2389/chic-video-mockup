@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -55,6 +56,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null)
   const [originalImageDimensions, setOriginalImageDimensions] = useState({ width: 0, height: 0 })
   const backgroundImageRef = useRef<HTMLImageElement>(null)
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   const SCALE_FACTOR = 0.5
 
@@ -189,14 +191,27 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       }
     }
 
-    setIsEditing(false)
+    setIsTransitioning(true);
+    // Small delay before turning off editing mode to prevent flashing
+    setTimeout(() => {
+      setIsEditing(false);
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 50);
+    }, 50);
   }
 
   const toggleEditMode = () => {
     if (isEditing) {
       handleSavePosition();
     } else {
-      setIsEditing(true);
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setIsEditing(true);
+        setTimeout(() => {
+          setIsTransitioning(false);
+        }, 50);
+      }, 50);
     }
   };
 
@@ -234,7 +249,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       )}
 
       {/* Static image display when not editing - z-index 20 */}
-      {imageUrl && !isEditing && currentImagePosition && (
+      {imageUrl && !isEditing && currentImagePosition && !isTransitioning && (
         <div className="absolute inset-0 flex items-center justify-center bg-transparent" style={{ zIndex: 20 }}>
           {imageError ? (
             <div className="bg-red-500 text-white p-2 rounded">Failed to load image. Please check the URL.</div>
@@ -261,7 +276,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       )}
 
       {/* Canvas editor component with higher z-index */}
-      {isEditing && (
+      {(isEditing || isTransitioning) && (
         <CanvasEditor
           isEditing={isEditing}
           imageUrl={imageUrl}

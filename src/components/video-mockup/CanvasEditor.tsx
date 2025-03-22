@@ -43,7 +43,9 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [canvasInitialized, setCanvasInitialized] = useState(false)
 
+  // Initialize the fabric canvas only once when editing starts
   useEffect(() => {
     if (!isEditing || !canvasRef.current || !imageUrl) return
 
@@ -51,18 +53,26 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
     if (fabricCanvas) {
       fabricCanvas.dispose()
       setFabricCanvas(null)
+      setCanvasInitialized(false)
     }
 
-    // Create a new fabric canvas with exact dimensions matching the container
-    const canvas = new Canvas(canvasRef.current, {
-      width: containerDimensions.width,
-      height: containerDimensions.height,
-      backgroundColor: "rgba(0,0,0,0.1)",
-      selection: false, // Disable group selection
-    })
+    const initializeCanvas = () => {
+      // Create a new fabric canvas with exact dimensions matching the container
+      const canvas = new Canvas(canvasRef.current!, {
+        width: containerDimensions.width,
+        height: containerDimensions.height,
+        backgroundColor: "rgba(0,0,0,0.1)",
+        selection: false, // Disable group selection
+        preserveObjectStacking: true,
+      })
 
-    console.log("Canvas created with dimensions:", containerDimensions.width, containerDimensions.height)
-    setFabricCanvas(canvas)
+      console.log("Canvas created with dimensions:", containerDimensions.width, containerDimensions.height)
+      setFabricCanvas(canvas)
+      setCanvasInitialized(true)
+      return canvas;
+    };
+
+    const canvas = initializeCanvas();
 
     // Load the image
     const img = new window.Image()
@@ -71,6 +81,9 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
 
     img.onload = () => {
       console.log("Image loaded:", img.width, img.height)
+      
+      if (!canvas) return; // Safety check
+      
       const fabricImage = new FabricImage(img)
 
       // Configure controls for better resizing and moving experience
@@ -125,6 +138,9 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
         })
       }
 
+      // Clear any existing objects before adding the image
+      canvas.clear();
+      
       // Add image to canvas and select it automatically
       canvas.add(fabricImage)
       canvas.setActiveObject(fabricImage)
@@ -153,15 +169,18 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
     }
 
     return () => {
-      canvas.dispose()
+      if (canvas) {
+        canvas.dispose()
+      }
       setFabricCanvas(null)
+      setCanvasInitialized(false)
     }
   }, [isEditing, imageUrl, containerDimensions, savedPosition, setFabricCanvas, setOriginalImageDimensions])
 
   return (
     <div className="absolute inset-0 z-50">
       <canvas ref={canvasRef} className="w-full h-full" />
-      {!imageLoaded && (
+      {isEditing && !imageLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 text-white">
           Loading image...
         </div>
