@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from "react";
 
 interface VideoContainerProps {
@@ -94,8 +93,8 @@ const VideoContainer = ({
             src={videoUrl}
             className="w-full h-full object-contain"
             style={{ 
-              zIndex: isEditing ? -20 : -10,
-              objectFit: "cover" // Changed from object-contain to object-cover to fill the container
+              zIndex: 1,
+              objectFit: "cover"
             }}
             autoPlay
             loop
@@ -105,7 +104,7 @@ const VideoContainer = ({
         ) : (
           <div 
             className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-800" 
-            style={{ zIndex: isEditing ? -20 : -10 }} 
+            style={{ zIndex: 1 }}
           />
         )}
         

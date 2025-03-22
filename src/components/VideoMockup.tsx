@@ -1,4 +1,3 @@
-
 "use client"
 
 import type React from "react"
@@ -169,7 +168,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       {/* Background Video - z-index 10 */}
       {videoUrl && (
         <>
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-white z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-white" style={{ zIndex: 10 }}>
             {!videoLoaded && !videoError && <p>Loading video...</p>}
             {videoError && <p>Error loading video. Please check the URL.</p>}
           </div>
@@ -216,7 +215,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </div>
       )}
 
-      {/* Canvas editor component */}
+      {/* Canvas editor component with higher z-index */}
       {isEditing && (
         <CanvasEditor
           isEditing={isEditing}
@@ -240,7 +239,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         />
       )}
 
-      {/* Editor controls */}
+      {/* Editor controls with highest z-index */}
       <EditorControls 
         isEditing={isEditing}
         onEditToggle={toggleEditMode}

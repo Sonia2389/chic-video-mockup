@@ -15,7 +15,7 @@ const EditorControls = ({
   if (!imageUrl) return null;
   
   return (
-    <div className="absolute top-2 right-2 flex items-center gap-2 z-30">
+    <div className="absolute top-2 right-2 flex items-center gap-2" style={{ zIndex: 1000 }}>
       <Button 
         size="sm" 
         variant={isEditing ? "default" : "outline"} 
