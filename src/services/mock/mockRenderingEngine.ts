@@ -139,11 +139,11 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         ctx.restore();
       }
       
-      // LAYER 3: Overlay video (top layer with 80% opacity)
+      // LAYER 3: Overlay video (top layer with 40% opacity)
       if (overlayVideo) {
-        // Apply overlay video with 80% opacity
+        // Apply overlay video with 40% opacity
         ctx.save();
-        ctx.globalAlpha = 0.8;
+        ctx.globalAlpha = 0.4;
         ctx.drawImage(overlayVideo, 0, 0, canvas.width, canvas.height);
         ctx.restore();
       }

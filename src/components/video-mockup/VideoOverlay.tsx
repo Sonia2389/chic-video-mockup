@@ -37,7 +37,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
   const overlayStyles = {
     zIndex: 40,
     pointerEvents: isEditing ? "none" as const : "auto" as const,
-    opacity: 0.8, // Set opacity to 80%
+    opacity: 0.4, // Set opacity to 40%
   };
 
   return (
