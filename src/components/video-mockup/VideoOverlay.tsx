@@ -33,13 +33,18 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
 
   const currentOverlay = overlays[overlayIndex];
 
-  // Increased z-index to ensure overlay is on top of everything
+  // Overlay container style to match background video exactly
   const overlayStyles = {
     position: "absolute" as const,
     inset: 0,
-    zIndex: 100, // Increased from 50 to 100 to make sure it's above everything
+    zIndex: 100,
     pointerEvents: "none" as const,
     opacity: 0.4,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    height: "100%",
   };
 
   return (
@@ -60,7 +65,12 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
         <video
           ref={overlayVideoRef}
           src={currentOverlay.url}
-          className="w-full h-full object-cover"
+          className="w-full h-full"
+          style={{
+            objectFit: "contain", // Match the background video's objectFit
+            width: "100%",
+            height: "100%",
+          }}
           autoPlay={!isEditing}
           loop
           muted

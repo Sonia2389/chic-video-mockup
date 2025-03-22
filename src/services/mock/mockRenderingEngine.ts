@@ -141,7 +141,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       
       // LAYER 3: Overlay video (top layer with 40% opacity)
       if (overlayVideo) {
-        // Apply overlay video with 40% opacity
+        // Apply overlay video with 40% opacity, using the full canvas dimensions
         ctx.save();
         ctx.globalAlpha = 0.4;
         ctx.drawImage(overlayVideo, 0, 0, canvas.width, canvas.height);
