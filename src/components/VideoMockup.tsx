@@ -4,14 +4,11 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { Canvas, Image as FabricImage } from "fabric"
 
-// Simplified VideoOverlay component with proper checks for undefined props
 const VideoOverlay = ({ overlayIndex, overlays = [], isEditing }) => {
-  // Check if overlays exists and is an array
   if (!overlays || !Array.isArray(overlays) || overlayIndex === null || isEditing) {
     return null
   }
 
-  // Check if the overlay at the specified index exists
   const overlay = overlays[overlayIndex]
   if (!overlay) return null
 
@@ -57,7 +54,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   imageUrl,
   overlayIndex,
   videoUrl,
-  overlays = [], // Provide default empty array
+  overlays = [],
   onPositionSave,
   savedPosition,
 }) => {
@@ -76,24 +73,19 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   const [currentImagePosition, setCurrentImagePosition] = useState<ImagePosition | null>(savedPosition)
   const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null)
 
-  // Scale factor for the preview (25% of original size)
   const SCALE_FACTOR = 0.25
 
-  // Log props for debugging
   useEffect(() => {
     console.log("VideoMockup props:", { imageUrl, videoUrl, savedPosition })
   }, [imageUrl, videoUrl, savedPosition])
 
-  // Handle video metadata loaded - get video dimensions
   const handleVideoMetadata = () => {
     if (videoRef.current) {
       const { videoWidth, videoHeight } = videoRef.current
       console.log("Original video dimensions:", videoWidth, videoHeight)
 
-      // Store original dimensions
       setOriginalVideoDimensions({ width: videoWidth, height: videoHeight })
 
-      // Calculate scaled dimensions (25% of original)
       const scaledWidth = Math.round(videoWidth * SCALE_FACTOR)
       const scaledHeight = Math.round(videoHeight * SCALE_FACTOR)
       console.log("Scaled video dimensions (25%):", scaledWidth, scaledHeight)
@@ -102,7 +94,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }
 
-  // Verify image URL is valid
   useEffect(() => {
     if (imageUrl) {
       console.log("Verifying image URL:", imageUrl)
@@ -112,12 +103,10 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         setImageLoaded(true)
         setImageError(false)
 
-        // If no saved position, create a default centered position
         if (!currentImagePosition) {
           const containerWidth = scaledVideoDimensions.width || 300
           const containerHeight = scaledVideoDimensions.height || 200
 
-          // Calculate scale to fit image within container
           const scale = Math.min((containerWidth * 0.8) / img.width, (containerHeight * 0.8) / img.height)
 
           const newPosition = {
@@ -146,7 +135,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [imageUrl, scaledVideoDimensions, currentImagePosition])
 
-  // Initialize fabric canvas for editing
   useEffect(() => {
     if (isEditing && canvasRef.current && imageUrl && imageLoaded) {
       try {
@@ -157,17 +145,14 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
         console.log("Initializing fabric canvas with dimensions:", containerWidth, containerHeight)
 
-        // Initialize fabric canvas
         const canvas = new Canvas(canvasRef.current)
 
-        // Set canvas dimensions
         canvas.setWidth(containerWidth)
         canvas.setHeight(containerHeight)
         canvas.setBackgroundColor("rgba(0,0,0,0.1)", canvas.renderAll.bind(canvas))
 
         setFabricCanvas(canvas)
 
-        // Load image into fabric
         const img = new Image()
         img.crossOrigin = "anonymous"
         img.onload = () => {
@@ -176,7 +161,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           try {
             const fabricImage = new FabricImage(img)
 
-            // Set position from current position
             if (currentImagePosition) {
               console.log("Setting fabric image position:", currentImagePosition)
               fabricImage.set({
@@ -187,7 +171,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
                 angle: currentImagePosition.angle || 0,
               })
             } else {
-              // Center the image
               const scale = Math.min((containerWidth * 0.8) / img.width, (containerHeight * 0.8) / img.height)
 
               fabricImage.scale(scale)
@@ -201,7 +184,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
             canvas.setActiveObject(fabricImage)
             canvas.renderAll()
 
-            // Set up object modified event
             canvas.on("object:modified", () => {
               const activeObject = canvas.getActiveObject()
               if (activeObject) {
@@ -246,7 +228,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [isEditing, imageUrl, imageLoaded, scaledVideoDimensions, currentImagePosition])
 
-  // Save position when exiting edit mode
   const handleSavePosition = () => {
     if (fabricCanvas) {
       const activeObject = fabricCanvas.getActiveObject()
@@ -275,7 +256,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     setCanvasReady(false)
   }
 
-  // Calculate container style based on scaled video dimensions
   const containerStyle = {
     width: scaledVideoDimensions.width > 0 ? `${scaledVideoDimensions.width}px` : "300px",
     height: scaledVideoDimensions.height > 0 ? `${scaledVideoDimensions.height}px` : "200px",
@@ -288,7 +268,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
   return (
     <div style={containerStyle} ref={containerRef}>
-      {/* Background video */}
       {videoUrl && (
         <>
           <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-white">
@@ -311,7 +290,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </>
       )}
 
-      {/* Display uploaded image in preview mode or when canvas is not ready */}
       {imageUrl && (!isEditing || !canvasReady) && currentImagePosition && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 10 }}>
           {imageError ? (
@@ -340,10 +318,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </div>
       )}
 
-      {/* Video overlay */}
       <VideoOverlay overlayIndex={overlayIndex} overlays={overlays} isEditing={isEditing} />
 
-      {/* Editing interface */}
       {isEditing && (
         <div className="absolute inset-0 z-100">
           <canvas
@@ -381,7 +357,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </div>
       )}
 
-      {/* Edit button */}
       {!isEditing && imageUrl && (
         <div className="absolute bottom-4 right-4 z-30">
           <button
@@ -393,7 +368,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </div>
       )}
 
-      {/* Debug info */}
       <div className="absolute top-2 left-2 text-xs text-white bg-black bg-opacity-50 p-1 rounded z-50">
         {originalVideoDimensions.width > 0 &&
           `Video: ${originalVideoDimensions.width}x${originalVideoDimensions.height} (${scaledVideoDimensions.width}x${scaledVideoDimensions.height})`}
@@ -407,4 +381,3 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 }
 
 export default VideoMockup
-

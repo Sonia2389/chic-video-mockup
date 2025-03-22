@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -48,8 +49,8 @@ const ImageTransformer: React.FC<ImageTransformerProps> = ({ imageSrc, isEditing
     }
   }, [position.x, position.y, dimensions.width, dimensions.height, onPositionChange])
 
-  // Start dragging the image
-  const startDragImage = (e: React.MouseEvent) => {
+  // Start dragging the image - fix for MouseEvent not having pointerId
+  const startDragImage = (e: React.PointerEvent<HTMLImageElement>) => {
     if (!isEditing) return
 
     e.preventDefault()
@@ -62,12 +63,12 @@ const ImageTransformer: React.FC<ImageTransformerProps> = ({ imageSrc, isEditing
     // Capture pointer to ensure we get all mouse events
     if (containerRef.current) {
       containerRef.current.style.cursor = "grabbing"
-      ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+      e.currentTarget.setPointerCapture(e.pointerId)
     }
   }
 
-  // Start resizing with a specific handle
-  const startResize = (e: React.MouseEvent, handle: string) => {
+  // Start resizing with a specific handle - fix for MouseEvent not having pointerId
+  const startResize = (e: React.PointerEvent<HTMLDivElement>, handle: string) => {
     if (!isEditing) return
 
     e.preventDefault()
@@ -79,7 +80,7 @@ const ImageTransformer: React.FC<ImageTransformerProps> = ({ imageSrc, isEditing
     startPositionRef.current = { ...position }
 
     // Capture pointer to ensure we get all mouse events
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+    e.currentTarget.setPointerCapture(e.pointerId)
   }
 
   // Handle mouse/pointer movement
@@ -258,4 +259,3 @@ const ImageTransformer: React.FC<ImageTransformerProps> = ({ imageSrc, isEditing
 }
 
 export default ImageTransformer
-

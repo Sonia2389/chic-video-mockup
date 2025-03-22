@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 
 interface Overlay {
@@ -26,15 +27,16 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
         }
       }
     }
-  }, [overlayIndex, overlays[overlayIndex]?.url, isEditing]);
+  }, [overlayIndex, overlays, isEditing]);
 
   if (overlayIndex === null || !overlays[overlayIndex]) return null;
 
   const currentOverlay = overlays[overlayIndex];
 
+  // Fix for pointerEvents type - use proper TypeScript type
   const overlayStyles = {
     zIndex: isEditing ? 25 : 30,
-    pointerEvents: isEditing ? "none" : "auto",
+    pointerEvents: isEditing ? "none" as const : "auto" as const,
     opacity: isEditing ? 0.2 : 0.6, // Lower opacity in edit mode
   };
 
@@ -49,7 +51,7 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
             backgroundRepeat: "no-repeat",
             width: "100%",
             height: "100%",
-            pointerEvents: "none",
+            pointerEvents: "none" as const,
             opacity: overlayStyles.opacity, // Lower opacity in edit mode
           }}
         />
