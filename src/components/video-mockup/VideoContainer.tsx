@@ -82,9 +82,10 @@ const VideoContainer = ({
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full overflow-hidden bg-black ${videoUrl ? 'max-h-[60vh]' : ''}`}
+      className={`relative w-full overflow-hidden bg-black ${videoUrl ? 'max-h-[80vh]' : ''}`}
       style={{ 
         paddingBottom: videoUrl ? 'unset' : `${(1 / videoAspectRatio) * 100}%`,
+        aspectRatio: videoUrl ? undefined : videoAspectRatio,
       }}
     >
       <div className={`${videoUrl ? 'absolute inset-0' : ''}`}>
@@ -92,10 +93,10 @@ const VideoContainer = ({
           <video 
             ref={videoRef}
             src={videoUrl}
-            className="w-full h-full object-contain"
+            className="w-full h-full"
             style={{ 
               zIndex: 1,
-              objectFit: "cover" // Changed back to "cover" to fill the container
+              objectFit: "contain" // Changed to "contain" to show the entire video
             }}
             autoPlay
             loop
