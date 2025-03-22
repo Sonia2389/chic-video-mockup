@@ -1,4 +1,3 @@
-
 "use client"
 
 import type React from "react"
@@ -17,7 +16,7 @@ const VideoOverlay = ({ overlayIndex, overlays = [], isEditing }) => {
   if (!overlay) return null
 
   return (
-    <div className="absolute inset-0 z-20 pointer-events-none">
+    <div className="absolute inset-0 z-30 pointer-events-none" style={{ opacity: 0.8 }}>
       {overlay.type === "video" ? (
         <video className="w-full h-full object-cover" src={overlay.url} autoPlay loop muted playsInline />
       ) : (
@@ -166,7 +165,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
   const toggleEditMode = () => {
     if (isEditing) {
-      // Save before exiting edit mode
       handleSavePosition();
     } else {
       setIsEditing(true);
@@ -234,7 +232,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </div>
       )}
 
-      {/* Video overlay element */}
+      {/* Video overlay element - now with z-index 30 (highest) and 80% opacity */}
       <VideoOverlay overlayIndex={overlayIndex} overlays={overlays} isEditing={isEditing} />
 
       {/* Canvas editor component */}
