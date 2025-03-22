@@ -33,9 +33,9 @@ const VideoOverlay = ({ overlayIndex, overlays, isEditing = false }: VideoOverla
 
   const currentOverlay = overlays[overlayIndex];
 
-  // Ensure overlay is always on top (z-index 40)
+  // Ensure overlay is always on top with z-index 50 (higher than image z-index which is 20)
   const overlayStyles = {
-    zIndex: 40,
+    zIndex: 50,
     pointerEvents: isEditing ? "none" as const : "auto" as const,
     opacity: 0.4, // Set opacity to 40%
   };
