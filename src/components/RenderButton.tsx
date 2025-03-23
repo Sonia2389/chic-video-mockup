@@ -1,9 +1,11 @@
+
 import { Button } from "@/components/ui/button";
 import { Server, Loader2, Download } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { startVideoRender, checkRenderStatus, downloadRenderedVideo } from "@/services/videoRenderingApi";
 import { useState } from "react";
 import { toast } from "sonner";
+import { setupMediaRecorder } from "@/services/mock/mockMediaProcessor";
 
 interface RenderButtonProps {
   disabled: boolean;
@@ -30,84 +32,79 @@ const RenderButton = ({
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
 
-  const capturePreviewAndDownload = () => {
+  const capturePreviewAndDownload = async () => {
     const mockupContainer = document.querySelector('.video-mockup-container');
     if (!mockupContainer) {
       toast.error("Could not find the mockup container element");
       return false;
     }
     
-    // Create a canvas to capture the preview
-    const canvas = document.createElement('canvas');
-    const containerRect = mockupContainer.getBoundingClientRect();
-    canvas.width = containerRect.width;
-    canvas.height = containerRect.height;
-    
-    // Use html2canvas to capture the content
-    import('html2canvas').then(({ default: html2canvas }) => {
+    try {
+      setIsRendering(true);
+      setRenderProgress(10);
       toast.info("Preparing to capture mockup preview...");
       
-      html2canvas(mockupContainer as HTMLElement, {
+      // Import html2canvas dynamically
+      const { default: html2canvas } = await import('html2canvas');
+      
+      setRenderProgress(20);
+      
+      // Capture the mockup container content
+      const canvas = await html2canvas(mockupContainer as HTMLElement, {
         allowTaint: true,
         useCORS: true,
         logging: false,
         backgroundColor: null,
-      }).then(canvas => {
-        // Convert to mp4 using MediaRecorder
-        const stream = canvas.captureStream(30);
-        const recordedChunks: BlobPart[] = [];
+      });
+      
+      setRenderProgress(40);
+      
+      // Create and configure the media recorder
+      try {
+        const { recorder, chunks, mimeType } = setupMediaRecorder(canvas);
         
-        // Find supported mime type
-        let mimeType = '';
-        const mimeTypes = [
-          'video/webm;codecs=vp9',
-          'video/webm;codecs=vp8',
-          'video/webm',
-          'video/mp4',
-          ''
-        ];
-        
-        for (const type of mimeTypes) {
-          if (type === '' || MediaRecorder.isTypeSupported(type)) {
-            mimeType = type;
-            break;
-          }
-        }
-        
-        // Create and configure media recorder
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: mimeType || undefined,
-          videoBitsPerSecond: 5000000
-        });
-        
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            recordedChunks.push(e.data);
+        // Set up recorder events
+        recorder.onstop = () => {
+          try {
+            // Create a proper video file from the recorded chunks
+            let fileType = 'video/mp4';
+            
+            // If browser used WebM format, maintain that for the file
+            if (mimeType.includes('webm')) {
+              fileType = 'video/webm';
+            }
+            
+            const videoBlob = new Blob(chunks, { type: fileType });
+            const videoUrl = URL.createObjectURL(videoBlob);
+            
+            // Set the download URL and complete
+            setDownloadUrl(videoUrl);
+            setRenderProgress(100);
+            setDownloadReady(true);
+            setIsRendering(false);
+            toast.success("Mockup processed successfully!");
+          } catch (error) {
+            console.error("Error creating video after recording:", error);
+            toast.error("Failed to create video file from recording");
+            setIsRendering(false);
           }
         };
         
-        mediaRecorder.onstop = () => {
-          // Create the downloadable video from recorded chunks
-          const videoBlob = new Blob(recordedChunks, { type: 'video/mp4' });
-          const videoUrl = URL.createObjectURL(videoBlob);
-          
-          // Set the download URL and complete
-          setDownloadUrl(videoUrl);
-          setRenderProgress(100);
-          setDownloadReady(true);
+        // Handle recording errors
+        recorder.onerror = (event) => {
+          console.error("MediaRecorder error:", event);
+          toast.error("Error during recording process");
           setIsRendering(false);
-          toast.success("Mockup processed successfully!");
         };
         
-        // Start recording for a brief duration (5 seconds)
-        mediaRecorder.start();
-        setIsRendering(true);
-        setRenderProgress(25);
+        // Start recording for a 5 second duration
+        recorder.start();
+        setRenderProgress(50);
         
         // Update progress while recording
         const interval = setInterval(() => {
           setRenderProgress(prev => {
-            const newProgress = prev + 15;
+            const newProgress = prev + 8;
             return newProgress < 95 ? newProgress : 95;
           });
         }, 1000);
@@ -115,20 +112,32 @@ const RenderButton = ({
         // Stop recording after 5 seconds
         setTimeout(() => {
           clearInterval(interval);
-          mediaRecorder.stop();
+          
+          try {
+            // Only stop if state is not "inactive"
+            if (recorder.state !== "inactive") {
+              recorder.stop();
+            }
+          } catch (stopError) {
+            console.error("Error stopping recorder:", stopError);
+            setIsRendering(false);
+            toast.error("Error stopping video recording");
+          }
         }, 5000);
-      }).catch(error => {
-        console.error("Error capturing preview:", error);
-        toast.error("Failed to capture mockup preview");
+        
+        return true;
+      } catch (recorderError) {
+        console.error("MediaRecorder setup error:", recorderError);
+        toast.error("Your browser doesn't fully support video recording. Try using Chrome or Firefox.");
         setIsRendering(false);
-      });
-    }).catch(error => {
-      console.error("Error importing html2canvas:", error);
-      toast.error("Failed to load capture library");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error capturing preview:", error);
+      toast.error("Failed to capture mockup preview");
       setIsRendering(false);
-    });
-    
-    return true;
+      return false;
+    }
   };
 
   const handleRender = async () => {
@@ -142,10 +151,10 @@ const RenderButton = ({
       return;
     }
 
-    // Try to capture preview directly
-    const captureSuccessful = capturePreviewAndDownload();
+    // Try to capture preview and create video
+    const captureSuccessful = await capturePreviewAndDownload();
     
-    // If capture fails, fall back to the server-side rendering
+    // If client-side capture fails, fall back to the server-side rendering
     if (!captureSuccessful) {
       try {
         setIsRendering(true);
@@ -239,7 +248,18 @@ const RenderButton = ({
 
   const handleDownload = () => {
     if (downloadUrl) {
-      downloadRenderedVideo(downloadUrl, "mockup.mp4");
+      // Create a proper filename with the correct extension
+      const filename = downloadUrl.includes('webm') ? 'mockup.webm' : 'mockup.mp4';
+      
+      // Try playing the video in a new tab first to verify it works
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      toast.success(`Video downloaded as ${filename}`);
     } else {
       toast.error("Download URL not available");
     }
