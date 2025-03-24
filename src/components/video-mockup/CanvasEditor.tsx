@@ -170,16 +170,26 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
                 angle: savedPosition.angle || 0,
                 width: savedPosition.originalWidth,
                 height: savedPosition.originalHeight,
+                originX: 'left',
+                originY: 'top'
               });
               
               // Store this position as reference for future comparisons
               lastPositionRef.current = { ...savedPosition };
             } else {
               // Center the image if no saved position
-              fabricImage.scaleToWidth(containerDimensions.width * 0.8);
+              const scaleFactor = Math.min(
+                (containerDimensions.width * 0.8) / img.width,
+                (containerDimensions.height * 0.8) / img.height
+              );
+              
               fabricImage.set({
-                left: containerDimensions.width / 2 - (fabricImage.width! * fabricImage.scaleX!) / 2,
-                top: containerDimensions.height / 2 - (fabricImage.height! * fabricImage.scaleY!) / 2,
+                scaleX: scaleFactor,
+                scaleY: scaleFactor,
+                left: containerDimensions.width / 2 - (img.width * scaleFactor) / 2,
+                top: containerDimensions.height / 2 - (img.height * scaleFactor) / 2,
+                originX: 'left',
+                originY: 'top'
               });
             }
             

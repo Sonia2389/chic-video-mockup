@@ -81,6 +81,8 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       scaleY: params.overlayPosition.scaleY
     });
     
+    console.log("Using exact positioning:", params.exactPositioning);
+    
     recorder.onstop = () => {
       const blob = new Blob(chunks, { type: mimeType || "video/webm" });
       completeJob(jobId, URL.createObjectURL(blob));

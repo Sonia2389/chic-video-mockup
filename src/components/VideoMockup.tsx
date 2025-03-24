@@ -1,4 +1,3 @@
-
 "use client"
 
 import type React from "react"
@@ -71,9 +70,9 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   useEffect(() => {
     if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(currentImagePosition)) {
       setCurrentImagePosition(savedPosition);
-      console.log("Updated currentImagePosition from savedPosition");
+      console.log("Updated currentImagePosition from savedPosition:", savedPosition);
     }
-  }, [savedPosition]);
+  }, [savedPosition, currentImagePosition]);
 
   // Handle background image loading
   useEffect(() => {
@@ -173,73 +172,84 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [scaledDimensions, onContainerDimensionsChange])
 
-  // Save position function
+  // Save position function with extra validation
   const handleSavePosition = () => {
     if (fabricCanvas) {
       try {
-        const activeObject = fabricCanvas.getActiveObject()
+        const activeObject = fabricCanvas.getActiveObject();
         if (activeObject) {
-          // Create consistent position values
-          const originalWidth = activeObject.width || activeObject.getScaledWidth() / (activeObject.scaleX || 1);
-          const originalHeight = activeObject.height || activeObject.getScaledHeight() / (activeObject.scaleY || 1);
+          console.log("Active object before saving:", {
+            left: activeObject.left,
+            top: activeObject.top,
+            scaleX: activeObject.scaleX,
+            scaleY: activeObject.scaleY,
+            angle: activeObject.angle,
+            width: activeObject.width,
+            height: activeObject.height
+          });
           
+          // Get exact original dimensions - crucial for accurate display
+          const originalWidth = activeObject.width ?? activeObject.getScaledWidth() / (activeObject.scaleX ?? 1);
+          const originalHeight = activeObject.height ?? activeObject.getScaledHeight() / (activeObject.scaleY ?? 1);
+          
+          // Create consistent position values with all properties needed for exact reconstruction
           const newPosition = {
-            left: activeObject.left || 0,
-            top: activeObject.top || 0,
-            scale: Math.max(activeObject.scaleX || 1, activeObject.scaleY || 1),
+            left: activeObject.left ?? 0,
+            top: activeObject.top ?? 0,
+            scale: Math.max(activeObject.scaleX ?? 1, activeObject.scaleY ?? 1),
             width: activeObject.getScaledWidth(),
             height: activeObject.getScaledHeight(),
-            scaleX: activeObject.scaleX || 1,
-            scaleY: activeObject.scaleY || 1,
+            scaleX: activeObject.scaleX ?? 1,
+            scaleY: activeObject.scaleY ?? 1,
             originalWidth,
             originalHeight,
-            angle: activeObject.angle || 0,
-          }
+            angle: activeObject.angle ?? 0,
+          };
 
-          console.log("Saving position:", newPosition)
-          setCurrentImagePosition(newPosition)
-          onPositionSave(newPosition)
+          console.log("Saving position with exact dimensions:", newPosition);
+          setCurrentImagePosition(newPosition);
+          onPositionSave(newPosition);
         }
       } catch (error) {
-        console.error("Error saving position:", error)
+        console.error("Error saving position:", error);
       }
     }
 
     // Clean up any existing timeouts
     if (editorTimeoutRef.current) {
-      clearTimeout(editorTimeoutRef.current)
+      clearTimeout(editorTimeoutRef.current);
     }
 
-    setIsTransitioning(true)
+    setIsTransitioning(true);
     // First wait to fade out the editor
     editorTimeoutRef.current = setTimeout(() => {
-      setIsEditing(false)
+      setIsEditing(false);
       // Then wait for the transition to complete before showing the static image
       editorTimeoutRef.current = setTimeout(() => {
-        setIsTransitioning(false)
-      }, 300)
-    }, 300)
-  }
+        setIsTransitioning(false);
+      }, 150); // Reduced transition time for smoother experience
+    }, 150); // Reduced transition time for smoother experience
+  };
 
   // Toggle edit mode
   const toggleEditMode = () => {
     if (isEditing) {
-      handleSavePosition()
+      handleSavePosition();
     } else {
       // Clean up any existing timeouts
       if (editorTimeoutRef.current) {
-        clearTimeout(editorTimeoutRef.current)
+        clearTimeout(editorTimeoutRef.current);
       }
       
-      setIsTransitioning(true)
+      setIsTransitioning(true);
       // First fade out the current view
       editorTimeoutRef.current = setTimeout(() => {
-        setIsEditing(true)
+        setIsEditing(true);
         // Then wait for the editor to initialize before fading it in
         editorTimeoutRef.current = setTimeout(() => {
-          setIsTransitioning(false)
-        }, 300)
-      }, 300)
+          setIsTransitioning(false);
+        }, 300);
+      }, 300);
     }
   };
 
@@ -247,10 +257,10 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   useEffect(() => {
     return () => {
       if (editorTimeoutRef.current) {
-        clearTimeout(editorTimeoutRef.current)
+        clearTimeout(editorTimeoutRef.current);
       }
     }
-  }, [])
+  }, []);
 
   const containerStyle = {
     width: scaledDimensions.width > 0 ? `${scaledDimensions.width}px` : "100%",
@@ -284,7 +294,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </>
       )}
 
-      {/* Use the ImageDisplay component for non-editing mode */}
+      {/* Use the ImageDisplay component for non-editing mode - only when not transitioning */}
       {imageUrl && !isEditing && !isTransitioning && (
         <ImageDisplay 
           imageUrl={imageUrl} 
@@ -293,7 +303,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         />
       )}
 
-      {(isEditing || isTransitioning) && (
+      {/* Show canvas editor in edit mode or during transitions */}
+      {imageUrl && (isEditing || isTransitioning) && (
         <CanvasEditor
           isEditing={isEditing}
           imageUrl={imageUrl}

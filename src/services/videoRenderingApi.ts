@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { RenderVideoParams, RenderResponse } from "./types/renderingTypes";
 import { API_URL, apiErrorShown, setApiErrorShown } from "./config/apiConfig";
@@ -22,7 +23,7 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
     const adjustedParams = { 
       ...params, 
       preserveOriginalSpeed: params.preserveOriginalSpeed ?? true, // Default to true if not specified
-      exactPositioning: params.exactPositioning ?? false, // Default to false if not specified
+      exactPositioning: true, // Always use exact positioning to ensure consistency
     };
 
     // Log and confirm overlay position and other params are as expected
@@ -38,6 +39,7 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
     // Ensure that the aspect ratio and quality are correctly passed if provided
     console.log("Aspect Ratio:", adjustedParams.aspectRatio);
     console.log("Video Quality:", adjustedParams.quality);
+    console.log("Exact Positioning:", adjustedParams.exactPositioning);
 
     // Call the actual API to start the rendering
     return await apiStartVideoRender(adjustedParams);

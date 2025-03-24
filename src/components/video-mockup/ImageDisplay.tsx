@@ -34,6 +34,14 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
     }
   }, [savedPosition]);
 
+  useEffect(() => {
+    // Reset states when the image URL changes
+    if (imageUrl) {
+      setImageLoaded(false);
+      setImageError(false);
+    }
+  }, [imageUrl]);
+
   if (!imageUrl) {
     console.log("ImageDisplay: No image URL provided");
     return null;
@@ -65,8 +73,21 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
               zIndex: 10,
               objectFit: 'contain'
             }}
-            onLoad={() => setImageLoaded(true)}
-            onError={() => setImageError(true)}
+            onLoad={() => {
+              console.log("Image loaded in static display with dimensions:", 
+                savedPosition.originalWidth, 
+                "×", 
+                savedPosition.originalHeight,
+                "Scale:", 
+                savedPosition.scaleX, 
+                savedPosition.scaleY
+              );
+              setImageLoaded(true);
+            }}
+            onError={() => {
+              console.error("Failed to load image in static display");
+              setImageError(true);
+            }}
           />
         ) : (
           <img 

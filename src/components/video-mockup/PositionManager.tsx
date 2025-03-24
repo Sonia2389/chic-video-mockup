@@ -43,21 +43,21 @@ const PositionManager = ({
     const activeObject = fabricCanvas.getActiveObject();
     if (activeObject) {
       // Get exact original dimensions - crucial for accurate display
-      const originalWidth = activeObject.width || activeObject.getScaledWidth() / (activeObject.scaleX || 1);
-      const originalHeight = activeObject.height || activeObject.getScaledHeight() / (activeObject.scaleY || 1);
+      const originalWidth = activeObject.width ?? activeObject.getScaledWidth() / (activeObject.scaleX ?? 1);
+      const originalHeight = activeObject.height ?? activeObject.getScaledHeight() / (activeObject.scaleY ?? 1);
       
       // Create position object with all necessary data for exact reproduction
       const newPosition = {
-        left: activeObject.left!,
-        top: activeObject.top!,
-        scale: Math.max(activeObject.scaleX!, activeObject.scaleY!),
-        scaleX: activeObject.scaleX!,
-        scaleY: activeObject.scaleY!,
+        left: activeObject.left ?? 0,
+        top: activeObject.top ?? 0,
+        scale: Math.max(activeObject.scaleX ?? 1, activeObject.scaleY ?? 1),
+        scaleX: activeObject.scaleX ?? 1,
+        scaleY: activeObject.scaleY ?? 1,
         width: activeObject.getScaledWidth(),
         height: activeObject.getScaledHeight(),
         originalWidth,
         originalHeight,
-        angle: activeObject.angle || 0
+        angle: activeObject.angle ?? 0
       };
       
       // Log exact measurements for debugging
