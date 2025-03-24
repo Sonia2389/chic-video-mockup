@@ -98,8 +98,8 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     
     console.log("Drawing with overlay position:", JSON.stringify(params.overlayPosition));
     
-    // Create a 10-second looping video
-    const renderDuration = 10000; // 10 seconds for the loop
+    // Create a 5-second looping video (changed from 10 to 5 seconds)
+    const renderDuration = 5000; // 5 seconds for the loop
     const startTime = Date.now();
     
     // For overlay video, determine loop duration
@@ -209,7 +209,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         ctx.restore();
       }
       
-      // Create a perfect 10-second looping video
+      // Create a perfect 5-second looping video (changed from 10 to 5 seconds)
       const elapsed = Date.now() - startTime;
       if (elapsed < renderDuration) {
         requestAnimationFrame(render);
@@ -232,10 +232,10 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
  * Simulates progress updates for a rendering job
  */
 export const simulateProgress = (jobId: string): void => {
-  // Simulate progress at different stages to match 10 second rendering
-  setTimeout(() => updateJobProgress(jobId, 10), 1000);
-  setTimeout(() => updateJobProgress(jobId, 25), 2500);
-  setTimeout(() => updateJobProgress(jobId, 50), 5000);
-  setTimeout(() => updateJobProgress(jobId, 75), 7500);
-  setTimeout(() => updateJobProgress(jobId, 90), 9000);
+  // Simulate progress at different stages to match 5 second rendering (changed from 10 to 5 seconds)
+  setTimeout(() => updateJobProgress(jobId, 20), 1000);
+  setTimeout(() => updateJobProgress(jobId, 40), 2000);
+  setTimeout(() => updateJobProgress(jobId, 60), 3000);
+  setTimeout(() => updateJobProgress(jobId, 80), 4000);
+  setTimeout(() => updateJobProgress(jobId, 95), 4800);
 }

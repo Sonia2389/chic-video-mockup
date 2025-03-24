@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Canvas } from 'fabric';
 import { toast } from "sonner";
@@ -57,15 +58,14 @@ const PositionManager = ({
       };
       
       // Log exact measurements for debugging
-      console.log("Precise position saved:", {
+      console.log("Saving precise position:", {
         left: newPosition.left,
         top: newPosition.top,
         originalWidth,
         originalHeight,
         scaleX: newPosition.scaleX,
         scaleY: newPosition.scaleY,
-        angle: newPosition.angle,
-        containerDimensions
+        angle: newPosition.angle
       });
       
       // Store this position to use as reference
@@ -103,8 +103,6 @@ const PositionManager = ({
     }
     
     fabricCanvas.renderAll();
-    // Save position after moving
-    handleSavePosition();
   };
   
   const changeSize = (scaleChange: number) => {
@@ -123,8 +121,6 @@ const PositionManager = ({
     });
     
     fabricCanvas.renderAll();
-    // Save position after resizing
-    handleSavePosition();
   };
 
   // When returning to editing mode, ensure we apply the last saved position
@@ -144,21 +140,6 @@ const PositionManager = ({
       }
     }
   }, [isEditing, fabricCanvas, lastSavedPosition]);
-
-  // Automatically save position when editing mode is active and canvas changes
-  useEffect(() => {
-    if (!isEditing || !fabricCanvas) return;
-    
-    const handleObjectModified = () => {
-      handleSavePosition();
-    };
-    
-    fabricCanvas.on('object:modified', handleObjectModified);
-    
-    return () => {
-      fabricCanvas.off('object:modified', handleObjectModified);
-    };
-  }, [isEditing, fabricCanvas, containerDimensions]);
 
   // Expose functions for external components to use
   return {

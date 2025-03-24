@@ -152,7 +152,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
             
             // Position the image - Use the exact saved position if available
             if (savedPosition) {
-              console.log("Applying exact saved position:", savedPosition)
+              console.log("Applying exact saved position to editor:", savedPosition)
               fabricImage.set({
                 left: savedPosition.left,
                 top: savedPosition.top,
@@ -164,7 +164,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
               })
               
               // Store this position as reference for future comparisons
-              lastPositionRef.current = savedPosition;
+              lastPositionRef.current = { ...savedPosition };
             } else {
               // Center the image if no saved position
               fabricImage.scaleToWidth(containerDimensions.width * 0.8)
@@ -242,7 +242,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   }, [])
 
   return (
-    <div className={`absolute inset-0 z-50 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`absolute inset-0 z-50 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
       <canvas ref={canvasRef} className="w-full h-full" />
       
       {isEditing && !imageLoaded && (

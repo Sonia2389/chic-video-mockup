@@ -7,6 +7,7 @@ import { Canvas } from "fabric"
 import EditorControls from "./video-mockup/EditorControls"
 import CanvasEditor from "./video-mockup/CanvasEditor"
 import VideoOverlay from "./video-mockup/VideoOverlay"
+import ImageDisplay from "./video-mockup/ImageDisplay"
 
 interface ImagePosition {
   left: number
@@ -70,6 +71,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   useEffect(() => {
     if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(currentImagePosition)) {
       setCurrentImagePosition(savedPosition);
+      console.log("Updated currentImagePosition from savedPosition");
     }
   }, [savedPosition]);
 
@@ -177,17 +179,20 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       try {
         const activeObject = fabricCanvas.getActiveObject()
         if (activeObject) {
-          const coords = activeObject.getBoundingRect()
+          // Create consistent position values
+          const originalWidth = activeObject.width || activeObject.getScaledWidth() / (activeObject.scaleX || 1);
+          const originalHeight = activeObject.height || activeObject.getScaledHeight() / (activeObject.scaleY || 1);
+          
           const newPosition = {
             left: activeObject.left || 0,
             top: activeObject.top || 0,
-            scale: 1,
-            width: coords.width,
-            height: coords.height,
+            scale: Math.max(activeObject.scaleX || 1, activeObject.scaleY || 1),
+            width: activeObject.getScaledWidth(),
+            height: activeObject.getScaledHeight(),
             scaleX: activeObject.scaleX || 1,
             scaleY: activeObject.scaleY || 1,
-            originalWidth: activeObject.width || 0,
-            originalHeight: activeObject.height || 0,
+            originalWidth,
+            originalHeight,
             angle: activeObject.angle || 0,
           }
 
@@ -212,8 +217,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       // Then wait for the transition to complete before showing the static image
       editorTimeoutRef.current = setTimeout(() => {
         setIsTransitioning(false)
-      }, 500)
-    }, 500)
+      }, 300)
+    }, 300)
   }
 
   // Toggle edit mode
@@ -233,8 +238,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         // Then wait for the editor to initialize before fading it in
         editorTimeoutRef.current = setTimeout(() => {
           setIsTransitioning(false)
-        }, 500)
-      }, 500)
+        }, 300)
+      }, 300)
     }
   };
 
@@ -279,30 +284,13 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </>
       )}
 
-      {imageUrl && !isEditing && currentImagePosition && !isTransitioning && (
-        <div className="absolute inset-0 flex items-center justify-center bg-transparent transition-opacity duration-500 opacity-100" style={{ zIndex: 20 }}>
-          {imageError ? (
-            <div className="bg-red-500 text-white p-2 rounded">Failed to load image. Please check the URL.</div>
-          ) : !imageLoaded ? (
-            <div className="bg-gray-800 text-white p-2 rounded">Loading image...</div>
-          ) : (
-            <img
-              src={imageUrl || "/placeholder.svg"}
-              alt="Uploaded image"
-              style={{
-                position: "absolute",
-                left: currentImagePosition.left,
-                top: currentImagePosition.top,
-                width: currentImagePosition.originalWidth,
-                height: currentImagePosition.originalHeight,
-                transform: `scale(${currentImagePosition.scaleX}, ${currentImagePosition.scaleY}) rotate(${currentImagePosition.angle || 0}deg)`,
-                transformOrigin: "top left",
-                pointerEvents: "none",
-                zIndex: 20,
-              }}
-            />
-          )}
-        </div>
+      {/* Use the ImageDisplay component for non-editing mode */}
+      {imageUrl && !isEditing && !isTransitioning && (
+        <ImageDisplay 
+          imageUrl={imageUrl} 
+          savedPosition={currentImagePosition} 
+          isEditing={isEditing} 
+        />
       )}
 
       {(isEditing || isTransitioning) && (

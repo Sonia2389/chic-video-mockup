@@ -28,7 +28,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
   useEffect(() => {
     if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(positionRef.current)) {
       positionRef.current = savedPosition;
-      console.log("Updated display position:", savedPosition);
+      console.log("Display using exact position:", savedPosition);
     }
   }, [savedPosition]);
 
