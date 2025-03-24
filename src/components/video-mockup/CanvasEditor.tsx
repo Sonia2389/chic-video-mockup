@@ -152,7 +152,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
             
             // Position the image - Use the exact saved position if available
             if (savedPosition) {
-              console.log("Using saved position:", savedPosition)
+              console.log("Applying exact saved position:", savedPosition)
               fabricImage.set({
                 left: savedPosition.left,
                 top: savedPosition.top,

@@ -21,8 +21,35 @@ export const apiStartVideoRender = async (params: RenderVideoParams): Promise<st
   // Add required background image
   formData.append('backgroundImage', params.backgroundImage);
   
+  // Add overlay image and position data
   formData.append('overlayImage', params.overlayImage);
-  formData.append('overlayPosition', JSON.stringify(params.overlayPosition));
+  
+  // Ensure position data is complete and correctly formatted
+  if (params.overlayPosition) {
+    // Clone the position to avoid mutating the original
+    const position = { ...params.overlayPosition };
+    
+    // Make sure we have all required properties
+    if (!position.originalWidth && position.width) {
+      position.originalWidth = position.width / (position.scaleX || 1);
+    }
+    
+    if (!position.originalHeight && position.height) {
+      position.originalHeight = position.height / (position.scaleY || 1);
+    }
+    
+    // Ensure angle is defined
+    if (position.angle === undefined) {
+      position.angle = 0;
+    }
+    
+    // Log the exact position being sent
+    console.log("Sending precise overlay position:", position);
+    formData.append('overlayPosition', JSON.stringify(position));
+  } else {
+    formData.append('overlayPosition', JSON.stringify({}));
+  }
+  
   formData.append('aspectRatio', params.aspectRatio.toString());
 
   if (params.overlayVideo) {
@@ -52,7 +79,6 @@ export const apiStartVideoRender = async (params: RenderVideoParams): Promise<st
   console.log("Sending render request to API:", API_URL);
   console.log("Background image size:", params.backgroundImage.size);
   console.log("Overlay image size:", params.overlayImage.size);
-  console.log("Overlay position:", JSON.stringify(params.overlayPosition));
   console.log("Quality setting:", params.quality || 'standard');
   console.log("Preserve original speed:", params.preserveOriginalSpeed);
   console.log("Exact positioning:", params.exactPositioning);

@@ -147,15 +147,6 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
           ctx.rotate((angle * Math.PI) / 180);
         }
         
-        // Log actual position for each frame
-        console.log("Frame rendering:", {
-          left, top, 
-          scaledLeft, scaledTop,
-          scaleX, scaleY,
-          scaledScaleX, scaledScaleY,
-          angle
-        });
-        
         // Draw the image at the origin (we've already translated)
         if (originalWidth && originalHeight) {
           ctx.drawImage(

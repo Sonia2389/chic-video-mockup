@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Canvas } from 'fabric';
 import { toast } from "sonner";
@@ -39,42 +38,35 @@ const PositionManager = ({
     
     const activeObject = fabricCanvas.getActiveObject();
     if (activeObject) {
-      // Calculate the actual display dimensions to maintain consistency
-      const scaledWidth = activeObject.getScaledWidth();
-      const scaledHeight = activeObject.getScaledHeight();
+      // Get exact original dimensions - crucial for accurate display
+      const originalWidth = activeObject.width || activeObject.getScaledWidth() / (activeObject.scaleX || 1);
+      const originalHeight = activeObject.height || activeObject.getScaledHeight() / (activeObject.scaleY || 1);
       
-      // Get the original unscaled dimensions for proper scaling during rendering
-      const originalWidth = activeObject.width || scaledWidth / (activeObject.scaleX || 1);
-      const originalHeight = activeObject.height || scaledHeight / (activeObject.scaleY || 1);
-      
-      // Log exact measurements before saving
-      console.log("Saving position with measurements:", {
-        left: activeObject.left,
-        top: activeObject.top,
-        scaleX: activeObject.scaleX,
-        scaleY: activeObject.scaleY,
-        scaledWidth,
-        scaledHeight,
-        originalWidth,
-        originalHeight,
-        angle: activeObject.angle,
-        containerWidth: containerDimensions?.width,
-        containerHeight: containerDimensions?.height
-      });
-      
-      // Ensure we precisely capture all dimensions and transformations
+      // Create position object with all necessary data for exact reproduction
       const newPosition = {
         left: activeObject.left!,
         top: activeObject.top!,
         scale: Math.max(activeObject.scaleX!, activeObject.scaleY!),
         scaleX: activeObject.scaleX!,
         scaleY: activeObject.scaleY!,
-        width: scaledWidth,
-        height: scaledHeight,
+        width: activeObject.getScaledWidth(),
+        height: activeObject.getScaledHeight(),
         originalWidth,
         originalHeight,
         angle: activeObject.angle
       };
+      
+      // Log exact measurements for debugging
+      console.log("Precise position saved:", {
+        left: newPosition.left,
+        top: newPosition.top,
+        originalWidth,
+        originalHeight,
+        scaleX: newPosition.scaleX,
+        scaleY: newPosition.scaleY,
+        angle: newPosition.angle,
+        containerDimensions
+      });
       
       // Store this position to use as reference
       setLastSavedPosition(newPosition);
@@ -82,8 +74,6 @@ const PositionManager = ({
       
       if (containerDimensions) {
         setLastEditDimensions(containerDimensions);
-        // Store container dimensions for accurate scaling during rendering
-        console.log("Container dimensions at save time:", containerDimensions);
       }
       
       toast.success("Image position saved");
