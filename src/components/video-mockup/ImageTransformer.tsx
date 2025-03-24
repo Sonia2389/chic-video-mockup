@@ -2,18 +2,44 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 
 interface ImageTransformerProps {
   imageSrc: string
   isEditing: boolean
+  initialPosition?: { x: number; y: number; width: number; height: number }
   onPositionChange?: (position: { x: number; y: number; width: number; height: number }) => void
 }
 
-const ImageTransformer: React.FC<ImageTransformerProps> = ({ imageSrc, isEditing = false, onPositionChange }) => {
+const ImageTransformer: React.FC<ImageTransformerProps> = ({ 
+  imageSrc, 
+  isEditing = false, 
+  initialPosition,
+  onPositionChange 
+}) => {
   // State for image dimensions and position
-  const [dimensions, setDimensions] = useState({ width: 300, height: 200 })
-  const [position, setPosition] = useState({ x: 50, y: 50 })
+  const [dimensions, setDimensions] = useState({ 
+    width: initialPosition?.width || 300, 
+    height: initialPosition?.height || 200 
+  })
+  const [position, setPosition] = useState({ 
+    x: initialPosition?.x || 50, 
+    y: initialPosition?.y || 50 
+  })
+
+  // Update position and dimensions when initialPosition changes
+  useEffect(() => {
+    if (initialPosition) {
+      setPosition({ 
+        x: initialPosition.x, 
+        y: initialPosition.y 
+      })
+      setDimensions({ 
+        width: initialPosition.width, 
+        height: initialPosition.height 
+      })
+    }
+  }, [initialPosition])
 
   // State for tracking interactions
   const [activeHandle, setActiveHandle] = useState<string | null>(null)
@@ -24,7 +50,12 @@ const ImageTransformer: React.FC<ImageTransformerProps> = ({ imageSrc, isEditing
   const startDimensionsRef = useRef({ width: 0, height: 0 })
   const startPositionRef = useRef({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
-  const lastPositionRef = useRef({ x: 50, y: 50, width: 300, height: 200 })
+  const lastPositionRef = useRef({ 
+    x: initialPosition?.x || 50, 
+    y: initialPosition?.y || 50, 
+    width: initialPosition?.width || 300, 
+    height: initialPosition?.height || 200 
+  })
 
   // Only notify parent when interaction ends to avoid infinite loops
   const notifyPositionChange = useCallback(() => {

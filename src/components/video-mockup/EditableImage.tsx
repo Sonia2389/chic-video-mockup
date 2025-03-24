@@ -1,7 +1,8 @@
+
 "use client"
 
 import type React from "react"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import ImageTransformer from "./ImageTransformer"
 
@@ -13,6 +14,7 @@ interface EditableImageProps {
 const EditableImage: React.FC<EditableImageProps> = ({ imageSrc, onSave }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [position, setPosition] = useState({ x: 50, y: 50, width: 300, height: 200 })
+  const savedPositionRef = useRef({ x: 50, y: 50, width: 300, height: 200 })
 
   // Use useCallback to prevent recreation of this function on every render
   const handlePositionChange = useCallback(
@@ -25,7 +27,17 @@ const EditableImage: React.FC<EditableImageProps> = ({ imageSrc, onSave }) => {
     [isEditing],
   )
 
+  // When exiting edit mode, restore the saved position if user cancels
+  useEffect(() => {
+    if (!isEditing) {
+      // When exiting edit mode without saving, restore the previous saved position
+      setPosition(savedPositionRef.current)
+    }
+  }, [isEditing])
+
   const handleSave = () => {
+    // Save the current position to our ref for future reference
+    savedPositionRef.current = { ...position }
     setIsEditing(false)
     if (onSave) {
       onSave(position)
@@ -53,7 +65,12 @@ const EditableImage: React.FC<EditableImageProps> = ({ imageSrc, onSave }) => {
       </div>
 
       {/* Image transformer */}
-      <ImageTransformer imageSrc={imageSrc} isEditing={isEditing} onPositionChange={handlePositionChange} />
+      <ImageTransformer 
+        imageSrc={imageSrc} 
+        isEditing={isEditing} 
+        onPositionChange={handlePositionChange}
+        initialPosition={savedPositionRef.current}
+      />
 
       {/* Overlay instructions when editing */}
       {isEditing && (
@@ -68,4 +85,3 @@ const EditableImage: React.FC<EditableImageProps> = ({ imageSrc, onSave }) => {
 }
 
 export default EditableImage
-

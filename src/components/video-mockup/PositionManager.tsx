@@ -31,6 +31,8 @@ const PositionManager = ({
   containerDimensions,
   setLastEditDimensions
 }: PositionManagerProps) => {
+  // Track the last valid position to prevent position shifts
+  const [lastSavedPosition, setLastSavedPosition] = useState<ImagePosition | null>(null);
   
   const handleSavePosition = () => {
     if (!fabricCanvas) return;
@@ -74,6 +76,8 @@ const PositionManager = ({
         angle: activeObject.angle
       };
       
+      // Store this position to use as reference
+      setLastSavedPosition(newPosition);
       onSave(newPosition);
       
       if (containerDimensions) {
@@ -132,6 +136,24 @@ const PositionManager = ({
     // Save position after resizing
     handleSavePosition();
   };
+
+  // When returning to editing mode, ensure we apply the last saved position
+  useEffect(() => {
+    if (isEditing && fabricCanvas && lastSavedPosition) {
+      const activeObject = fabricCanvas.getActiveObject();
+      if (activeObject) {
+        // Apply last saved position to ensure consistency
+        activeObject.set({
+          left: lastSavedPosition.left,
+          top: lastSavedPosition.top,
+          scaleX: lastSavedPosition.scaleX,
+          scaleY: lastSavedPosition.scaleY,
+          angle: lastSavedPosition.angle || 0
+        });
+        fabricCanvas.renderAll();
+      }
+    }
+  }, [isEditing, fabricCanvas, lastSavedPosition]);
 
   // Automatically save position when editing mode is active and canvas changes
   useEffect(() => {

@@ -45,6 +45,14 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   const [imageLoaded, setImageLoaded] = useState(false)
   const [canvasInitialized, setCanvasInitialized] = useState(false)
   const imageLoadingRef = useRef(false)
+  const lastPositionRef = useRef<ImagePosition | null>(null)
+  
+  // Store the last saved position for comparison
+  useEffect(() => {
+    if (savedPosition) {
+      lastPositionRef.current = savedPosition;
+    }
+  }, [savedPosition]);
   
   // Initialize canvas when editing starts
   useEffect(() => {
@@ -142,8 +150,9 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
               br: true,
             })
             
-            // Position the image
+            // Position the image - Use the exact saved position if available
             if (savedPosition) {
+              console.log("Using saved position:", savedPosition)
               fabricImage.set({
                 left: savedPosition.left,
                 top: savedPosition.top,
@@ -153,6 +162,9 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
                 width: savedPosition.originalWidth,
                 height: savedPosition.originalHeight,
               })
+              
+              // Store this position as reference for future comparisons
+              lastPositionRef.current = savedPosition;
             } else {
               // Center the image if no saved position
               fabricImage.scaleToWidth(containerDimensions.width * 0.8)

@@ -1,5 +1,5 @@
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 
 interface ImagePosition {
   left: number;
@@ -22,6 +22,15 @@ interface ImageDisplayProps {
 
 const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps) => {
   const imageRef = useRef<HTMLImageElement>(null);
+  const positionRef = useRef<ImagePosition | null>(null);
+
+  // Store position in ref to compare changes
+  useEffect(() => {
+    if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(positionRef.current)) {
+      positionRef.current = savedPosition;
+      console.log("Updated display position:", savedPosition);
+    }
+  }, [savedPosition]);
 
   if (!imageUrl) return null;
 
@@ -39,8 +48,8 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
             style={{ 
               left: `${savedPosition.left}px`,
               top: `${savedPosition.top}px`,
-              width: `${savedPosition.width}px`, 
-              height: `${savedPosition.height}px`,
+              width: savedPosition.originalWidth ? `${savedPosition.originalWidth * savedPosition.scaleX}px` : `${savedPosition.width}px`,
+              height: savedPosition.originalHeight ? `${savedPosition.originalHeight * savedPosition.scaleY}px` : `${savedPosition.height}px`,
               transformOrigin: 'left top',
               transform: `rotate(${savedPosition.angle || 0}deg)`,
               zIndex: 1
