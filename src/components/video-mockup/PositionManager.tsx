@@ -35,7 +35,10 @@ const PositionManager = ({
   const [lastSavedPosition, setLastSavedPosition] = useState<ImagePosition | null>(null);
   
   const handleSavePosition = () => {
-    if (!fabricCanvas) return;
+    if (!fabricCanvas) {
+      console.warn("PositionManager: Cannot save position - canvas not available");
+      return;
+    }
     
     const activeObject = fabricCanvas.getActiveObject();
     if (activeObject) {
@@ -54,7 +57,7 @@ const PositionManager = ({
         height: activeObject.getScaledHeight(),
         originalWidth,
         originalHeight,
-        angle: activeObject.angle
+        angle: activeObject.angle || 0
       };
       
       // Log exact measurements for debugging
@@ -77,6 +80,8 @@ const PositionManager = ({
       }
       
       toast.success("Image position saved");
+    } else {
+      console.warn("PositionManager: No active object to save position");
     }
   };
   
@@ -126,6 +131,7 @@ const PositionManager = ({
   // When returning to editing mode, ensure we apply the last saved position
   useEffect(() => {
     if (isEditing && fabricCanvas && lastSavedPosition) {
+      console.log("PositionManager: Applying last saved position in edit mode:", lastSavedPosition);
       const activeObject = fabricCanvas.getActiveObject();
       if (activeObject) {
         // Apply last saved position to ensure consistency

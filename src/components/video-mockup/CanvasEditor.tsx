@@ -51,35 +51,44 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   useEffect(() => {
     if (savedPosition) {
       lastPositionRef.current = savedPosition;
+      console.log("CanvasEditor: Saved position updated:", savedPosition);
     }
   }, [savedPosition]);
   
   // Initialize canvas when editing starts
   useEffect(() => {
-    if (!isEditing || !canvasRef.current || !imageUrl) return
+    if (!isEditing || !canvasRef.current || !imageUrl) {
+      console.log("CanvasEditor: Skipping canvas initialization", { isEditing, hasCanvas: !!canvasRef.current, imageUrl });
+      return;
+    }
     
     // If we're already loading the image or canvas is initialized, don't try again
-    if (imageLoadingRef.current || canvasInitialized) return
+    if (imageLoadingRef.current || canvasInitialized) {
+      console.log("CanvasEditor: Already initializing or initialized");
+      return;
+    }
     
     // Set loading flag to prevent multiple initialization attempts
-    imageLoadingRef.current = true
+    imageLoadingRef.current = true;
+    console.log("CanvasEditor: Starting canvas initialization");
     
     // Clean up any existing canvas before creating a new one
     if (fabricCanvas) {
       try {
         // Remove all objects before disposal to prevent memory leaks
-        fabricCanvas.clear()
-        fabricCanvas.dispose()
+        fabricCanvas.clear();
+        fabricCanvas.dispose();
+        console.log("CanvasEditor: Disposed existing canvas");
       } catch (error) {
-        console.error("Error disposing canvas:", error)
+        console.error("Error disposing canvas:", error);
       }
-      setFabricCanvas(null)
+      setFabricCanvas(null);
     }
     
-    let canvas: Canvas | null = null
+    let canvas: Canvas | null = null;
     
     try {
-      console.log("Creating new canvas with dimensions:", containerDimensions.width, containerDimensions.height)
+      console.log("Creating new canvas with dimensions:", containerDimensions.width, containerDimensions.height);
       
       // Create a new fabric canvas
       canvas = new Canvas(canvasRef.current, {
@@ -88,37 +97,37 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
         backgroundColor: "rgba(0,0,0,0.1)",
         selection: false,
         preserveObjectStacking: true,
-      })
+      });
       
       // Store the canvas reference
-      setFabricCanvas(canvas)
-      setCanvasInitialized(true)
+      setFabricCanvas(canvas);
+      setCanvasInitialized(true);
       
       // Load image onto canvas with delay to ensure DOM is ready
       setTimeout(() => {
-        if (!canvas) return
+        if (!canvas) return;
         
-        const img = new Image()
-        img.crossOrigin = "anonymous"
-        img.src = imageUrl
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = imageUrl;
         
         img.onload = () => {
           try {
-            if (!canvas) return
+            if (!canvas) return;
             
-            console.log("Image loaded:", img.width, img.height)
+            console.log("Image loaded in CanvasEditor:", img.width, img.height);
             
             // Update original dimensions
             setOriginalImageDimensions({
               width: img.width,
               height: img.height,
-            })
+            });
             
             // Clear any existing objects
-            canvas.clear()
+            canvas.clear();
             
             // Create fabric image
-            const fabricImage = new FabricImage(img)
+            const fabricImage = new FabricImage(img);
             
             // Configure controls
             fabricImage.set({
@@ -136,7 +145,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
               objectCaching: false,
               padding: 5,
               borderOpacityWhenMoving: 0.4,
-            })
+            });
             
             // Enable all corner controls
             fabricImage.setControlsVisibility({
@@ -148,11 +157,11 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
               tr: true,
               bl: true,
               br: true,
-            })
+            });
             
             // Position the image - Use the exact saved position if available
             if (savedPosition) {
-              console.log("Applying exact saved position to editor:", savedPosition)
+              console.log("Applying exact saved position to editor:", savedPosition);
               fabricImage.set({
                 left: savedPosition.left,
                 top: savedPosition.top,
@@ -161,88 +170,91 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
                 angle: savedPosition.angle || 0,
                 width: savedPosition.originalWidth,
                 height: savedPosition.originalHeight,
-              })
+              });
               
               // Store this position as reference for future comparisons
               lastPositionRef.current = { ...savedPosition };
             } else {
               // Center the image if no saved position
-              fabricImage.scaleToWidth(containerDimensions.width * 0.8)
+              fabricImage.scaleToWidth(containerDimensions.width * 0.8);
               fabricImage.set({
                 left: containerDimensions.width / 2 - (fabricImage.width! * fabricImage.scaleX!) / 2,
                 top: containerDimensions.height / 2 - (fabricImage.height! * fabricImage.scaleY!) / 2,
-              })
+              });
             }
             
             // Add image to canvas
-            canvas.add(fabricImage)
-            canvas.setActiveObject(fabricImage)
-            canvas.renderAll()
+            canvas.add(fabricImage);
+            canvas.setActiveObject(fabricImage);
+            canvas.renderAll();
             
             // Add event listeners
             canvas.on('object:moving', () => {
-              canvas.renderAll()
-            })
+              canvas.renderAll();
+            });
             
             canvas.on('object:scaling', () => {
-              canvas.renderAll()
-            })
+              canvas.renderAll();
+            });
             
             canvas.on('object:rotating', () => {
-              canvas.renderAll()
-            })
+              canvas.renderAll();
+            });
             
-            setImageLoaded(true)
-            imageLoadingRef.current = false
+            setImageLoaded(true);
+            imageLoadingRef.current = false;
+            console.log("CanvasEditor: Canvas setup complete");
           } catch (error) {
-            console.error("Error setting up image on canvas:", error)
-            setImageLoaded(false)
-            imageLoadingRef.current = false
+            console.error("Error setting up image on canvas:", error);
+            setImageLoaded(false);
+            imageLoadingRef.current = false;
           }
-        }
+        };
         
         img.onerror = (error) => {
-          console.error("Error loading image:", error)
-          setImageLoaded(false)
-          imageLoadingRef.current = false
-        }
-      }, 300) // Add a delay to ensure the canvas is properly mounted
+          console.error("Error loading image:", error);
+          setImageLoaded(false);
+          imageLoadingRef.current = false;
+        };
+      }, 100); // Reduced delay for faster loading
     } catch (error) {
-      console.error("Error initializing canvas:", error)
-      imageLoadingRef.current = false
-      setCanvasInitialized(false)
+      console.error("Error initializing canvas:", error);
+      imageLoadingRef.current = false;
+      setCanvasInitialized(false);
     }
     
     // Cleanup function
     return () => {
       // No need to dispose here as it will be handled on the next initialization
-    }
-  }, [isEditing, containerDimensions, imageUrl, savedPosition])
+    };
+  }, [isEditing, containerDimensions, imageUrl, savedPosition]);
   
   // Reset state when editing mode changes
   useEffect(() => {
     if (!isEditing) {
-      setImageLoaded(false)
-      setCanvasInitialized(false)
+      console.log("CanvasEditor: Exiting edit mode");
+      setImageLoaded(false);
+      setCanvasInitialized(false);
     }
-  }, [isEditing])
+  }, [isEditing]);
   
   // Cleanup when component unmounts
   useEffect(() => {
     return () => {
       if (fabricCanvas) {
         try {
-          fabricCanvas.dispose()
-          setFabricCanvas(null)
+          fabricCanvas.dispose();
+          setFabricCanvas(null);
+          console.log("CanvasEditor: Disposed canvas on unmount");
         } catch (error) {
-          console.error("Error disposing canvas on unmount:", error)
+          console.error("Error disposing canvas on unmount:", error);
         }
       }
-    }
-  }, [])
+    };
+  }, []);
 
   return (
-    <div className={`absolute inset-0 z-50 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+    <div className={`absolute inset-0 z-20 transition-opacity duration-150 ${isEditing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
       <canvas ref={canvasRef} className="w-full h-full" />
       
       {isEditing && !imageLoaded && (
@@ -257,7 +269,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default CanvasEditor
+export default CanvasEditor;

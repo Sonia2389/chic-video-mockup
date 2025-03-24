@@ -1,5 +1,5 @@
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 interface ImagePosition {
   left: number;
@@ -23,6 +23,8 @@ interface ImageDisplayProps {
 const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps) => {
   const imageRef = useRef<HTMLImageElement>(null);
   const positionRef = useRef<ImagePosition | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   // Store position in ref to compare changes
   useEffect(() => {
@@ -32,12 +34,20 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
     }
   }, [savedPosition]);
 
-  if (!imageUrl) return null;
+  if (!imageUrl) {
+    console.log("ImageDisplay: No image URL provided");
+    return null;
+  }
 
-  if (isEditing) return null; // When editing, the canvas handles the display
+  if (isEditing) {
+    console.log("ImageDisplay: Editor is active, not displaying static image");
+    return null; // When editing, the canvas handles the display
+  }
+
+  console.log("ImageDisplay: Rendering with image URL:", imageUrl, "Position:", savedPosition);
 
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0 z-10">
       <div className="w-full h-full relative">
         {savedPosition ? (
           <img 
@@ -52,8 +62,11 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
               height: `${savedPosition.originalHeight}px`,
               transformOrigin: 'top left',
               transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
-              zIndex: 1
+              zIndex: 10,
+              objectFit: 'contain'
             }}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
           />
         ) : (
           <img 
@@ -64,9 +77,23 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
               left: '50%', 
               top: '50%', 
               transform: 'translate(-50%, -50%)',
-              zIndex: 1 
+              zIndex: 10
             }}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
           />
+        )}
+        
+        {!imageLoaded && !imageError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white">
+            Loading image...
+          </div>
+        )}
+        
+        {imageError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-red-500/20 text-red-600">
+            Error loading image
+          </div>
         )}
       </div>
     </div>

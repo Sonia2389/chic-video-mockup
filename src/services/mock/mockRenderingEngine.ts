@@ -27,6 +27,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       backgroundImg = await loadImageElement(params.backgroundImage);
       canvasWidth = backgroundImg.naturalWidth;
       canvasHeight = backgroundImg.naturalHeight;
+      console.log("Background image loaded with dimensions:", canvasWidth, "x", canvasHeight);
     } else {
       throw new Error("No background image provided");
     }
@@ -37,11 +38,13 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     
     // Load the overlay image
     const img = await loadImageElement(params.overlayImage);
+    console.log("Overlay image loaded with dimensions:", img.naturalWidth, "x", img.naturalHeight);
     
     // Check if we have an overlay video
     let overlayVideo: HTMLVideoElement | null = null;
     if (params.overlayVideo) {
       overlayVideo = await loadVideoElement(params.overlayVideo);
+      console.log("Overlay video loaded with dimensions:", overlayVideo.videoWidth, "x", overlayVideo.videoHeight);
       
       // Start playing the overlay video
       await overlayVideo.play();
@@ -69,16 +72,19 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       scaleFactorY: renderScaleFactor.y
     });
     
-    console.log("Image dimensions:", {
+    console.log("Image dimensions for rendering:", {
       imgWidth: img.width,
       imgHeight: img.height,
       originalWidth: params.overlayPosition.originalWidth,
-      originalHeight: params.overlayPosition.originalHeight
+      originalHeight: params.overlayPosition.originalHeight,
+      scaleX: params.overlayPosition.scaleX,
+      scaleY: params.overlayPosition.scaleY
     });
     
     recorder.onstop = () => {
       const blob = new Blob(chunks, { type: mimeType || "video/webm" });
       completeJob(jobId, URL.createObjectURL(blob));
+      console.log("Rendering complete for job:", jobId);
       
       // Clean up resources
       if (overlayVideo) {
