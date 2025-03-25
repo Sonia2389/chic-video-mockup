@@ -149,11 +149,12 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         
         // Draw the image at the origin (we've already translated)
         if (originalWidth && originalHeight) {
+          ctx.scale(scaledScaleX, scaledScaleY);
           ctx.drawImage(
             img,
             0, 0,
-            originalWidth * scaledScaleX, 
-            originalHeight * scaledScaleY
+            originalWidth, 
+            originalHeight
           );
         } else {
           // Fallback if original dimensions not provided

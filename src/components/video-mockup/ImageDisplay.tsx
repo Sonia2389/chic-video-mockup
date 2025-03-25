@@ -81,7 +81,10 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
                 savedPosition.originalHeight,
                 "Scale:", 
                 savedPosition.scaleX, 
-                savedPosition.scaleY
+                savedPosition.scaleY,
+                "Position:",
+                savedPosition.left,
+                savedPosition.top
               );
               setImageLoaded(true);
             }}

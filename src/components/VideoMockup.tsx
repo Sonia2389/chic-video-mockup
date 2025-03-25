@@ -266,7 +266,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
   }
 
   return (
-    <div style={containerStyle} ref={containerRef} className="bg-transparent">
+    <div style={containerStyle} ref={containerRef} className="video-mockup-container bg-transparent">
       {backgroundImageUrl && (
         <>
           <div className="absolute inset-0 flex items-center justify-center bg-transparent text-white" style={{ zIndex: 5 }}>
