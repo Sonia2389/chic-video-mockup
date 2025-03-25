@@ -15,8 +15,9 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       throw new Error("Canvas context creation failed");
     }
     
-    let canvasWidth = 1920; // Default width
-    let canvasHeight = 1080; // Default height
+    // Default dimensions
+    let canvasWidth = 1920;
+    let canvasHeight = 1080;
     
     // Load background image
     let backgroundImg: HTMLImageElement | null = null;
@@ -53,7 +54,6 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     const { recorder, chunks, mimeType } = setupMediaRecorder(canvas);
     
     // Calculate the correct scaling factor between preview and render
-    // This ensures that positions in the preview match positions in the rendered video
     const renderScaleFactor = calculateRenderScaleFactor(
       canvas.width,
       canvas.height,
@@ -133,19 +133,11 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         // Save current context state
         ctx.save();
         
-        // Calculate the exact position based on the scaling factors
+        // Use exact positioning always for consistent rendering
         let scaledLeft = left;
         let scaledTop = top;
         let scaledScaleX = scaleX;
         let scaledScaleY = scaleY;
-        
-        // Only apply render scale factor if not using exact positioning
-        if (!params.exactPositioning) {
-          scaledLeft *= renderScaleFactor.x;
-          scaledTop *= renderScaleFactor.y;
-          scaledScaleX *= renderScaleFactor.x;
-          scaledScaleY *= renderScaleFactor.y;
-        }
         
         // Apply transformations in order: translate → rotate → scale
         ctx.translate(scaledLeft, scaledTop);

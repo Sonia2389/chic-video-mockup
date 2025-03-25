@@ -22,37 +22,25 @@ interface ImageDisplayProps {
 
 const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps) => {
   const imageRef = useRef<HTMLImageElement>(null);
-  const positionRef = useRef<ImagePosition | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isShowing, setIsShowing] = useState(false);
 
-  // Store position in ref to compare changes
+  // Reset states when the image URL changes
   useEffect(() => {
-    if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(positionRef.current)) {
-      positionRef.current = savedPosition;
-      console.log("ImageDisplay: Using exact position:", savedPosition);
-    }
-  }, [savedPosition]);
-
-  useEffect(() => {
-    // Reset states when the image URL changes
     if (imageUrl) {
       setImageLoaded(false);
       setImageError(false);
     }
   }, [imageUrl]);
 
-  // Reset loading state on edit mode change
+  // Show image after edit mode is toggled
   useEffect(() => {
     if (!isEditing && imageUrl) {
-      // Delay showing the image until we're sure the edit mode transition is complete
-      setIsShowing(true);
-      
-      // Small delay to ensure image is loaded after edit mode is toggled
       const timer = setTimeout(() => {
+        setIsShowing(true);
         setImageLoaded(true);
-      }, 50);
+      }, 100); // Increased delay for smoother transition
       return () => clearTimeout(timer);
     } else {
       setIsShowing(false);
@@ -60,19 +48,15 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
   }, [isEditing, imageUrl]);
 
   if (!imageUrl) {
-    console.log("ImageDisplay: No image URL provided");
     return null;
   }
 
   if (isEditing) {
-    console.log("ImageDisplay: Editor is active, not displaying static image");
     return null; // When editing, the canvas handles the display
   }
 
-  console.log("ImageDisplay: Rendering with image URL:", imageUrl, "Position:", savedPosition);
-
   return (
-    <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-100 ${isShowing ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-300 ${isShowing ? 'opacity-100' : 'opacity-0'}`}>
       <div className="w-full h-full relative">
         {savedPosition ? (
           <img 
@@ -122,7 +106,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
         )}
         
         {!imageLoaded && !imageError && !isEditing && (
-          <div className={`absolute inset-0 flex items-center justify-center bg-black/20 text-white transition-opacity duration-150 ${isShowing ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white transition-opacity duration-300">
             Loading image...
           </div>
         )}

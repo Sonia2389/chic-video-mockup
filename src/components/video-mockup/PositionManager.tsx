@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Canvas } from 'fabric';
 import { toast } from "sonner";
@@ -43,34 +42,32 @@ const PositionManager = ({
     const activeObject = fabricCanvas.getActiveObject();
     if (activeObject) {
       // Get exact original dimensions - crucial for accurate display
-      // This ensures we're saving the EXACT dimensions needed to reproduce the view
       const originalWidth = activeObject.width ?? 0;
       const originalHeight = activeObject.height ?? 0;
       
+      // Use exact values with no rounding to ensure precision
+      const exactLeft = activeObject.left ?? 0;
+      const exactTop = activeObject.top ?? 0;
+      const exactScaleX = activeObject.scaleX ?? 1;
+      const exactScaleY = activeObject.scaleY ?? 1;
+      const exactAngle = activeObject.angle ?? 0;
+      
       // Create position object with all necessary data for exact reproduction
       const newPosition = {
-        left: Math.round(activeObject.left ?? 0),
-        top: Math.round(activeObject.top ?? 0),
-        scale: Math.max(activeObject.scaleX ?? 1, activeObject.scaleY ?? 1),
-        scaleX: activeObject.scaleX ?? 1,
-        scaleY: activeObject.scaleY ?? 1,
-        width: (originalWidth) * (activeObject.scaleX ?? 1),
-        height: (originalHeight) * (activeObject.scaleY ?? 1),
+        left: exactLeft,
+        top: exactTop,
+        scale: Math.max(exactScaleX, exactScaleY),
+        scaleX: exactScaleX,
+        scaleY: exactScaleY,
+        width: originalWidth * exactScaleX,
+        height: originalHeight * exactScaleY,
         originalWidth,
         originalHeight,
-        angle: activeObject.angle ?? 0
+        angle: exactAngle
       };
       
       // Log exact measurements for debugging
-      console.log("Saving precise position:", {
-        left: newPosition.left,
-        top: newPosition.top,
-        originalWidth,
-        originalHeight,
-        scaleX: newPosition.scaleX,
-        scaleY: newPosition.scaleY,
-        angle: newPosition.angle
-      });
+      console.log("Saving precise position:", JSON.stringify(newPosition));
       
       // Store this position to use as reference
       setLastSavedPosition(newPosition);

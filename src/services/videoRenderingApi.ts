@@ -17,36 +17,19 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
     }
 
     // Ensure that the rendering API receives all necessary params
-    console.log("Sending video render request to API with params:", params);
+    console.log("Sending video render request to API with params:", JSON.stringify(params, null, 2));
 
-    // Adjust parameters to ensure original speed and position are preserved
+    // Always use exact positioning without any rounding
     const adjustedParams = { 
       ...params, 
-      preserveOriginalSpeed: params.preserveOriginalSpeed ?? true, // Default to true if not specified
-      exactPositioning: true, // Always use exact positioning to ensure consistency
+      preserveOriginalSpeed: params.preserveOriginalSpeed ?? true,
+      exactPositioning: true, // Force exact positioning
     };
 
-    // Ensure we're sending the exact position values without any rounding or modification
+    // Ensure position values are passed exactly as they are without any rounding
     if (adjustedParams.overlayPosition) {
-      // Use exact position values to prevent any rounding errors
-      console.log("Sending exact position values to API:", JSON.stringify(adjustedParams.overlayPosition));
+      console.log("Using exact position values:", JSON.stringify(adjustedParams.overlayPosition, null, 2));
     }
-
-    // Log and confirm overlay position and other params are as expected
-    console.log("Adjusted params for rendering:", adjustedParams);
-
-    // Ensure overlayPosition is passed correctly with precise values
-    if (adjustedParams.overlayPosition) {
-      // Preserve exact values without any rounding that could cause size shifting
-      console.log("Overlay position being sent to API:", JSON.stringify(adjustedParams.overlayPosition));
-    } else {
-      console.warn("Overlay position is not defined or not set correctly.");
-    }
-
-    // Ensure that the aspect ratio and quality are correctly passed if provided
-    console.log("Aspect Ratio:", adjustedParams.aspectRatio);
-    console.log("Video Quality:", adjustedParams.quality);
-    console.log("Exact Positioning:", adjustedParams.exactPositioning);
 
     // Call the actual API to start the rendering
     return await apiStartVideoRender(adjustedParams);
