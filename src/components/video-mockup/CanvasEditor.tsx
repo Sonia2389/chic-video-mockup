@@ -50,7 +50,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   // Store the last saved position for comparison
   useEffect(() => {
     if (savedPosition) {
-      lastPositionRef.current = savedPosition;
+      lastPositionRef.current = { ...savedPosition };
       console.log("CanvasEditor: Saved position updated:", savedPosition);
     }
   }, [savedPosition]);
@@ -165,7 +165,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
             if (savedPosition) {
               console.log("Applying exact saved position to editor:", savedPosition);
               
-              // Explicitly set width and height of fabricImage to the original dimensions
+              // Explicitly set width and height to match original dimensions
               fabricImage.set({
                 width: savedPosition.originalWidth,
                 height: savedPosition.originalHeight
@@ -180,6 +180,17 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
                 angle: savedPosition.angle || 0,
                 originX: 'left',
                 originY: 'top'
+              });
+              
+              // Log for debugging
+              console.log("Position after applying saved values:", {
+                left: fabricImage.left,
+                top: fabricImage.top,
+                scaleX: fabricImage.scaleX,
+                scaleY: fabricImage.scaleY,
+                width: fabricImage.width,
+                height: fabricImage.height,
+                angle: fabricImage.angle
               });
               
               // Store this position as reference for future comparisons
@@ -253,7 +264,8 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   useEffect(() => {
     if (!isEditing) {
       console.log("CanvasEditor: Exiting edit mode");
-      setImageLoaded(false);
+      
+      // Don't reset image loaded state to prevent flashing
       setCanvasInitialized(false);
     }
   }, [isEditing]);

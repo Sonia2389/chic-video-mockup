@@ -1,4 +1,3 @@
-
 import { completeJob, failJob, updateJobProgress } from "./mockJobManager";
 import { calculateRenderScaleFactor, loadImageElement, loadVideoElement, setupMediaRecorder } from "./mockMediaProcessor";
 import { RenderVideoParams } from "../types/renderingTypes";
@@ -106,7 +105,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     
     console.log("Drawing with overlay position:", JSON.stringify(params.overlayPosition));
     
-    // Create a 5-second looping video (changed from 10 to 5 seconds)
+    // Create a 5-second looping video
     const renderDuration = 5000; // 5 seconds for the loop
     const startTime = Date.now();
     
@@ -217,7 +216,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         ctx.restore();
       }
       
-      // Create a perfect 5-second looping video (changed from 10 to 5 seconds)
+      // Create a perfect 5-second looping video
       const elapsed = Date.now() - startTime;
       if (elapsed < renderDuration) {
         requestAnimationFrame(render);
@@ -240,7 +239,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
  * Simulates progress updates for a rendering job
  */
 export const simulateProgress = (jobId: string): void => {
-  // Simulate progress at different stages to match 5 second rendering (changed from 10 to 5 seconds)
+  // Simulate progress at different stages to match 5 second rendering
   setTimeout(() => updateJobProgress(jobId, 20), 1000);
   setTimeout(() => updateJobProgress(jobId, 40), 2000);
   setTimeout(() => updateJobProgress(jobId, 60), 3000);

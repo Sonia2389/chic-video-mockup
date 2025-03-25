@@ -73,7 +73,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
             ref={imageRef}
             src={imageUrl} 
             alt="Uploaded content" 
-            className="absolute"
+            className={`absolute ${imageLoaded ? 'block' : 'hidden'}`}
             style={{ 
               left: `${savedPosition.left}px`,
               top: `${savedPosition.top}px`,
@@ -81,8 +81,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
               height: `${savedPosition.originalHeight}px`,
               transformOrigin: 'top left',
               transform: `scale(${savedPosition.scaleX}, ${savedPosition.scaleY}) rotate(${savedPosition.angle || 0}deg)`,
-              zIndex: 10,
-              objectFit: 'contain'
+              zIndex: 10
             }}
             onLoad={() => {
               console.log("Image loaded in static display with dimensions:", 
@@ -104,7 +103,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
           <img 
             src={imageUrl} 
             alt="Uploaded content" 
-            className="object-contain w-auto h-auto max-w-full max-h-full absolute"
+            className={`object-contain w-auto h-auto max-w-full max-h-full absolute ${imageLoaded ? 'block' : 'hidden'}`}
             style={{ 
               left: '50%', 
               top: '50%', 

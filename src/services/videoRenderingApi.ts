@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { RenderVideoParams, RenderResponse } from "./types/renderingTypes";
 import { API_URL, apiErrorShown, setApiErrorShown } from "./config/apiConfig";
@@ -29,16 +28,9 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
     // Log and confirm overlay position and other params are as expected
     console.log("Adjusted params for rendering:", adjustedParams);
 
-    // Ensure overlayPosition is passed correctly
+    // Ensure overlayPosition is passed correctly with precise values
     if (adjustedParams.overlayPosition) {
-      // Round position values for better precision
-      if (typeof adjustedParams.overlayPosition.left === 'number') {
-        adjustedParams.overlayPosition.left = Math.round(adjustedParams.overlayPosition.left);
-      }
-      if (typeof adjustedParams.overlayPosition.top === 'number') {
-        adjustedParams.overlayPosition.top = Math.round(adjustedParams.overlayPosition.top);
-      }
-      
+      // Preserve exact values without any rounding that could cause size shifting
       console.log("Overlay position being sent to API:", JSON.stringify(adjustedParams.overlayPosition));
     } else {
       console.warn("Overlay position is not defined or not set correctly.");

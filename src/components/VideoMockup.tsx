@@ -1,4 +1,3 @@
-
 "use client"
 
 import type React from "react"
@@ -120,8 +119,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
             left: Math.round(containerWidth / 2 - (img.width * scale) / 2),
             top: Math.round(containerHeight / 2 - (img.height * scale) / 2),
             scale: scale,
-            width: img.width * scale,
-            height: img.height * scale,
+            width: Math.round(img.width * scale),
+            height: Math.round(img.height * scale),
             scaleX: scale,
             scaleY: scale,
             originalWidth: img.width,
@@ -173,16 +172,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       try {
         const activeObject = fabricCanvas.getActiveObject();
         if (activeObject) {
-          console.log("Active object before saving:", {
-            left: activeObject.left,
-            top: activeObject.top,
-            scaleX: activeObject.scaleX,
-            scaleY: activeObject.scaleY,
-            angle: activeObject.angle,
-            width: activeObject.width,
-            height: activeObject.height
-          });
-          
           const originalWidth = activeObject.width ?? 0;
           const originalHeight = activeObject.height ?? 0;
           
@@ -212,14 +201,12 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       clearTimeout(editorTimeoutRef.current);
     }
 
-    // First, hide the editor to prevent flicker
     setIsTransitioning(true);
     setIsEditing(false);
     
-    // Then show the image after a brief delay
     editorTimeoutRef.current = setTimeout(() => {
       setIsTransitioning(false);
-    }, 150);
+    }, 250);
   };
 
   const toggleEditMode = () => {
@@ -232,13 +219,12 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       
       setIsTransitioning(true);
       
-      // Start editing with a slight delay to allow for transition
       editorTimeoutRef.current = setTimeout(() => {
         setIsEditing(true);
         editorTimeoutRef.current = setTimeout(() => {
           setIsTransitioning(false);
-        }, 150);
-      }, 50);
+        }, 250);
+      }, 100);
     }
   };
 
