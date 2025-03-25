@@ -25,6 +25,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
   const positionRef = useRef<ImagePosition | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isShowing, setIsShowing] = useState(false);
 
   // Store position in ref to compare changes
   useEffect(() => {
@@ -45,11 +46,16 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
   // Reset loading state on edit mode change
   useEffect(() => {
     if (!isEditing && imageUrl) {
+      // Delay showing the image until we're sure the edit mode transition is complete
+      setIsShowing(true);
+      
       // Small delay to ensure image is loaded after edit mode is toggled
       const timer = setTimeout(() => {
         setImageLoaded(true);
-      }, 100);
+      }, 50);
       return () => clearTimeout(timer);
+    } else {
+      setIsShowing(false);
     }
   }, [isEditing, imageUrl]);
 
@@ -66,7 +72,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
   console.log("ImageDisplay: Rendering with image URL:", imageUrl, "Position:", savedPosition);
 
   return (
-    <div className="absolute inset-0 z-10 pointer-events-none">
+    <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-100 ${isShowing ? 'opacity-100' : 'opacity-0'}`}>
       <div className="w-full h-full relative">
         {savedPosition ? (
           <img 
@@ -116,7 +122,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
         )}
         
         {!imageLoaded && !imageError && !isEditing && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white">
+          <div className={`absolute inset-0 flex items-center justify-center bg-black/20 text-white transition-opacity duration-150 ${isShowing ? 'opacity-100' : 'opacity-0'}`}>
             Loading image...
           </div>
         )}

@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { RenderVideoParams, RenderResponse } from "./types/renderingTypes";
 import { API_URL, apiErrorShown, setApiErrorShown } from "./config/apiConfig";
@@ -24,6 +25,12 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
       preserveOriginalSpeed: params.preserveOriginalSpeed ?? true, // Default to true if not specified
       exactPositioning: true, // Always use exact positioning to ensure consistency
     };
+
+    // Ensure we're sending the exact position values without any rounding or modification
+    if (adjustedParams.overlayPosition) {
+      // Use exact position values to prevent any rounding errors
+      console.log("Sending exact position values to API:", JSON.stringify(adjustedParams.overlayPosition));
+    }
 
     // Log and confirm overlay position and other params are as expected
     console.log("Adjusted params for rendering:", adjustedParams);

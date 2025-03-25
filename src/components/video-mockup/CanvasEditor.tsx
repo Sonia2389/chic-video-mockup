@@ -50,7 +50,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   // Store the last saved position for comparison
   useEffect(() => {
     if (savedPosition) {
-      lastPositionRef.current = { ...savedPosition };
+      lastPositionRef.current = JSON.parse(JSON.stringify(savedPosition));
       console.log("CanvasEditor: Saved position updated:", savedPosition);
     }
   }, [savedPosition]);
@@ -117,7 +117,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
             
             console.log("Image loaded in CanvasEditor:", img.width, img.height);
             
-            // Update original dimensions
+            // Update original dimensions - store exact integers to avoid floating point issues
             setOriginalImageDimensions({
               width: img.width,
               height: img.height,
@@ -165,13 +165,13 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
             if (savedPosition) {
               console.log("Applying exact saved position to editor:", savedPosition);
               
-              // Explicitly set width and height to match original dimensions
+              // Explicitly set width and height to match original dimensions - no rounding here
               fabricImage.set({
                 width: savedPosition.originalWidth,
                 height: savedPosition.originalHeight
               });
               
-              // Now apply position, scale and rotation from saved position
+              // Now apply position, scale and rotation from saved position exactly as stored
               fabricImage.set({
                 left: savedPosition.left,
                 top: savedPosition.top,
@@ -182,7 +182,6 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
                 originY: 'top'
               });
               
-              // Log for debugging
               console.log("Position after applying saved values:", {
                 left: fabricImage.left,
                 top: fabricImage.top,
@@ -193,8 +192,6 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
                 angle: fabricImage.angle
               });
               
-              // Store this position as reference for future comparisons
-              lastPositionRef.current = { ...savedPosition };
             } else {
               // Center the image if no saved position
               const scaleFactor = Math.min(
@@ -247,7 +244,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
           setImageLoaded(false);
           imageLoadingRef.current = false;
         };
-      }, 100); // Reduced delay for faster loading
+      }, 50); // Reduced delay for faster loading
     } catch (error) {
       console.error("Error initializing canvas:", error);
       imageLoadingRef.current = false;
@@ -264,8 +261,6 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   useEffect(() => {
     if (!isEditing) {
       console.log("CanvasEditor: Exiting edit mode");
-      
-      // Don't reset image loaded state to prevent flashing
       setCanvasInitialized(false);
     }
   }, [isEditing]);
@@ -286,7 +281,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   }, []);
 
   return (
-    <div className={`absolute inset-0 z-20 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+    <div className={`absolute inset-0 z-20 transition-opacity duration-200 ${isEditing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
       <canvas ref={canvasRef} className="w-full h-full" />
       
       {isEditing && !imageLoaded && (

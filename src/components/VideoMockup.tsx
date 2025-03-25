@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -61,17 +62,21 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
   const SCALE_FACTOR = 0.5
 
+  // Log props for debugging
   useEffect(() => {
     console.log("VideoMockup props:", { imageUrl, backgroundImageUrl, savedPosition })
   }, [imageUrl, backgroundImageUrl, savedPosition])
 
+  // Update current position when savedPosition changes
   useEffect(() => {
     if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(currentImagePosition)) {
-      setCurrentImagePosition(savedPosition);
+      // Use deep clone to avoid reference issues
+      setCurrentImagePosition(JSON.parse(JSON.stringify(savedPosition)));
       console.log("Updated currentImagePosition from savedPosition:", savedPosition);
     }
   }, [savedPosition, currentImagePosition]);
 
+  // Handle background image loading
   useEffect(() => {
     if (backgroundImageUrl) {
       console.log("Verifying background image URL:", backgroundImageUrl)
@@ -81,8 +86,9 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         setBackgroundImageLoaded(true)
         setBackgroundImageError(false)
         
-        const scaledWidth = Math.round(img.width * SCALE_FACTOR)
-        const scaledHeight = Math.round(img.height * SCALE_FACTOR)
+        // Scale dimensions without rounding to prevent shifts
+        const scaledWidth = img.width * SCALE_FACTOR
+        const scaledHeight = img.height * SCALE_FACTOR
         console.log("Scaled background dimensions (50%):", scaledWidth, scaledHeight)
         
         setScaledDimensions({ width: scaledWidth, height: scaledHeight })
@@ -100,6 +106,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [backgroundImageUrl, onContainerDimensionsChange])
 
+  // Handle image verification and default position creation
   useEffect(() => {
     if (imageUrl) {
       console.log("Verifying image URL:", imageUrl)
@@ -115,12 +122,13 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
           const scale = Math.min((containerWidth * 0.8) / img.width, (containerHeight * 0.8) / img.height)
 
+          // Create initial position without rounding to maintain precision
           const newPosition = {
-            left: Math.round(containerWidth / 2 - (img.width * scale) / 2),
-            top: Math.round(containerHeight / 2 - (img.height * scale) / 2),
+            left: containerWidth / 2 - (img.width * scale) / 2,
+            top: containerHeight / 2 - (img.height * scale) / 2,
             scale: scale,
-            width: Math.round(img.width * scale),
-            height: Math.round(img.height * scale),
+            width: img.width * scale,
+            height: img.height * scale,
             scaleX: scale,
             scaleY: scale,
             originalWidth: img.width,
@@ -142,13 +150,14 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [imageUrl, scaledDimensions, currentImagePosition, onPositionSave])
 
+  // Update container dimensions when they change
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current && onContainerDimensionsChange) {
         const rect = containerRef.current.getBoundingClientRect()
         onContainerDimensionsChange({ 
-          width: Math.round(rect.width), 
-          height: Math.round(rect.height) 
+          width: rect.width, 
+          height: rect.height 
         })
       }
     }
@@ -167,17 +176,19 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [scaledDimensions, onContainerDimensionsChange])
 
+  // Handle saving position from canvas editor
   const handleSavePosition = () => {
     if (fabricCanvas) {
       try {
         const activeObject = fabricCanvas.getActiveObject();
         if (activeObject) {
+          // Get precise values without rounding to prevent drift
           const originalWidth = activeObject.width ?? 0;
           const originalHeight = activeObject.height ?? 0;
           
           const newPosition = {
-            left: Math.round(activeObject.left ?? 0),
-            top: Math.round(activeObject.top ?? 0),
+            left: activeObject.left ?? 0,
+            top: activeObject.top ?? 0,
             scale: Math.max(activeObject.scaleX ?? 1, activeObject.scaleY ?? 1),
             width: originalWidth * (activeObject.scaleX ?? 1),
             height: originalHeight * (activeObject.scaleY ?? 1),
@@ -189,7 +200,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           };
 
           console.log("Saving position with exact dimensions:", newPosition);
-          setCurrentImagePosition(newPosition);
+          // Use deep clone to break references
+          setCurrentImagePosition(JSON.parse(JSON.stringify(newPosition)));
           onPositionSave(newPosition);
         }
       } catch (error) {
@@ -204,11 +216,13 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     setIsTransitioning(true);
     setIsEditing(false);
     
+    // Allow time for transition to complete
     editorTimeoutRef.current = setTimeout(() => {
       setIsTransitioning(false);
     }, 250);
   };
 
+  // Toggle edit mode with proper transitions
   const toggleEditMode = () => {
     if (isEditing) {
       handleSavePosition();
@@ -219,15 +233,17 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       
       setIsTransitioning(true);
       
+      // Small delay before showing editor to ensure smooth transition
       editorTimeoutRef.current = setTimeout(() => {
         setIsEditing(true);
         editorTimeoutRef.current = setTimeout(() => {
           setIsTransitioning(false);
-        }, 250);
-      }, 100);
+        }, 200); // Slightly shorter to ensure visual continuity
+      }, 50); // Faster transition in
     }
   };
 
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (editorTimeoutRef.current) {
@@ -236,6 +252,7 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, []);
 
+  // Container style for mockup
   const containerStyle = {
     width: scaledDimensions.width > 0 ? `${scaledDimensions.width}px` : "100%",
     maxWidth: "100%",
@@ -268,11 +285,11 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </>
       )}
 
-      {imageUrl && !isEditing && !isTransitioning && (
+      {imageUrl && !isEditing && (
         <ImageDisplay 
           imageUrl={imageUrl} 
           savedPosition={currentImagePosition} 
-          isEditing={isEditing} 
+          isEditing={isEditing || isTransitioning} 
         />
       )}
 
