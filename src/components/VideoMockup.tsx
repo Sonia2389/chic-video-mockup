@@ -61,12 +61,10 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
 
   const SCALE_FACTOR = 0.5
 
-  // Log key props for debugging
   useEffect(() => {
     console.log("VideoMockup props:", { imageUrl, backgroundImageUrl, savedPosition })
   }, [imageUrl, backgroundImageUrl, savedPosition])
 
-  // Update current position when savedPosition changes
   useEffect(() => {
     if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(currentImagePosition)) {
       setCurrentImagePosition(savedPosition);
@@ -74,7 +72,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [savedPosition, currentImagePosition]);
 
-  // Handle background image loading
   useEffect(() => {
     if (backgroundImageUrl) {
       console.log("Verifying background image URL:", backgroundImageUrl)
@@ -103,7 +100,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [backgroundImageUrl, onContainerDimensionsChange])
 
-  // Handle image loading
   useEffect(() => {
     if (imageUrl) {
       console.log("Verifying image URL:", imageUrl)
@@ -146,7 +142,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [imageUrl, scaledDimensions, currentImagePosition, onPositionSave])
 
-  // Update container dimensions
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current && onContainerDimensionsChange) {
@@ -172,7 +167,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   }, [scaledDimensions, onContainerDimensionsChange])
 
-  // Save position function with extra validation
   const handleSavePosition = () => {
     if (fabricCanvas) {
       try {
@@ -188,17 +182,15 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
             height: activeObject.height
           });
           
-          // Get exact original dimensions - crucial for accurate display
-          const originalWidth = activeObject.width ?? activeObject.getScaledWidth() / (activeObject.scaleX ?? 1);
-          const originalHeight = activeObject.height ?? activeObject.getScaledHeight() / (activeObject.scaleY ?? 1);
+          const originalWidth = activeObject.width ?? 0;
+          const originalHeight = activeObject.height ?? 0;
           
-          // Create consistent position values with all properties needed for exact reconstruction
           const newPosition = {
             left: activeObject.left ?? 0,
             top: activeObject.top ?? 0,
             scale: Math.max(activeObject.scaleX ?? 1, activeObject.scaleY ?? 1),
-            width: activeObject.getScaledWidth(),
-            height: activeObject.getScaledHeight(),
+            width: originalWidth * (activeObject.scaleX ?? 1),
+            height: originalHeight * (activeObject.scaleY ?? 1),
             scaleX: activeObject.scaleX ?? 1,
             scaleY: activeObject.scaleY ?? 1,
             originalWidth,
@@ -215,37 +207,30 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       }
     }
 
-    // Clean up any existing timeouts
     if (editorTimeoutRef.current) {
       clearTimeout(editorTimeoutRef.current);
     }
 
     setIsTransitioning(true);
-    // First wait to fade out the editor
     editorTimeoutRef.current = setTimeout(() => {
       setIsEditing(false);
-      // Then wait for the transition to complete before showing the static image
       editorTimeoutRef.current = setTimeout(() => {
         setIsTransitioning(false);
-      }, 150); // Reduced transition time for smoother experience
-    }, 150); // Reduced transition time for smoother experience
+      }, 50);
+    }, 50);
   };
 
-  // Toggle edit mode
   const toggleEditMode = () => {
     if (isEditing) {
       handleSavePosition();
     } else {
-      // Clean up any existing timeouts
       if (editorTimeoutRef.current) {
         clearTimeout(editorTimeoutRef.current);
       }
       
       setIsTransitioning(true);
-      // First fade out the current view
       editorTimeoutRef.current = setTimeout(() => {
         setIsEditing(true);
-        // Then wait for the editor to initialize before fading it in
         editorTimeoutRef.current = setTimeout(() => {
           setIsTransitioning(false);
         }, 300);
@@ -253,7 +238,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
     }
   };
 
-  // Clean up timeouts on unmount
   useEffect(() => {
     return () => {
       if (editorTimeoutRef.current) {
@@ -294,7 +278,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         </>
       )}
 
-      {/* Use the ImageDisplay component for non-editing mode - only when not transitioning */}
       {imageUrl && !isEditing && !isTransitioning && (
         <ImageDisplay 
           imageUrl={imageUrl} 
@@ -303,7 +286,6 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
         />
       )}
 
-      {/* Show canvas editor in edit mode or during transitions */}
       {imageUrl && (isEditing || isTransitioning) && (
         <CanvasEditor
           isEditing={isEditing}

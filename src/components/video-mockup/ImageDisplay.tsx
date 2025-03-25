@@ -30,7 +30,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
   useEffect(() => {
     if (savedPosition && JSON.stringify(savedPosition) !== JSON.stringify(positionRef.current)) {
       positionRef.current = savedPosition;
-      console.log("Display using exact position:", savedPosition);
+      console.log("ImageDisplay: Using exact position:", savedPosition);
     }
   }, [savedPosition]);
 
@@ -41,6 +41,17 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
       setImageError(false);
     }
   }, [imageUrl]);
+
+  // Reset loading state on edit mode change
+  useEffect(() => {
+    if (!isEditing && imageUrl) {
+      // Small delay to ensure image is loaded after edit mode is toggled
+      const timer = setTimeout(() => {
+        setImageLoaded(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isEditing, imageUrl]);
 
   if (!imageUrl) {
     console.log("ImageDisplay: No image URL provided");
@@ -105,7 +116,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
           />
         )}
         
-        {!imageLoaded && !imageError && (
+        {!imageLoaded && !imageError && !isEditing && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white">
             Loading image...
           </div>

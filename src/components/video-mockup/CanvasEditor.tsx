@@ -145,6 +145,8 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
               objectCaching: false,
               padding: 5,
               borderOpacityWhenMoving: 0.4,
+              originX: 'left',
+              originY: 'top'
             });
             
             // Enable all corner controls
@@ -162,14 +164,20 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
             // Position the image - Use the exact saved position if available
             if (savedPosition) {
               console.log("Applying exact saved position to editor:", savedPosition);
+              
+              // Explicitly set width and height of fabricImage to the original dimensions
+              fabricImage.set({
+                width: savedPosition.originalWidth,
+                height: savedPosition.originalHeight
+              });
+              
+              // Now apply position, scale and rotation from saved position
               fabricImage.set({
                 left: savedPosition.left,
                 top: savedPosition.top,
                 scaleX: savedPosition.scaleX,
                 scaleY: savedPosition.scaleY,
                 angle: savedPosition.angle || 0,
-                width: savedPosition.originalWidth,
-                height: savedPosition.originalHeight,
                 originX: 'left',
                 originY: 'top'
               });

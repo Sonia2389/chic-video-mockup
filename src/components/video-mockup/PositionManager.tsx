@@ -43,8 +43,9 @@ const PositionManager = ({
     const activeObject = fabricCanvas.getActiveObject();
     if (activeObject) {
       // Get exact original dimensions - crucial for accurate display
-      const originalWidth = activeObject.width ?? activeObject.getScaledWidth() / (activeObject.scaleX ?? 1);
-      const originalHeight = activeObject.height ?? activeObject.getScaledHeight() / (activeObject.scaleY ?? 1);
+      // This ensures we're saving the EXACT dimensions needed to reproduce the view
+      const originalWidth = activeObject.width ?? 0;
+      const originalHeight = activeObject.height ?? 0;
       
       // Create position object with all necessary data for exact reproduction
       const newPosition = {
@@ -53,8 +54,8 @@ const PositionManager = ({
         scale: Math.max(activeObject.scaleX ?? 1, activeObject.scaleY ?? 1),
         scaleX: activeObject.scaleX ?? 1,
         scaleY: activeObject.scaleY ?? 1,
-        width: activeObject.getScaledWidth(),
-        height: activeObject.getScaledHeight(),
+        width: (originalWidth) * (activeObject.scaleX ?? 1),
+        height: (originalHeight) * (activeObject.scaleY ?? 1),
         originalWidth,
         originalHeight,
         angle: activeObject.angle ?? 0
