@@ -31,6 +31,14 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
 
     // Ensure overlayPosition is passed correctly
     if (adjustedParams.overlayPosition) {
+      // Round position values for better precision
+      if (typeof adjustedParams.overlayPosition.left === 'number') {
+        adjustedParams.overlayPosition.left = Math.round(adjustedParams.overlayPosition.left);
+      }
+      if (typeof adjustedParams.overlayPosition.top === 'number') {
+        adjustedParams.overlayPosition.top = Math.round(adjustedParams.overlayPosition.top);
+      }
+      
       console.log("Overlay position being sent to API:", JSON.stringify(adjustedParams.overlayPosition));
     } else {
       console.warn("Overlay position is not defined or not set correctly.");

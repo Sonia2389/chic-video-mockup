@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -116,8 +117,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           const scale = Math.min((containerWidth * 0.8) / img.width, (containerHeight * 0.8) / img.height)
 
           const newPosition = {
-            left: containerWidth / 2 - (img.width * scale) / 2,
-            top: containerHeight / 2 - (img.height * scale) / 2,
+            left: Math.round(containerWidth / 2 - (img.width * scale) / 2),
+            top: Math.round(containerHeight / 2 - (img.height * scale) / 2),
             scale: scale,
             width: img.width * scale,
             height: img.height * scale,
@@ -147,8 +148,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       if (containerRef.current && onContainerDimensionsChange) {
         const rect = containerRef.current.getBoundingClientRect()
         onContainerDimensionsChange({ 
-          width: rect.width, 
-          height: rect.height 
+          width: Math.round(rect.width), 
+          height: Math.round(rect.height) 
         })
       }
     }
@@ -186,8 +187,8 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
           const originalHeight = activeObject.height ?? 0;
           
           const newPosition = {
-            left: activeObject.left ?? 0,
-            top: activeObject.top ?? 0,
+            left: Math.round(activeObject.left ?? 0),
+            top: Math.round(activeObject.top ?? 0),
             scale: Math.max(activeObject.scaleX ?? 1, activeObject.scaleY ?? 1),
             width: originalWidth * (activeObject.scaleX ?? 1),
             height: originalHeight * (activeObject.scaleY ?? 1),
@@ -211,13 +212,14 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       clearTimeout(editorTimeoutRef.current);
     }
 
+    // First, hide the editor to prevent flicker
     setIsTransitioning(true);
+    setIsEditing(false);
+    
+    // Then show the image after a brief delay
     editorTimeoutRef.current = setTimeout(() => {
-      setIsEditing(false);
-      editorTimeoutRef.current = setTimeout(() => {
-        setIsTransitioning(false);
-      }, 50);
-    }, 50);
+      setIsTransitioning(false);
+    }, 150);
   };
 
   const toggleEditMode = () => {
@@ -229,12 +231,14 @@ const VideoMockup: React.FC<VideoMockupProps> = ({
       }
       
       setIsTransitioning(true);
+      
+      // Start editing with a slight delay to allow for transition
       editorTimeoutRef.current = setTimeout(() => {
         setIsEditing(true);
         editorTimeoutRef.current = setTimeout(() => {
           setIsTransitioning(false);
-        }, 300);
-      }, 300);
+        }, 150);
+      }, 50);
     }
   };
 

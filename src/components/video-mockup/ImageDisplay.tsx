@@ -66,7 +66,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
   console.log("ImageDisplay: Rendering with image URL:", imageUrl, "Position:", savedPosition);
 
   return (
-    <div className="absolute inset-0 z-10">
+    <div className="absolute inset-0 z-10 pointer-events-none">
       <div className="w-full h-full relative">
         {savedPosition ? (
           <img 

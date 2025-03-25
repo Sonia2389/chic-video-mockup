@@ -196,6 +196,8 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
                 scaleY: scaleFactor,
                 left: containerDimensions.width / 2 - (img.width * scaleFactor) / 2,
                 top: containerDimensions.height / 2 - (img.height * scaleFactor) / 2,
+                width: img.width,
+                height: img.height,
                 originX: 'left',
                 originY: 'top'
               });
@@ -272,7 +274,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
   }, []);
 
   return (
-    <div className={`absolute inset-0 z-20 transition-opacity duration-150 ${isEditing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+    <div className={`absolute inset-0 z-20 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
       <canvas ref={canvasRef} className="w-full h-full" />
       
       {isEditing && !imageLoaded && (

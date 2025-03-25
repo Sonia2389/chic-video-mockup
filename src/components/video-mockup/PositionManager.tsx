@@ -49,8 +49,8 @@ const PositionManager = ({
       
       // Create position object with all necessary data for exact reproduction
       const newPosition = {
-        left: activeObject.left ?? 0,
-        top: activeObject.top ?? 0,
+        left: Math.round(activeObject.left ?? 0),
+        top: Math.round(activeObject.top ?? 0),
         scale: Math.max(activeObject.scaleX ?? 1, activeObject.scaleY ?? 1),
         scaleX: activeObject.scaleX ?? 1,
         scaleY: activeObject.scaleY ?? 1,
