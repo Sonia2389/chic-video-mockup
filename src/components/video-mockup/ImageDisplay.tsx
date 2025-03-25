@@ -37,10 +37,11 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
   // Show image after edit mode is toggled
   useEffect(() => {
     if (!isEditing && imageUrl) {
+      // Delay showing the image to allow for smooth transition
       const timer = setTimeout(() => {
         setIsShowing(true);
         setImageLoaded(true);
-      }, 100); // Increased delay for smoother transition
+      }, 100);
       return () => clearTimeout(timer);
     } else {
       setIsShowing(false);
@@ -74,7 +75,7 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
               zIndex: 10
             }}
             onLoad={() => {
-              console.log("Image loaded in static display with dimensions:", 
+              console.log("Image loaded in static display with exact dimensions:", 
                 savedPosition.originalWidth, 
                 "×", 
                 savedPosition.originalHeight,

@@ -1,3 +1,4 @@
+
 import { completeJob, failJob, updateJobProgress } from "./mockJobManager";
 import { calculateRenderScaleFactor, loadImageElement, loadVideoElement, setupMediaRecorder } from "./mockMediaProcessor";
 import { RenderVideoParams } from "../types/renderingTypes";
