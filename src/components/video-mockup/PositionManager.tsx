@@ -68,7 +68,7 @@ const PositionManager = ({
       };
       
       // Log exact measurements for debugging
-      console.log("Saving precise position:", JSON.stringify(newPosition));
+      console.log("Saving precise position:", JSON.stringify(newPosition, null, 2));
       
       // Store this position to use as reference
       setLastSavedPosition(newPosition);

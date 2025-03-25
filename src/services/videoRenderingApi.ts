@@ -28,7 +28,7 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
 
     // Ensure position values are passed exactly as they are without any rounding
     if (adjustedParams.overlayPosition) {
-      console.log("Using exact position values:", JSON.stringify(adjustedParams.overlayPosition, null, 2));
+      console.log("Using exact overlay position values:", JSON.stringify(adjustedParams.overlayPosition, null, 2));
     }
 
     // Call the actual API to start the rendering

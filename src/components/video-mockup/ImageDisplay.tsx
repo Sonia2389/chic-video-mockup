@@ -84,7 +84,9 @@ const ImageDisplay = ({ imageUrl, savedPosition, isEditing }: ImageDisplayProps)
                 savedPosition.scaleY,
                 "Position:",
                 savedPosition.left,
-                savedPosition.top
+                savedPosition.top,
+                "Angle:",
+                savedPosition.angle || 0
               );
               setImageLoaded(true);
             }}

@@ -163,7 +163,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
             
             // Position the image - Use the exact saved position if available
             if (savedPosition) {
-              console.log("Applying exact saved position to editor:", savedPosition);
+              console.log("Applying exact saved position to editor:", JSON.stringify(savedPosition, null, 2));
               
               // Explicitly set width and height to match original dimensions - no rounding here
               fabricImage.set({
@@ -216,18 +216,26 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
             canvas.setActiveObject(fabricImage);
             canvas.renderAll();
             
-            // Add event listeners
-            canvas.on('object:moving', () => {
-              canvas.renderAll();
-            });
+            // Add event listeners for object changes
+            canvas.on('object:moving', () => canvas.renderAll());
+            canvas.on('object:scaling', () => canvas.renderAll());
+            canvas.on('object:rotating', () => canvas.renderAll());
             
-            canvas.on('object:scaling', () => {
-              canvas.renderAll();
-            });
-            
-            canvas.on('object:rotating', () => {
-              canvas.renderAll();
-            });
+            // Debug image positioning
+            const obj = canvas.getActiveObject();
+            if (obj) {
+              console.log("Canvas active object position:", {
+                left: obj.left,
+                top: obj.top,
+                scaleX: obj.scaleX,
+                scaleY: obj.scaleY,
+                angle: obj.angle,
+                width: obj.width,
+                height: obj.height,
+                originalWidth: savedPosition?.originalWidth,
+                originalHeight: savedPosition?.originalHeight
+              });
+            }
             
             setImageLoaded(true);
             imageLoadingRef.current = false;
@@ -255,7 +263,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
     return () => {
       // No need to dispose here as it will be handled on the next initialization
     };
-  }, [isEditing, containerDimensions, imageUrl, savedPosition]);
+  }, [isEditing, containerDimensions, imageUrl, savedPosition, fabricCanvas, setFabricCanvas, setOriginalImageDimensions]);
   
   // Reset state when editing mode changes
   useEffect(() => {
@@ -278,7 +286,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
         }
       }
     };
-  }, []);
+  }, [fabricCanvas, setFabricCanvas]);
 
   return (
     <div className={`absolute inset-0 z-20 transition-opacity duration-200 ${isEditing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>

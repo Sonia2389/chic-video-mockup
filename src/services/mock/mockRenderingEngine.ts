@@ -78,7 +78,10 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       originalWidth: params.overlayPosition.originalWidth,
       originalHeight: params.overlayPosition.originalHeight,
       scaleX: params.overlayPosition.scaleX,
-      scaleY: params.overlayPosition.scaleY
+      scaleY: params.overlayPosition.scaleY,
+      angle: params.overlayPosition.angle || 0,
+      left: params.overlayPosition.left,
+      top: params.overlayPosition.top
     });
     
     console.log("Using exact positioning:", params.exactPositioning);
@@ -104,7 +107,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     // Start recording
     recorder.start();
     
-    console.log("Drawing with overlay position:", JSON.stringify(params.overlayPosition));
+    console.log("Drawing with overlay position:", JSON.stringify(params.overlayPosition, null, 2));
     
     // Create a 5-second looping video
     const renderDuration = 5000; // 5 seconds for the loop
