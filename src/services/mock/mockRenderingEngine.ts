@@ -72,19 +72,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       scaleFactorY: renderScaleFactor.y
     });
     
-    console.log("Image dimensions for rendering:", {
-      imgWidth: img.width,
-      imgHeight: img.height,
-      originalWidth: params.overlayPosition.originalWidth,
-      originalHeight: params.overlayPosition.originalHeight,
-      scaleX: params.overlayPosition.scaleX,
-      scaleY: params.overlayPosition.scaleY,
-      angle: params.overlayPosition.angle || 0,
-      left: params.overlayPosition.left,
-      top: params.overlayPosition.top
-    });
-    
-    console.log("Using exact positioning:", params.exactPositioning);
+    console.log("Using overlay position for rendering:", JSON.stringify(params.overlayPosition, null, 2));
     
     recorder.onstop = () => {
       const blob = new Blob(chunks, { type: mimeType || "video/webm" });
@@ -106,8 +94,6 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     
     // Start recording
     recorder.start();
-    
-    console.log("Drawing with overlay position:", JSON.stringify(params.overlayPosition, null, 2));
     
     // Create a 5-second looping video
     const renderDuration = 5000; // 5 seconds for the loop
@@ -137,14 +123,8 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         // Save current context state
         ctx.save();
         
-        // Use exact positioning always for consistent rendering
-        let scaledLeft = left;
-        let scaledTop = top;
-        let scaledScaleX = scaleX;
-        let scaledScaleY = scaleY;
-        
         // Apply transformations in order: translate → rotate → scale
-        ctx.translate(scaledLeft, scaledTop);
+        ctx.translate(left, top);
         
         if (angle) {
           ctx.rotate((angle * Math.PI) / 180);
@@ -152,7 +132,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         
         // Draw the image at the origin (we've already translated)
         if (originalWidth && originalHeight) {
-          ctx.scale(scaledScaleX, scaledScaleY);
+          ctx.scale(scaleX, scaleY);
           ctx.drawImage(
             img,
             0, 0,
@@ -161,7 +141,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
           );
         } else {
           // Fallback if original dimensions not provided
-          ctx.scale(scaledScaleX, scaledScaleY);
+          ctx.scale(scaleX, scaleY);
           ctx.drawImage(
             img,
             0, 0,

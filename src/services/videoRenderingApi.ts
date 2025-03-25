@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { RenderVideoParams, RenderResponse } from "./types/renderingTypes";
 import { API_URL, apiErrorShown, setApiErrorShown } from "./config/apiConfig";
@@ -16,8 +15,13 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
       return mockRenderProcess(params); // Use mock rendering if API_URL points to mockify
     }
 
-    // Ensure that the rendering API receives all necessary params
-    console.log("Sending video render request to API with params:", JSON.stringify(params, null, 2));
+    // Log exact position values for debugging
+    console.log("Sending video render request with exact position values:", {
+      position: JSON.stringify(params.overlayPosition, null, 2),
+      containerDimensions: params.containerWidth && params.containerHeight 
+        ? `${params.containerWidth}x${params.containerHeight}` 
+        : 'Not provided'
+    });
 
     // Always use exact positioning without any rounding
     const adjustedParams = { 
@@ -26,8 +30,10 @@ export const startVideoRender = async (params: RenderVideoParams): Promise<strin
       exactPositioning: true, // Force exact positioning
     };
 
-    // Ensure position values are passed exactly as they are without any rounding
+    // Ensure position values are passed as-is without any rounding
     if (adjustedParams.overlayPosition) {
+      // Clone the position object to avoid reference issues
+      adjustedParams.overlayPosition = JSON.parse(JSON.stringify(adjustedParams.overlayPosition));
       console.log("Using exact overlay position values:", JSON.stringify(adjustedParams.overlayPosition, null, 2));
     }
 

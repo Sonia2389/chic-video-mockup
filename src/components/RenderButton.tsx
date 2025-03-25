@@ -161,20 +161,24 @@ const RenderButton = ({
         setRenderProgress(0);
         setDownloadReady(false);
 
-        console.log("Rendering with saved position:", JSON.stringify(savedPosition));
+        // Log the exact position values we're sending to the renderer
+        console.log("Rendering with saved position:", JSON.stringify(savedPosition, null, 2));
         console.log("Container dimensions:", containerDimensions);
+
+        // Create a deep clone of the savedPosition to ensure no references are passed
+        const positionClone = JSON.parse(JSON.stringify(savedPosition));
 
         const newJobId = await startVideoRender({
           backgroundImage,
           overlayImage,
-          overlayPosition: savedPosition,
+          overlayPosition: positionClone,
           overlayVideo: overlayVideo || undefined,
           aspectRatio: videoAspectRatio,
           quality: 'high',
           preserveOriginalSpeed: true,
           exactPositioning: true,
-          containerWidth: containerDimensions?.width,
-          containerHeight: containerDimensions?.height
+          containerWidth: containerDimensions.width,
+          containerHeight: containerDimensions.height
         });
         
         setJobId(newJobId);
