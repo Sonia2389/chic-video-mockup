@@ -48,7 +48,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ imageUrl, savedPosition, is
     pointerEvents: 'none',
     display: 'block',
     willChange: 'transform', // Optimize for transforms
-    imageRendering: 'high-quality', // Request high quality rendering
+    imageRendering: 'auto', // Changed from 'high-quality' to 'auto'
   };
 
   // Apply exact scaling without rounding
