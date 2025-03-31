@@ -43,9 +43,19 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     
     // Check if we have an overlay video
     let overlayVideo: HTMLVideoElement | null = null;
+    let renderDuration = 5000; // Default to 5 seconds for the loop
+    
     if (params.overlayVideo) {
       overlayVideo = await loadVideoElement(params.overlayVideo);
       console.log("Overlay video loaded with dimensions:", overlayVideo.videoWidth, "x", overlayVideo.videoHeight);
+      
+      // Calculate render duration based on overlay video
+      if (overlayVideo.duration) {
+        renderDuration = Math.round(overlayVideo.duration * 1000);
+        // Ensure reasonable duration (3 seconds to 30 seconds)
+        renderDuration = Math.max(3000, Math.min(renderDuration, 30000));
+        console.log(`Using overlay video duration for rendering: ${renderDuration}ms`);
+      }
       
       // Start playing the overlay video
       await overlayVideo.play();
@@ -95,14 +105,13 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     // Start recording
     recorder.start();
     
-    // Create a 5-second looping video
-    const renderDuration = 5000; // 5 seconds for the loop
+    // Create a video that matches the overlay video duration or default 5 seconds
     const startTime = Date.now();
     
     // For overlay video, determine loop duration
     let overlayDuration = 0;
     if (overlayVideo) {
-      overlayDuration = overlayVideo.duration * 1000 || 5000;
+      overlayDuration = overlayVideo.duration * 1000 || renderDuration;
     }
     
     // Render function to draw each frame
@@ -193,7 +202,7 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
         ctx.restore();
       }
       
-      // Create a perfect 5-second looping video
+      // Create a video with the overlay video duration
       const elapsed = Date.now() - startTime;
       if (elapsed < renderDuration) {
         requestAnimationFrame(render);
@@ -216,10 +225,15 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
  * Simulates progress updates for a rendering job
  */
 export const simulateProgress = (jobId: string): void => {
-  // Simulate progress at different stages to match 5 second rendering
+  // Simulate progress with more granular updates
+  setTimeout(() => updateJobProgress(jobId, 10), 500);
   setTimeout(() => updateJobProgress(jobId, 20), 1000);
-  setTimeout(() => updateJobProgress(jobId, 40), 2000);
-  setTimeout(() => updateJobProgress(jobId, 60), 3000);
-  setTimeout(() => updateJobProgress(jobId, 80), 4000);
-  setTimeout(() => updateJobProgress(jobId, 95), 4800);
+  setTimeout(() => updateJobProgress(jobId, 30), 2000);
+  setTimeout(() => updateJobProgress(jobId, 40), 3000);
+  setTimeout(() => updateJobProgress(jobId, 50), 4000);
+  setTimeout(() => updateJobProgress(jobId, 60), 5000);
+  setTimeout(() => updateJobProgress(jobId, 70), 6000);
+  setTimeout(() => updateJobProgress(jobId, 80), 7000);
+  setTimeout(() => updateJobProgress(jobId, 90), 8000);
+  setTimeout(() => updateJobProgress(jobId, 95), 9000);
 }

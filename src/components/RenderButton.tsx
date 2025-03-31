@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Server, Loader2, Download } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { startVideoRender, checkRenderStatus, downloadRenderedVideo } from "@/services/videoRenderingApi";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { setupMediaRecorder } from "@/services/mock/mockMediaProcessor";
 
@@ -31,6 +31,8 @@ const RenderButton = ({
   const [downloadReady, setDownloadReady] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
 
   const capturePreviewAndDownload = async () => {
     const mockupContainer = document.querySelector('.video-mockup-container');
@@ -59,9 +61,47 @@ const RenderButton = ({
       
       setRenderProgress(40);
       
+      // Determine video duration based on overlay video
+      let videoDuration = 5000; // Default 5 seconds
+      
+      if (overlayVideo) {
+        // Create a video element to check duration
+        const videoElement = document.createElement('video');
+        videoElement.preload = 'metadata';
+        
+        try {
+          // Create a URL from the file
+          const videoUrl = URL.createObjectURL(overlayVideo);
+          
+          await new Promise<void>((resolve, reject) => {
+            videoElement.onloadedmetadata = () => {
+              // Get the duration in milliseconds
+              videoDuration = Math.round(videoElement.duration * 1000);
+              console.log(`Using overlay video duration: ${videoDuration}ms`);
+              // Use minimum 3 seconds, maximum 30 seconds
+              videoDuration = Math.max(3000, Math.min(videoDuration, 30000));
+              resolve();
+            };
+            videoElement.onerror = () => reject(new Error('Failed to load video metadata'));
+            videoElement.src = videoUrl;
+          });
+          
+          // Clean up URL
+          URL.revokeObjectURL(videoUrl);
+        } catch (err) {
+          console.error('Error determining video duration:', err);
+          // Continue with default duration
+          toast.error("Could not determine video duration, using default (5 seconds)");
+        }
+      }
+      
+      console.log(`Final video duration: ${videoDuration}ms`);
+      
       // Create and configure the media recorder
       try {
         const { recorder, chunks, mimeType } = setupMediaRecorder(canvas);
+        recorderRef.current = recorder;
+        recordingChunksRef.current = chunks;
         
         // Set up recorder events
         recorder.onstop = () => {
@@ -97,19 +137,26 @@ const RenderButton = ({
           setIsRendering(false);
         };
         
-        // Start recording for a 5 second duration
+        // Start recording for the calculated duration
         recorder.start();
         setRenderProgress(50);
         
+        // Calculate interval count for smooth progress updates
+        const progressIntervals = 10; // Number of progress updates
+        const intervalTime = Math.floor(videoDuration / progressIntervals);
+        let currentInterval = 0;
+        
         // Update progress while recording
         const interval = setInterval(() => {
-          setRenderProgress(prev => {
-            const newProgress = prev + 8;
-            return newProgress < 95 ? newProgress : 95;
-          });
-        }, 1000);
+          currentInterval++;
+          if (currentInterval <= progressIntervals) {
+            // Calculate progress: 50% (starting point) + gradual progress to 95%
+            const newProgress = 50 + Math.floor((currentInterval / progressIntervals) * 45);
+            setRenderProgress(newProgress);
+          }
+        }, intervalTime);
         
-        // Stop recording after 5 seconds
+        // Stop recording after the determined duration
         setTimeout(() => {
           clearInterval(interval);
           
@@ -123,7 +170,7 @@ const RenderButton = ({
             setIsRendering(false);
             toast.error("Error stopping video recording");
           }
-        }, 5000);
+        }, videoDuration);
         
         return true;
       } catch (recorderError) {
