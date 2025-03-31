@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Server, Loader2, Download } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -46,12 +45,10 @@ const RenderButton = ({
       setRenderProgress(10);
       toast.info("Preparing to capture mockup preview...");
       
-      // Import html2canvas dynamically
       const { default: html2canvas } = await import('html2canvas');
       
       setRenderProgress(20);
       
-      // Capture the mockup container content
       const canvas = await html2canvas(mockupContainer as HTMLElement, {
         allowTaint: true,
         useCORS: true,
@@ -61,24 +58,19 @@ const RenderButton = ({
       
       setRenderProgress(40);
       
-      // Determine video duration based on overlay video
-      let videoDuration = 5000; // Default 5 seconds
+      let videoDuration = 5000;
       
       if (overlayVideo) {
-        // Create a video element to check duration
         const videoElement = document.createElement('video');
         videoElement.preload = 'metadata';
         
         try {
-          // Create a URL from the file
           const videoUrl = URL.createObjectURL(overlayVideo);
           
           await new Promise<void>((resolve, reject) => {
             videoElement.onloadedmetadata = () => {
-              // Get the duration in milliseconds
               videoDuration = Math.round(videoElement.duration * 1000);
               console.log(`Using overlay video duration: ${videoDuration}ms`);
-              // Use minimum 3 seconds, maximum 30 seconds
               videoDuration = Math.max(3000, Math.min(videoDuration, 30000));
               resolve();
             };
@@ -86,99 +78,81 @@ const RenderButton = ({
             videoElement.src = videoUrl;
           });
           
-          // Clean up URL
           URL.revokeObjectURL(videoUrl);
         } catch (err) {
           console.error('Error determining video duration:', err);
-          // Continue with default duration
           toast.error("Could not determine video duration, using default (5 seconds)");
         }
       }
       
       console.log(`Final video duration: ${videoDuration}ms`);
       
-      // Create and configure the media recorder
-      try {
-        const { recorder, chunks, mimeType } = setupMediaRecorder(canvas);
-        recorderRef.current = recorder;
-        recordingChunksRef.current = chunks;
-        
-        // Set up recorder events
-        recorder.onstop = () => {
-          try {
-            // Create a proper video file from the recorded chunks
-            let fileType = 'video/mp4';
-            
-            // If browser used WebM format, maintain that for the file
-            if (mimeType.includes('webm')) {
-              fileType = 'video/webm';
-            }
-            
-            const videoBlob = new Blob(chunks, { type: fileType });
-            const videoUrl = URL.createObjectURL(videoBlob);
-            
-            // Set the download URL and complete
-            setDownloadUrl(videoUrl);
-            setRenderProgress(100);
-            setDownloadReady(true);
-            setIsRendering(false);
-            toast.success("Mockup processed successfully!");
-          } catch (error) {
-            console.error("Error creating video after recording:", error);
-            toast.error("Failed to create video file from recording");
-            setIsRendering(false);
-          }
-        };
-        
-        // Handle recording errors
-        recorder.onerror = (event) => {
-          console.error("MediaRecorder error:", event);
-          toast.error("Error during recording process");
-          setIsRendering(false);
-        };
-        
-        // Start recording for the calculated duration
-        recorder.start();
-        setRenderProgress(50);
-        
-        // Calculate interval count for smooth progress updates
-        const progressIntervals = 10; // Number of progress updates
-        const intervalTime = Math.floor(videoDuration / progressIntervals);
-        let currentInterval = 0;
-        
-        // Update progress while recording
-        const interval = setInterval(() => {
-          currentInterval++;
-          if (currentInterval <= progressIntervals) {
-            // Calculate progress: 50% (starting point) + gradual progress to 95%
-            const newProgress = 50 + Math.floor((currentInterval / progressIntervals) * 45);
-            setRenderProgress(newProgress);
-          }
-        }, intervalTime);
-        
-        // Stop recording after the determined duration
-        setTimeout(() => {
-          clearInterval(interval);
+      const { recorder, chunks, mimeType } = setupMediaRecorder(canvas);
+      recorderRef.current = recorder;
+      recordingChunksRef.current = chunks;
+      
+      recorder.onstop = () => {
+        try {
+          let fileType = 'video/mp4';
+          let fileExtension = 'mp4';
           
-          try {
-            // Only stop if state is not "inactive"
-            if (recorder.state !== "inactive") {
-              recorder.stop();
-            }
-          } catch (stopError) {
-            console.error("Error stopping recorder:", stopError);
-            setIsRendering(false);
-            toast.error("Error stopping video recording");
+          if (mimeType.includes('webm')) {
+            fileType = 'video/webm';
+            fileExtension = 'webm';
+            console.log("Browser created WebM format - may require conversion for Windows compatibility");
           }
-        }, videoDuration);
-        
-        return true;
-      } catch (recorderError) {
-        console.error("MediaRecorder setup error:", recorderError);
-        toast.error("Your browser doesn't fully support video recording. Try using Chrome or Firefox.");
+          
+          const videoBlob = new Blob(chunks, { type: fileType });
+          const videoUrl = URL.createObjectURL(videoBlob);
+          
+          setDownloadUrl(videoUrl);
+          setRenderProgress(100);
+          setDownloadReady(true);
+          setIsRendering(false);
+          toast.success(`Mockup processed successfully as ${fileExtension.toUpperCase()} format!`);
+        } catch (error) {
+          console.error("Error creating video after recording:", error);
+          toast.error("Failed to create video file from recording");
+          setIsRendering(false);
+        }
+      };
+      
+      recorder.onerror = (event) => {
+        console.error("MediaRecorder error:", event);
+        toast.error("Error during recording process");
         setIsRendering(false);
-        return false;
-      }
+      };
+      
+      recorder.start();
+      setRenderProgress(50);
+      
+      const progressIntervals = 10;
+      const intervalTime = Math.floor(videoDuration / progressIntervals);
+      let currentInterval = 0;
+      
+      const interval = setInterval(() => {
+        currentInterval++;
+        if (currentInterval <= progressIntervals) {
+          const newProgress = 50 + Math.floor((currentInterval / progressIntervals) * 45);
+          setRenderProgress(newProgress);
+        }
+      }, intervalTime);
+      
+      setTimeout(() => {
+        clearInterval(interval);
+        
+        try {
+          if (recorder.state !== "inactive") {
+            recorder.stop();
+          }
+        } catch (stopError) {
+          console.error("Error stopping recorder:", stopError);
+          setIsRendering(false);
+          toast.error("Error stopping video recording");
+        }
+      }, videoDuration);
+      
+      return true;
     } catch (error) {
       console.error("Error capturing preview:", error);
       toast.error("Failed to capture mockup preview");
@@ -198,21 +172,17 @@ const RenderButton = ({
       return;
     }
 
-    // Try to capture preview and create video
     const captureSuccessful = await capturePreviewAndDownload();
     
-    // If client-side capture fails, fall back to the server-side rendering
     if (!captureSuccessful) {
       try {
         setIsRendering(true);
         setRenderProgress(0);
         setDownloadReady(false);
 
-        // Log the exact position values we're sending to the renderer
         console.log("Rendering with saved position:", JSON.stringify(savedPosition, null, 2));
         console.log("Container dimensions:", containerDimensions);
 
-        // Create a deep clone of the savedPosition to ensure no references are passed
         const positionClone = JSON.parse(JSON.stringify(savedPosition));
 
         const newJobId = await startVideoRender({
@@ -299,10 +269,13 @@ const RenderButton = ({
 
   const handleDownload = () => {
     if (downloadUrl) {
-      // Create a proper filename with the correct extension
-      const filename = downloadUrl.includes('webm') ? 'mockup.webm' : 'mockup.mp4';
+      let filename = 'mockup.mp4';
       
-      // Try playing the video in a new tab first to verify it works
+      if (downloadUrl.includes('webm')) {
+        filename = 'mockup.webm';
+        toast.info("Video is in WebM format. If it doesn't play on Windows, convert it to MP4 using a video converter.");
+      }
+      
       const a = document.createElement('a');
       a.href = downloadUrl;
       a.download = filename;

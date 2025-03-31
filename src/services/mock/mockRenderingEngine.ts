@@ -61,8 +61,8 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
       await overlayVideo.play();
     }
     
-    // Set up for recording
-    const { recorder, chunks, mimeType } = setupMediaRecorder(canvas);
+    // Set up for recording - explicitly request MP4 format for Windows compatibility
+    const { recorder, chunks, mimeType } = setupMediaRecorder(canvas, true); // Pass true to prefer MP4
     
     // Calculate the correct scaling factor between preview and render
     const renderScaleFactor = calculateRenderScaleFactor(
@@ -85,8 +85,15 @@ export const renderVideo = async (params: RenderVideoParams, jobId: string): Pro
     console.log("Using overlay position for rendering:", JSON.stringify(params.overlayPosition, null, 2));
     
     recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: mimeType || "video/webm" });
-      completeJob(jobId, URL.createObjectURL(blob));
+      // Create blob with MP4 mimetype specifically for Windows compatibility
+      const blob = new Blob(chunks, { type: mimeType || "video/mp4" });
+      
+      // Create a URL for the blob
+      const videoUrl = URL.createObjectURL(blob);
+      console.log("Video created with MIME type:", mimeType || "video/mp4");
+      
+      // Complete the job with the video URL
+      completeJob(jobId, videoUrl);
       console.log("Rendering complete for job:", jobId);
       
       // Clean up resources

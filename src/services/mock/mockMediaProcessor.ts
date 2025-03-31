@@ -3,7 +3,7 @@
  * Creates a media recorder for the canvas
  * @returns The MediaRecorder and chunks array
  */
-export const setupMediaRecorder = (canvas: HTMLCanvasElement): { 
+export const setupMediaRecorder = (canvas: HTMLCanvasElement, preferMp4 = false): { 
   recorder: MediaRecorder; 
   chunks: Blob[]; 
   mimeType: string;
@@ -15,7 +15,7 @@ export const setupMediaRecorder = (canvas: HTMLCanvasElement): {
   let mimeType = '';
   
   // Test different codecs in order of preference
-  const mimeTypes = [
+  let mimeTypes = [
     'video/webm;codecs=vp9',
     'video/webm;codecs=vp8',
     'video/webm',
@@ -23,10 +23,22 @@ export const setupMediaRecorder = (canvas: HTMLCanvasElement): {
     ''  // Default, let browser decide
   ];
   
+  // If MP4 is preferred for Windows compatibility, prioritize it
+  if (preferMp4) {
+    mimeTypes = [
+      'video/mp4',
+      'video/mp4;codecs=h264',
+      'video/mp4;codecs=avc1',
+      'video/webm',
+      ''  // Default, let browser decide
+    ];
+  }
+  
   // Find the first supported mime type
   for (const type of mimeTypes) {
     if (type === '' || MediaRecorder.isTypeSupported(type)) {
       mimeType = type;
+      console.log("Using MIME type for recording:", mimeType || "browser default");
       break;
     }
   }
@@ -35,7 +47,7 @@ export const setupMediaRecorder = (canvas: HTMLCanvasElement): {
   try {
     const recorder = new MediaRecorder(stream, {
       mimeType: mimeType || undefined,
-      videoBitsPerSecond: 5000000
+      videoBitsPerSecond: 5000000 // High bitrate for quality
     });
     
     recorder.ondataavailable = (e) => {

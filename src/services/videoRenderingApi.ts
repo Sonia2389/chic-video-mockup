@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { RenderVideoParams, RenderResponse } from "./types/renderingTypes";
 import { API_URL, apiErrorShown, setApiErrorShown } from "./config/apiConfig";
@@ -100,6 +101,11 @@ export const checkRenderStatus = async (jobId: string): Promise<RenderResponse> 
 export const downloadRenderedVideo = (downloadUrl: string, filename = 'tothefknmoon-video.mp4'): void => {
   console.log("Downloading video from:", downloadUrl);
 
+  // Ensure filename has mp4 extension for Windows compatibility
+  if (!filename.endsWith('.mp4')) {
+    filename = filename.replace(/\.[^/.]+$/, '') + '.mp4';
+  }
+
   const a = document.createElement('a');
   a.href = downloadUrl;
   a.download = filename;
@@ -107,7 +113,7 @@ export const downloadRenderedVideo = (downloadUrl: string, filename = 'tothefknm
   a.click();
   document.body.removeChild(a);
 
-  toast.success("Video downloaded successfully!");
+  toast.success(`Video downloaded as ${filename}`);
 };
 
 // Export the checkApiAvailability function from apiRenderingService
